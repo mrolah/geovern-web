@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Több szakpolitika. Egy település. Egy közös térkép. — GEOVERN @ konferencia</title>
+<meta name="description" content="Hogyan lesz a települési problémából jó döntés — még a technológiai beszerzés előtt? Konferencia-oldal: módszertan, 100 napos útiterv, nemzetközi referenciák.">
+<meta name="theme-color" content="#0F4A57">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+:root{
+  --bg:#050f14; --petrol:#0F4A57; --teal:#2AD1B5; --amber:#FF9F45;
+  --text:#EAF4F4; --muted:#8FB0B5; --faint:#5E7A80;
+  --card:rgba(5,15,20,.62); --cardline:rgba(42,209,181,.22);
+  --font:'Roboto',system-ui,sans-serif; --mono:'Roboto Mono',ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.5;overflow-x:hidden}
+a{color:var(--teal);text-decoration:none}
+#map{position:fixed;inset:0;z-index:0;pointer-events:none;transition:opacity .8s}
+body.ch-refs #map{pointer-events:auto}
+#vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 45%,transparent 30%,rgba(5,15,20,.55) 100%),
+             linear-gradient(180deg,rgba(5,15,20,.6) 0%,transparent 18%,transparent 82%,rgba(5,15,20,.75) 100%)}
+body.ch-pol #map,body.ch-days #map,body.ch-game #map{opacity:.3}
+body.maperr #map{display:none}
+body.maperr::before{content:'';position:fixed;inset:0;z-index:0;
+  background:radial-gradient(900px 600px at 70% 20%,rgba(15,74,87,.55),transparent 60%),
+             radial-gradient(700px 500px at 15% 85%,rgba(42,209,181,.12),transparent 60%),var(--bg)}
+/* markerek fejezetenként */
+/* visibility-vel rejtünk: a MapLibre inline opacity-t ír a markerre, azt felülírná */
+.mk{visibility:hidden;pointer-events:none;
+  width:15px;height:15px;border-radius:50%;background:var(--c,#2AD1B5);cursor:pointer;position:relative;
+  box-shadow:0 0 14px var(--c,#2AD1B5);border:2px solid rgba(5,15,20,.9)}
+.mk::after{content:'';position:absolute;inset:-7px;border:2px solid var(--c,#2AD1B5);border-radius:50%;animation:pulse 2.3s infinite}
+@keyframes pulse{0%{transform:scale(.55);opacity:.95}100%{transform:scale(1.7);opacity:0}}
+body.ch-refs .mk.ref{visibility:visible;pointer-events:auto;width:18px;height:18px}
+body.ch-hero .mk.venue{visibility:visible}
+.maplibregl-popup-content{background:#07181e!important;border:1px solid var(--cardline);border-radius:12px!important;
+  color:var(--text);font-family:var(--font);padding:14px 16px!important;box-shadow:0 16px 50px rgba(0,0,0,.55)!important;max-width:260px}
+.maplibregl-popup-tip{border-top-color:#07181e!important;border-bottom-color:#07181e!important}
+.maplibregl-popup-close-button{color:var(--faint);font-size:18px;right:6px;top:4px}
+.pp-c{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:5px}
+.pp-n{font:500 22px var(--mono);color:var(--text)}
+.pp-l{font-size:12.5px;font-weight:700;margin-bottom:4px}
+.pp-d{font-size:12px;color:var(--muted);line-height:1.4}
+/* topbar */
+header{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;gap:16px;
+  padding:14px 26px;background:linear-gradient(180deg,rgba(5,15,20,.85),transparent)}
+.logo{display:block;color:var(--text)}
+.logo .wm{height:48px;width:auto;display:block;max-width: 900px;}
+.wm-o{fill:var(--amber)}
+.wm-tag{fill:var(--muted)}
+.spacer{flex:1}
+.navlink{font-size:13.5px;font-weight:500;color:var(--muted)}
+.navlink:hover{color:var(--teal)}
+.lang{display:flex;gap:3px;border:1px solid rgba(143,176,181,.3);border-radius:8px;padding:3px;backdrop-filter:blur(6px)}
+.lang button{background:none;border:none;color:var(--faint);font:700 12px var(--mono);padding:4px 9px;border-radius:6px;cursor:pointer}
+.lang button.active{background:var(--teal);color:#04211d}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14.5px;cursor:pointer;border:1px solid transparent;transition:.2s;font-family:var(--font)}
+.btn-primary{background:var(--teal);color:#04211d}
+.btn-primary:hover{background:#63e6cf;transform:translateY(-1px)}
+.btn-ghost{border-color:rgba(42,209,181,.4);color:var(--text);backdrop-filter:blur(6px)}
+.btn-ghost:hover{border-color:var(--teal);color:var(--teal)}
+/* fejezet-pöttyök */
+#dots{position:fixed;right:22px;top:50%;transform:translateY(-50%);z-index:50;display:flex;flex-direction:column;gap:14px}
+#dots a{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--faint);display:block;transition:.25s}
+#dots a.active{background:var(--teal);border-color:var(--teal);box-shadow:0 0 12px rgba(42,209,181,.8)}
+@media(max-width:640px){#dots{display:none}}
+/* szekciók */
+/* a szekciók átengedik a kattintást a térképnek — csak a kártya fogja el */
+section{position:relative;z-index:2;min-height:100vh;display:flex;align-items:center;padding:110px 6vw 60px;pointer-events:none}
+.card{pointer-events:auto;max-width:640px;background:var(--card);border:1px solid var(--cardline);border-radius:18px;
+  padding:38px 40px;backdrop-filter:blur(14px);box-shadow:0 30px 80px rgba(0,0,0,.5);
+  opacity:0;transform:translateY(34px);transition:opacity .7s ease,transform .7s ease}
+section.vis .card{opacity:1;transform:none}
+@media(max-width:640px){.card{padding:26px 22px}}
+.eyebrow{font:500 12px var(--mono);letter-spacing:.18em;color:var(--teal);margin-bottom:14px;display:block}
+h1{font-size:clamp(30px,4.6vw,50px);font-weight:900;line-height:1.08;margin-bottom:16px}
+h1 em{font-style:normal;color:var(--teal)}
+h2{font-size:clamp(24px,3.2vw,34px);font-weight:900;line-height:1.12;margin-bottom:12px}
+.sub{color:var(--muted);font-size:16px;margin-bottom:24px;max-width:540px}
+.sub-big{font-size:20px;color:var(--text);font-weight:500}
+.hint{font:400 12.5px var(--mono);color:var(--faint);margin-top:16px}
+.ctas{display:flex;gap:12px;flex-wrap:wrap}
+.event{display:inline-flex;align-items:center;gap:8px;font:500 12px var(--mono);letter-spacing:.06em;
+  color:var(--amber);border:1px solid rgba(255,159,69,.45);background:rgba(255,159,69,.08);
+  border-radius:100px;padding:7px 16px;margin-bottom:18px}
+.speaker{font:400 13px var(--mono);color:var(--muted);margin-top:22px}
+.scrolldown{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);font:500 11px var(--mono);
+  letter-spacing:.22em;color:var(--faint);text-transform:uppercase;animation:bob 2.2s infinite}
+@keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,7px)}}
+/* 8 szakpolitika */
+#s-pol .card{max-width:860px;width:100%}
+.pol{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
+@media(max-width:860px){.pol{grid-template-columns:repeat(2,1fr)}}
+.pol .p{border:1px solid rgba(42,209,181,.16);border-radius:13px;padding:16px;background:rgba(15,74,87,.14);transition:.2s;overflow:hidden}
+.pol .p:hover{border-color:var(--teal);background:rgba(42,209,181,.1);transform:translateY(-3px)}
+.pol .n{font:500 12px var(--mono);color:var(--amber)}
+.pol h3{font-size:13.5px;font-weight:700;margin-top:5px;line-height:1.25}
+.pol p{font-size:12px;color:var(--muted);line-height:1.4;max-height:0;opacity:0;margin-top:0;transition:.3s}
+.pol .p:hover p,.pol .p:focus-within p{max-height:60px;opacity:1;margin-top:6px}
+@media(hover:none){.pol p{max-height:60px;opacity:1;margin-top:6px}}
+/* körfolyamat */
+#s-loop .card{max-width:720px}
+.loop{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:22px}
+@media(max-width:720px){.loop{grid-template-columns:repeat(2,1fr)}}
+.loop div{border:1px solid rgba(42,209,181,.18);border-radius:12px;padding:14px 13px;background:rgba(15,74,87,.16)}
+.loop b{display:block;font:500 11px var(--mono);letter-spacing:.12em;color:var(--teal);margin-bottom:6px}
+.loop span{font-size:12px;color:var(--muted);line-height:1.4}
+/* 100 nap */
+#s-days .card{max-width:720px}
+.days{display:grid;gap:12px;margin-top:22px}
+.day{display:grid;grid-template-columns:110px 1fr;gap:16px;border:1px solid rgba(42,209,181,.18);
+  border-radius:13px;padding:16px 18px;background:rgba(15,74,87,.16);align-items:center}
+@media(max-width:560px){.day{grid-template-columns:1fr;gap:6px}}
+.day .d{font:500 15px var(--mono);color:var(--amber);white-space:nowrap}
+.day b{display:block;font-size:13.5px;margin-bottom:3px}
+.day span{font-size:12.5px;color:var(--muted)}
+.tagline{margin-top:18px;font:500 13px var(--mono);color:var(--teal)}
+/* referenciák */
+#s-refs{justify-content:flex-start}
+#s-refs .card{max-width:400px}
+.austin{margin-top:20px;border:1px solid rgba(255,159,69,.35);border-radius:13px;padding:14px 16px;background:rgba(255,159,69,.06)}
+.austin .n{font:500 20px var(--mono);color:var(--amber)}
+.austin b{display:block;font-size:13px;margin:2px 0 4px}
+.austin span{font-size:12px;color:var(--muted)}
+/* zárás */
+#s-end{justify-content:center;text-align:center}
+#s-end .card{max-width:640px}
+.big{font:500 clamp(44px,7vw,64px) var(--mono);color:var(--amber);line-height:1}
+.big-l{font-size:14px;color:var(--muted);margin:8px 0 4px}
+.big-d{font:400 11.5px var(--mono);color:var(--faint);margin-bottom:26px}
+.q{font-size:clamp(21px,2.8vw,28px);font-weight:900;line-height:1.25;margin-bottom:8px}
+.q em{font-style:normal;color:var(--teal)}
+.ct-ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+.ct-row{margin-top:22px;font-size:13px;color:var(--muted)}
+.foot{margin-top:28px;padding-top:16px;border-top:1px solid rgba(143,176,181,.15);font-size:11.5px;color:var(--faint);
+  display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.foot a{color:var(--faint)} .foot a:hover{color:var(--muted)}
+/* ---------- DÖNTÉSJÁTÉK ---------- */
+#s-game .card{max-width:760px;width:100%}
+.g-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.g-prog{font:500 12px var(--mono);color:var(--faint)}
+.g-score{font:500 13px var(--mono);color:var(--amber)}
+.g-pol{display:inline-block;font:500 11px var(--mono);letter-spacing:.1em;color:var(--teal);border:1px solid rgba(42,209,181,.3);border-radius:100px;padding:4px 12px;margin-bottom:12px}
+.g-title{font-size:clamp(19px,2.6vw,24px);font-weight:900;line-height:1.2;margin-bottom:8px}
+.g-setup{font-size:14px;color:var(--muted);margin-bottom:14px}
+.g-hints{margin:0 0 18px;padding:14px 16px;border:1px dashed rgba(143,176,181,.3);border-radius:12px}
+.g-hints b{font:500 11px var(--mono);letter-spacing:.12em;color:var(--faint);display:block;margin-bottom:8px}
+.g-hints li{font-size:13px;color:var(--muted);margin-left:18px;margin-bottom:4px}
+.g-opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:620px){.g-opts{grid-template-columns:1fr}}
+.g-opt{text-align:left;border:1px solid rgba(42,209,181,.25);background:rgba(15,74,87,.16);border-radius:13px;padding:16px;cursor:pointer;transition:.15s;font-family:var(--font);color:var(--text)}
+.g-opt:hover{border-color:var(--teal);background:rgba(42,209,181,.1);transform:translateY(-2px)}
+.g-opt.picked{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+.g-opt .ab{display:inline-block;font:700 12px var(--mono);color:#04211d;background:var(--teal);border-radius:6px;padding:2px 8px;margin-bottom:7px}
+.g-opt.picked .ab{background:var(--amber)}
+.g-opt b{display:block;font-size:14px;line-height:1.3}
+.g-opt span{display:block;font-size:12px;color:var(--muted);margin-top:5px}
+.g-cta{margin-top:16px;text-align:center}
+.citymap{width:100%;border:1px solid rgba(42,209,181,.2);border-radius:12px;background:#081a21;margin:4px 0 10px;display:block}
+.g-layers{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.g-ly{display:inline-flex;align-items:center;gap:9px;font:600 13.5px var(--font);color:var(--text);border:1px solid rgba(143,176,181,.35);border-radius:10px;padding:9px 14px;cursor:pointer;user-select:none;transition:.15s;background:rgba(15,74,87,.16)}
+.g-ly:hover{border-color:var(--teal);transform:translateY(-1px)}
+/* jelölőnégyzet-szerű állapotjelzés: bekapcsolva színes négyzet pipával, kikapcsolva üres keret */
+.g-ly .d{width:18px;height:18px;border-radius:5px;border:2px solid;display:flex;align-items:center;justify-content:center;font:700 12px var(--font);color:#fff}
+.g-ly.on .d::after{content:'✓';text-shadow:0 1px 2px rgba(0,0,0,.85)}
+.g-ly:not(.on){opacity:.55}
+.g-ly:not(.on) .d{background:transparent!important}
+/* kompakt A/B gyorsválasztó a térképes fázisban */
+.g-opt.compact{display:flex;align-items:center;gap:12px;padding:15px 16px}
+.g-opt.compact .ab{margin:0;padding:4px 11px;font-size:14px}
+.g-opt.compact b{margin:0;font-size:15px;line-height:1.25}
+.g-call{font:500 12.5px var(--mono);color:var(--amber);border-left:2px solid var(--amber);padding:6px 0 6px 12px;margin-bottom:14px;line-height:1.5}
+.g-call.pending{color:var(--faint);border-left-color:rgba(143,176,181,.4)}
+/* Apple-jellegű felső sor: lépéspöttyök + pontszám */
+.steps{display:flex;gap:7px;align-items:center}
+.steps i{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--faint);display:block}
+.steps i.done{background:var(--teal);border-color:var(--teal)}
+.steps i.cur{background:var(--amber);border-color:var(--amber);box-shadow:0 0 8px rgba(255,159,69,.7)}
+.g-meta{font:500 11.5px var(--mono);letter-spacing:.12em;color:var(--faint);margin-bottom:6px;text-transform:uppercase}
+.g-score i{font-style:normal;color:var(--faint);font-size:11px}
+.g-right{display:flex;gap:14px;align-items:baseline}
+.g-timer{font:500 12px var(--mono);color:var(--faint)}
+.g-board .row b em{font-style:normal;color:var(--faint);font-size:11px;margin-left:6px}
+/* szakosztályi adatok banner */
+.g-inbox{display:flex;gap:12px;align-items:center;border:1px solid rgba(255,159,69,.4);background:rgba(255,159,69,.08);
+  border-radius:12px;padding:12px 16px;margin-bottom:12px}
+.g-inbox .ic{font-size:22px}
+.g-inbox b{display:block;font-size:15.5px;line-height:1.25}
+.g-inbox span{font-size:12px;color:var(--muted)}
+/* fokozatos pontozás — opciók pontlistája */
+.g-grades{max-width:440px;margin:0 auto 16px;text-align:left}
+.g-grades .gr{display:flex;justify-content:space-between;gap:10px;padding:6px 12px;border-radius:9px;
+  font-size:12.5px;color:var(--muted);border:1px solid transparent}
+.g-grades .gr b{font-family:var(--mono);font-weight:500;color:var(--text)}
+.g-grades .gr.chosen{border-color:rgba(255,159,69,.5);background:rgba(255,159,69,.08);color:var(--text)}
+.g-grades .gr.best{color:var(--teal)}
+/* körönkénti pontbontás */
+.g-sum{max-width:480px;margin:14px auto;text-align:left}
+.g-sum .row{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(143,176,181,.12);font-size:13px}
+.g-sum .row span{color:var(--muted)}
+.g-sum .row b{font-family:var(--mono);font-weight:500}
+.g-sum .row.tot{border-bottom:none;background:rgba(42,209,181,.09);border-radius:9px;margin-top:6px}
+.g-sum .row.tot b{color:var(--teal);font-size:15px}
+.g-result{text-align:center;padding:10px 0}
+.g-result .verdict{font-size:22px;font-weight:900;margin-bottom:6px}
+.g-result .verdict.ok{color:var(--teal)} .g-result .verdict.mid{color:var(--amber)} .g-result .verdict.no{color:#ff8a7a}
+.g-why{font-size:13.5px;color:var(--muted);max-width:520px;margin:0 auto 10px}
+.g-earn{font:500 16px var(--mono);color:var(--amber);margin-bottom:16px}
+.g-form{display:grid;gap:10px;margin-top:14px;text-align:left}
+.g-form input[type=text],.g-form input[type=email]{background:rgba(15,74,87,.2);border:1px solid rgba(143,176,181,.3);border-radius:10px;padding:11px 14px;color:var(--text);font:400 14px var(--font);width:100%}
+.g-form input:focus{outline:none;border-color:var(--teal)}
+.g-check{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--muted);cursor:pointer}
+.g-check input{margin-top:2px;accent-color:var(--teal)}
+.g-err{font-size:12px;color:#ff8a7a;min-height:16px}
+.g-board{margin:14px 0;text-align:left}
+.g-board .row{display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid rgba(143,176,181,.12);font-size:13.5px}
+.g-board .row.me{background:rgba(42,209,181,.12);border-radius:8px;border-bottom-color:transparent}
+.g-board .row b{font-family:var(--mono);font-weight:500}
+.g-note{font:400 11.5px var(--mono);color:var(--faint);margin-top:10px}
+.g-dl{display:flex;flex-direction:column;gap:10px;margin:16px 0;text-align:left}
+.g-dl a{display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(42,209,181,.3);border-radius:12px;padding:13px 16px;font-size:13.5px;color:var(--text);gap:12px}
+.g-dl a:hover{border-color:var(--teal);background:rgba(42,209,181,.08)}
+.g-dl a .b{font:700 12px var(--mono);color:var(--teal);white-space:nowrap}
+.g-center{text-align:center}
+/* kapuzás: a játék befejezéséig a további szekciók rejtve */
+body.locked #s-pol,body.locked #s-loop,body.locked #s-days,body.locked #s-refs,body.locked #s-end{display:none}
+/* valós játéktérkép a kártyában */
+.gamemap{height:280px;border-radius:12px;overflow:hidden;border:1px solid rgba(42,209,181,.25);margin:4px 0 10px;position:relative;background:#081a21}
+.gm-ab{width:27px;height:27px;border-radius:50%;background:#0F4A57;border:2px solid #2AD1B5;color:#EAF4F4;
+  font:700 13px var(--mono);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.6)}
+.gm-ab.picked{border-color:#FF9F45;box-shadow:0 0 12px rgba(255,159,69,.8)}
+/* típusválasztó */
+.g-types{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+@media(max-width:560px){.g-types{grid-template-columns:1fr}}
+.g-types .ic{font-size:26px;margin-bottom:6px;display:block}
+/* mentés gomb középre */
+.g-form #g-submit{justify-self:center;min-width:230px}
+/* visszafogott újrajátszás-link */
+.btn-replay{background:none;border:none;color:var(--faint);font:500 13px var(--font);cursor:pointer;
+  text-decoration:underline;text-underline-offset:3px;padding:8px;margin-top:10px}
+.btn-replay:hover{color:var(--teal)}
+@media(prefers-reduced-motion:reduce){.card{transition:none}.mk::after{animation:none}.scrolldown{animation:none}}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+<div id="vignette"></div>
+
+<header>
+  <a class="logo" href="index.html">
+    <svg class="wm" viewBox="-0.1 24.8 604.4 133.2" aria-label="GEOVERN — independent geospatial advisory" role="img">
+      <g fill="currentColor"><path d="M42.1 101.2L42.1 101.2Q33.8 101.2 26.9 98.5Q19.9 95.8 14.8 91.0Q9.6 86.1 6.8 79.5Q3.9 72.9 3.9 65L3.9 65Q3.9 57.1 6.8 50.5Q9.6 43.9 14.8 39.0Q20 34.2 27 31.5Q34 28.8 42.4 28.8L42.4 28.8Q51.6 28.8 59.1 31.9Q66.6 35 71.7 40.9L71.7 40.9L61.3 50.5Q53.8 42.6 43.2 42.6L43.2 42.6Q36.4 42.6 31.3 45.4Q26.1 48.2 23.2 53.3Q20.3 58.3 20.3 65L20.3 65Q20.3 71.5 23.2 76.6Q26.1 81.7 31.2 84.5Q36.3 87.4 43 87.4L43 87.4Q46.3 87.4 49.5 86.8Q52.6 86.1 55.6 84.5L55.6 84.5L55.6 63.9L70.4 63.9L70.4 92.3Q64.6 96.7 57.1 99.0Q49.6 101.2 42.1 101.2Z"/><path d="M153.6 100L99.4 100L99.4 30L152.3 30L152.3 43L115.5 43L115.5 58.2L148 58.2L148 70.8L115.5 70.8L115.5 87L153.6 87L153.6 100Z"/><path d="M315.9 100L299.9 100L269.7 30L287.2 30L308.5 80L330.1 30L346.2 30L315.9 100Z"/><path d="M421.7 100L367.5 100L367.5 30L420.4 30L420.4 43L383.6 43L383.6 58.2L416.1 58.2L416.1 70.8L383.6 70.8L383.6 87L421.7 87L421.7 100Z"/><path d="M464.8 100L448.6 100L448.6 30L478.5 30Q493.1 30 501.2 36.8Q509.3 43.6 509.3 55.4L509.3 55.4Q509.3 63.2 505.6 68.8Q501.8 74.5 495.0 77.5L495.0 77.5L510.6 100L493.2 100L479.7 80.5Q479.3 80.5 478.9 80.5L478.9 80.5L464.8 80.5L464.8 100ZM464.8 43.2L464.8 67.6L478.0 67.6Q485.4 67.6 489.2 64.3Q492.9 61.1 492.9 55.4L492.9 55.4Q492.9 49.6 489.2 46.4Q485.4 43.2 478.0 43.2L478.0 43.2L464.8 43.2Z"/><path d="M552.1 100L536.1 100L536.1 30L549.5 30L584.3 72.6L584.3 30L600.3 30L600.3 100L587.0 100L552.1 57.4L552.1 100Z"/></g>
+      <path class="wm-o" d="M214.4 101.2L214.4 101.2Q206.1 101.2 199.2 98.5Q192.2 95.8 187.0 90.9Q181.8 86 179.0 79.4Q176.1 72.8 176.1 65L176.1 65Q176.1 57.2 179.0 50.6Q181.8 44 187.0 39.1Q192.2 34.2 199.2 31.5Q206.1 28.8 214.4 28.8L214.4 28.8Q222.7 28.8 229.7 31.5Q236.6 34.2 241.8 39.0Q247 43.9 249.9 50.5Q252.7 57.2 252.7 65L252.7 65Q252.7 72.8 249.9 79.5Q247 86.1 241.8 91.0Q236.6 95.8 229.7 98.5Q222.7 101.2 214.4 101.2ZM214.4 87.4L214.4 87.4Q220.6 87.4 225.6 84.5Q230.5 81.7 233.4 76.7Q236.3 71.6 236.3 65L236.3 65Q236.3 58.4 233.4 53.3Q230.5 48.3 225.6 45.4Q220.6 42.6 214.4 42.6L214.4 42.6Q208.2 42.6 203.3 45.4Q198.3 48.3 195.4 53.3Q192.5 58.4 192.5 65L192.5 65Q192.5 71.6 195.4 76.7Q198.3 81.7 203.3 84.5Q208.2 87.4 214.4 87.4Z"/>
+      <path class="wm-tag" d="M8.0 152L6.0 152L6.0 138.0L8.0 138.0L8.0 152Z M20.6 152L18.6 152L18.6 138.0L20.2 138.0L28.6 148.4L28.6 138.0L30.6 138.0L30.6 152L29.0 152L20.6 141.6L20.6 152Z M47.1 152L41.2 152L41.2 138.0L47.1 138.0Q49.3 138.0 51.0 138.9Q52.7 139.8 53.7 141.4Q54.6 142.9 54.6 145.0L54.6 145.0Q54.6 147.1 53.7 148.7Q52.7 150.2 51.0 151.1Q49.3 152 47.1 152L47.1 152ZM43.2 139.8L43.2 150.3L47.0 150.3Q48.7 150.3 50.0 149.6Q51.2 148.9 51.9 147.8Q52.6 146.6 52.6 145.0L52.6 145.0Q52.6 143.4 51.9 142.3Q51.2 141.1 50.0 140.4Q48.7 139.8 47.0 139.8L47.0 139.8L43.2 139.8Z M74.2 152L64.1 152L64.1 138.0L74.0 138.0L74.0 139.8L66.1 139.8L66.1 144.0L73.1 144.0L73.1 145.7L66.1 145.7L66.1 150.3L74.2 150.3L74.2 152Z M85.9 152L83.9 152L83.9 138.0L89.3 138.0Q92.0 138.0 93.6 139.3Q95.2 140.6 95.2 142.9L95.2 142.9Q95.2 145.2 93.6 146.5Q92.0 147.8 89.3 147.8L89.3 147.8L85.9 147.8L85.9 152ZM85.9 139.8L85.9 146.0L89.3 146.0Q91.2 146.0 92.2 145.2Q93.2 144.4 93.2 142.9L93.2 142.9Q93.2 141.4 92.2 140.6Q91.2 139.8 89.3 139.8L89.3 139.8L85.9 139.8Z M114.8 152L104.7 152L104.7 138.0L114.6 138.0L114.6 139.8L106.7 139.8L106.7 144.0L113.7 144.0L113.7 145.7L106.7 145.7L106.7 150.3L114.8 150.3L114.8 152Z M126.5 152L124.5 152L124.5 138.0L126.1 138.0L134.5 148.4L134.5 138.0L136.5 138.0L136.5 152L134.9 152L126.5 141.6L126.5 152Z M153.0 152L147.1 152L147.1 138.0L153.0 138.0Q155.2 138.0 156.9 138.9Q158.6 139.8 159.6 141.4Q160.5 142.9 160.5 145.0L160.5 145.0Q160.5 147.1 159.6 148.7Q158.6 150.2 156.9 151.1Q155.2 152 153.0 152L153.0 152ZM149.1 139.8L149.1 150.3L152.9 150.3Q154.6 150.3 155.9 149.6Q157.1 148.9 157.8 147.8Q158.5 146.6 158.5 145.0L158.5 145.0Q158.5 143.4 157.8 142.3Q157.1 141.1 155.9 140.4Q154.6 139.8 152.9 139.8L152.9 139.8L149.1 139.8Z M180.1 152L170.0 152L170.0 138.0L179.8 138.0L179.8 139.8L172.0 139.8L172.0 144.0L179.0 144.0L179.0 145.7L172.0 145.7L172.0 150.3L180.1 150.3L180.1 152Z M191.7 152L189.7 152L189.7 138.0L191.4 138.0L199.8 148.4L199.8 138.0L201.8 138.0L201.8 152L200.1 152L191.7 141.6L191.7 152Z M217.1 152L215.1 152L215.1 139.8L210.3 139.8L210.3 138.0L221.9 138.0L221.9 139.8L217.1 139.8L217.1 152Z  M248.6 152.2L248.6 152.2Q246.9 152.2 245.6 151.6Q244.2 151.1 243.2 150.1Q242.2 149.2 241.7 147.9Q241.1 146.6 241.1 145.0L241.1 145.0Q241.1 143.4 241.7 142.2Q242.2 140.9 243.2 139.9Q244.2 138.9 245.6 138.4Q247.0 137.9 248.6 137.9L248.6 137.9Q250.3 137.9 251.6 138.4Q253.0 138.9 254.0 140.0L254.0 140.0L252.7 141.3Q251.9 140.4 250.9 140.0Q249.9 139.6 248.7 139.6L248.7 139.6Q247.1 139.6 245.8 140.3Q244.5 141.0 243.8 142.2Q243.1 143.4 243.1 145.0L243.1 145.0Q243.1 146.5 243.8 147.8Q244.5 149.0 245.8 149.7Q247.0 150.4 248.7 150.4L248.7 150.4Q249.5 150.4 250.4 150.2Q251.2 150.0 251.9 149.5L251.9 149.5L251.9 144.9L253.9 144.9L253.9 150.4Q252.8 151.3 251.4 151.7Q250.0 152.2 248.6 152.2Z M274.2 152L264.1 152L264.1 138.0L273.9 138.0L273.9 139.8L266.1 139.8L266.1 144.0L273.1 144.0L273.1 145.7L266.1 145.7L266.1 150.3L274.2 150.3L274.2 152Z M290.2 152.2L290.2 152.2Q288.5 152.2 287.2 151.6Q285.8 151.1 284.8 150.1Q283.8 149.2 283.3 147.9Q282.7 146.5 282.7 145.0L282.7 145.0Q282.7 143.5 283.3 142.2Q283.8 140.9 284.8 139.9Q285.8 138.9 287.2 138.4Q288.5 137.9 290.2 137.9L290.2 137.9Q291.8 137.9 293.1 138.4Q294.4 138.9 295.5 139.9Q296.5 140.9 297.0 142.2Q297.6 143.5 297.6 145.0L297.6 145.0Q297.6 146.5 297.0 147.9Q296.5 149.2 295.5 150.1Q294.4 151.1 293.1 151.6Q291.8 152.2 290.2 152.2ZM290.2 150.4L290.2 150.4Q291.7 150.4 292.9 149.7Q294.1 149.0 294.9 147.8Q295.6 146.5 295.6 145.0L295.6 145.0Q295.6 143.5 294.9 142.3Q294.1 141.0 292.9 140.3Q291.7 139.6 290.2 139.6L290.2 139.6Q288.6 139.6 287.3 140.3Q286.1 141.0 285.4 142.3Q284.7 143.5 284.7 145.0L284.7 145.0Q284.7 146.5 285.4 147.8Q286.1 149.0 287.3 149.7Q288.6 150.4 290.2 150.4Z M311.1 152.2L311.1 152.2Q309.5 152.2 308.0 151.7Q306.6 151.2 305.7 150.4L305.7 150.4L306.5 148.8Q307.3 149.5 308.5 150.0Q309.8 150.5 311.1 150.5L311.1 150.5Q312.9 150.5 313.7 149.8Q314.5 149.2 314.5 148.3L314.5 148.3Q314.5 147.6 314.1 147.1Q313.6 146.7 312.9 146.4Q312.1 146.2 311.2 146.0Q310.3 145.8 309.4 145.5Q308.5 145.2 307.7 144.8Q307.0 144.4 306.5 143.7Q306.1 143.0 306.1 141.9L306.1 141.9Q306.1 140.8 306.6 139.9Q307.2 139.0 308.4 138.4Q309.6 137.9 311.4 137.9L311.4 137.9Q312.7 137.9 313.9 138.2Q315.0 138.5 315.9 139.1L315.9 139.1L315.3 140.7Q314.4 140.1 313.4 139.8Q312.3 139.6 311.4 139.6L311.4 139.6Q309.7 139.6 308.8 140.2Q308.0 140.9 308.0 141.8L308.0 141.8Q308.0 142.5 308.5 143.0Q309.0 143.4 309.7 143.6Q310.5 143.9 311.4 144.1Q312.3 144.3 313.2 144.6Q314.1 144.8 314.8 145.3Q315.6 145.7 316.0 146.4Q316.5 147.1 316.5 148.2L316.5 148.2Q316.5 149.2 315.9 150.2Q315.3 151.1 314.1 151.6Q312.9 152.2 311.1 152.2Z M327.8 152L325.8 152L325.8 138.0L331.3 138.0Q334.0 138.0 335.5 139.3Q337.1 140.6 337.1 142.9L337.1 142.9Q337.1 145.2 335.5 146.5Q334.0 147.8 331.3 147.8L331.3 147.8L327.8 147.8L327.8 152ZM327.8 139.8L327.8 146.0L331.2 146.0Q333.1 146.0 334.1 145.2Q335.1 144.4 335.1 142.9L335.1 142.9Q335.1 141.4 334.1 140.6Q333.1 139.8 331.2 139.8L331.2 139.8L327.8 139.8Z M346.6 152L344.5 152L350.8 138.0L352.8 138.0L359.2 152L357.1 152L355.5 148.5L348.1 148.5L346.6 152ZM351.8 140.1L348.8 146.9L354.8 146.9L351.8 140.1Z M372.4 152L370.4 152L370.4 139.8L365.6 139.8L365.6 138.0L377.2 138.0L377.2 139.8L372.4 139.8L372.4 152Z M387.8 152L385.8 152L385.8 138.0L387.8 138.0L387.8 152Z M398.3 152L396.2 152L402.6 138.0L404.5 138.0L410.9 152L408.8 152L407.3 148.5L399.8 148.5L398.3 152ZM403.5 140.1L400.5 146.9L406.6 146.9L403.5 140.1Z M428.9 152L419.4 152L419.4 138.0L421.4 138.0L421.4 150.3L428.9 150.3L428.9 152Z  M449.3 152L447.3 152L453.6 138.0L455.6 138.0L461.9 152L459.8 152L458.3 148.5L450.9 148.5L449.3 152ZM454.6 140.1L451.6 146.9L457.6 146.9L454.6 140.1Z M476.3 152L470.4 152L470.4 138.0L476.3 138.0Q478.5 138.0 480.2 138.9Q482.0 139.8 482.9 141.4Q483.9 142.9 483.9 145.0L483.9 145.0Q483.9 147.1 482.9 148.7Q482.0 150.2 480.2 151.1Q478.5 152 476.3 152L476.3 152ZM472.4 139.8L472.4 150.3L476.2 150.3Q477.9 150.3 479.2 149.6Q480.5 148.9 481.2 147.8Q481.9 146.6 481.9 145.0L481.9 145.0Q481.9 143.4 481.2 142.3Q480.5 141.1 479.2 140.4Q477.9 139.8 476.2 139.8L476.2 139.8L472.4 139.8Z M499.3 152L497.3 152L491.2 138.0L493.3 138.0L498.4 149.5L503.5 138.0L505.4 138.0L499.3 152Z M515.9 152L513.9 152L513.9 138.0L515.9 138.0L515.9 152Z M530.6 152.2L530.6 152.2Q529.0 152.2 527.5 151.7Q526.1 151.2 525.2 150.4L525.2 150.4L526.0 148.8Q526.7 149.5 528.0 150.0Q529.2 150.5 530.6 150.5L530.6 150.5Q532.4 150.5 533.2 149.8Q534.0 149.2 534.0 148.3L534.0 148.3Q534.0 147.6 533.6 147.1Q533.1 146.7 532.4 146.4Q531.6 146.2 530.7 146.0Q529.8 145.8 528.9 145.5Q528.0 145.2 527.2 144.8Q526.5 144.4 526.0 143.7Q525.6 143.0 525.6 141.9L525.6 141.9Q525.6 140.8 526.1 139.9Q526.7 139.0 527.9 138.4Q529.1 137.9 530.9 137.9L530.9 137.9Q532.2 137.9 533.3 138.2Q534.5 138.5 535.4 139.1L535.4 139.1L534.8 140.7Q533.9 140.1 532.8 139.8Q531.8 139.6 530.9 139.6L530.9 139.6Q529.1 139.6 528.3 140.2Q527.5 140.9 527.5 141.8L527.5 141.8Q527.5 142.5 528.0 143.0Q528.4 143.4 529.2 143.6Q530.0 143.9 530.9 144.1Q531.8 144.3 532.7 144.6Q533.6 144.8 534.3 145.3Q535.1 145.7 535.5 146.4Q536.0 147.1 536.0 148.2L536.0 148.2Q536.0 149.2 535.4 150.2Q534.8 151.1 533.6 151.6Q532.4 152.2 530.6 152.2Z M551.6 152.2L551.6 152.2Q550.0 152.2 548.6 151.6Q547.3 151.1 546.3 150.1Q545.3 149.2 544.7 147.9Q544.2 146.5 544.2 145.0L544.2 145.0Q544.2 143.5 544.7 142.2Q545.3 140.9 546.3 139.9Q547.3 138.9 548.6 138.4Q550.0 137.9 551.6 137.9L551.6 137.9Q553.2 137.9 554.6 138.4Q555.9 138.9 556.9 139.9Q557.9 140.9 558.5 142.2Q559.0 143.5 559.0 145.0L559.0 145.0Q559.0 146.5 558.5 147.9Q557.9 149.2 556.9 150.1Q555.9 151.1 554.6 151.6Q553.2 152.2 551.6 152.2ZM551.6 150.4L551.6 150.4Q553.2 150.4 554.4 149.7Q555.6 149.0 556.3 147.8Q557.0 146.5 557.0 145.0L557.0 145.0Q557.0 143.5 556.3 142.3Q555.6 141.0 554.4 140.3Q553.2 139.6 551.6 139.6L551.6 139.6Q550.0 139.6 548.8 140.3Q547.6 141.0 546.9 142.3Q546.2 143.5 546.2 145.0L546.2 145.0Q546.2 146.5 546.9 147.8Q547.6 149.0 548.8 149.7Q550.0 150.4 551.6 150.4Z M570.5 152L568.5 152L568.5 138.0L573.9 138.0Q576.6 138.0 578.2 139.3Q579.8 140.6 579.8 142.9L579.8 142.9Q579.8 144.5 579.0 145.7Q578.2 146.8 576.7 147.3L576.7 147.3L580.0 152L577.8 152L574.8 147.7Q574.4 147.7 573.9 147.7L573.9 147.7L570.5 147.7L570.5 152ZM570.5 139.8L570.5 146.0L573.9 146.0Q575.8 146.0 576.8 145.2Q577.8 144.4 577.8 142.9L577.8 142.9Q577.8 141.4 576.8 140.6Q575.8 139.8 573.9 139.8L573.9 139.8L570.5 139.8Z M594.7 152L592.8 152L592.8 147.1L587.2 138.0L589.4 138.0L593.8 145.4L598.3 138.0L600.3 138.0L594.7 147.1L594.7 152Z"/>
+    </svg>
+  </a>
+  <div class="spacer"></div>
+  <a class="navlink" href="index.html" data-i18n="nav_back">← Főoldal</a>
+  <div class="lang" id="lang">
+    <button data-lang="hu" class="active">HU</button>
+    <button data-lang="en">EN</button>
+    <button data-lang="de">DE</button>
+  </div>
+  <a href="#s-end" id="navCta" class="btn btn-primary" style="padding:9px 18px;font-size:13.5px" data-i18n="nav_cta">Beszéljünk</a>
+</header>
+
+<nav id="dots"></nav>
+
+<!-- 1 · HERO -->
+<section id="s-hero" data-ch="hero">
+  <div class="card">
+    <!-- <span class="event" id="eventChip">
+      ÉTOSZ Kongresszus 2026 · Budaörs · 2026. október 15.
+    </span> -->
+    <h1 data-i18n-html="h_h1">Több szakpolitika.<br>Egy település.<br><em>Egy közös térkép.</em></h1>
+    <p class="sub sub-big" data-i18n="h_sub">Ön jól döntene a polgármester helyében?</p>
+    <div class="ctas">
+      <a href="#s-game" class="btn btn-primary" data-i18n="h_c1">Játék indítása</a>
+    </div>
+    <!-- <p class="speaker" data-i18n="h_sp">Oláh Attila · VertiGIS</p> -->
+  </div>
+  <div class="scrolldown" data-i18n="scroll">görgessen</div>
+</section>
+
+<!-- 1b · DÖNTÉSJÁTÉK -->
+<section id="s-game" data-ch="game">
+  <div class="card">
+    <!-- <span class="eyebrow" data-i18n="g_eb">A DÖNTÉSJÁTÉK</span> -->
+    <div id="gameBox"></div>
+  </div>
+</section>
+
+<!-- 2 · NYOLC SZAKPOLITIKA -->
+<section id="s-pol" data-ch="pol">
+  <div class="card">
+    <span class="eyebrow" data-i18n="p_eb">A KÖZÖS KOORDINÁTA: A HELY</span>
+    <h2 data-i18n="p_h2">A nyolc fejezet közös koordinátája a hely</h2>
+    <p class="sub" style="margin-bottom:0" data-i18n="p_sub">Ugyanaz az utca — egyszerre több szakpolitikai kérdés.</p>
+    <div class="pol" id="polGrid"></div>
+  </div>
+</section>
+
+<!-- 3 · A TÉRKÉP MUNKÁT INDÍT -->
+<section id="s-loop" data-ch="loop">
+  <div class="card">
+    <span class="eyebrow" data-i18n="l_eb">MŰKÖDÉS, NEM SZOFTVER</span>
+    <h2 data-i18n="l_h2">A térkép nem a döntés vége — a végrehajtás kezdete</h2>
+    <p class="sub" style="margin-bottom:0" data-i18n="l_sub">Ne szoftverrel kezdjünk: a működést értsük meg először.</p>
+    <div class="loop" id="loopGrid"></div>
+  </div>
+</section>
+
+<!-- 4 · 100 NAP -->
+<section id="s-days" data-ch="days">
+  <div class="card">
+    <span class="eyebrow" data-i18n="d_eb">100 NAPOS ÚTITERV</span>
+    <h2 data-i18n="d_h2">Az első beszerzés ne szoftver legyen — hanem tiszta döntési helyzet</h2>
+    <div class="days" id="daysGrid"></div>
+    <p class="tagline" data-i18n="d_tag">Tanácsadás → pilot → csak ezután beszerzés</p>
+  </div>
+</section>
+
+<!-- 5 · REFERENCIÁK -->
+<section id="s-refs" data-ch="refs">
+  <div class="card">
+    <span class="eyebrow" data-i18n="r_eb">A RÉGIÓBAN MÁR MŰKÖDIK</span>
+    <h2 data-i18n="r_h2">Egyik projekt sem szoftverrel indult</h2>
+    <p class="sub" style="margin-bottom:0" data-i18n="r_sub">Kattintson a pontokra a térképen.</p>
+    <div class="austin">
+      <span class="n" id="ausN">2–3 ezer</span>
+      <b data-i18n="aus_l">önkiszolgáló ügy havonta — Austin (US)</b>
+      <span data-i18n="aus_d">Árvízi információs alkalmazás · ~1,5 FTE kapacitás szabadult fel</span>
+    </div>
+  </div>
+</section>
+
+<!-- 6 · ZÁRÁS -->
+<section id="s-end" data-ch="end">
+  <div class="card">
+    <div class="big">10–20×</div>
+    <p class="big-l" data-i18n="e_stat">költségkülönbség ugyanarra a feladatra — a rosszul meghatározott scope a legdrágább tétel</p>
+    <p class="big-d" data-i18n="e_disc">Saját projektfelmérési tapasztalat — nem általános piaci statisztika.</p>
+    <p class="q" data-i18n-html="e_q">Melyik települési döntést szeretné<br><em>öt hét helyett öt perc alatt</em> meghozni?</p>
+    <div class="ct-ctas">
+      <a class="btn btn-primary" href="mailto:attila.olah@vertigis.com" data-i18n="e_c1">Helyzetértékelést kérek</a>
+      <a class="btn btn-ghost" href="index.html" data-i18n="e_c2">A teljes kínálat →</a>
+    </div>
+    <p class="ct-row">Oláh Attila · VertiGIS · attila.olah@vertigis.com</p>
+    <div class="foot">
+      <span id="csvHot">© 2026 GEOVERN</span>
+      <span data-i18n="e_first">Első lépés: szakértői helyzetértékelés. Szoftver csak utána.</span>
+    </div>
+  </div>
+</section>
+
+<script>
+/* =====================================================
+   KONFERENCIA-KONFIG — következő rendezvénynél CSAK EZT írd át
+   ===================================================== */
+const EVENT={
+  hu:'ÉTOSZ Kongresszus 2026 · Budaörs · 2026. október 15.',
+  en:'ÉTOSZ Congress 2026 · Budaörs, Hungary · 15 Oct 2026',
+  de:'ÉTOSZ-Kongress 2026 · Budaörs, Ungarn · 15.10.2026'
+};
+const VENUE=[18.96,47.46]; /* Budaörs */
+
+/* ============ ADAT ============ */
+const POL=[
+ {n:'01',t:{hu:'Klímaadaptáció',en:'Climate adaptation',de:'Klimaanpassung'},q:{hu:'Hol a legnagyobb kockázat?',en:'Where is the greatest risk?',de:'Wo ist das größte Risiko?'}},
+ {n:'02',t:{hu:'Vízgazdálkodás',en:'Water management',de:'Wasserwirtschaft'},q:{hu:'Hol tartsuk meg a vizet?',en:'Where should we retain water?',de:'Wo halten wir das Wasser zurück?'}},
+ {n:'03',t:{hu:'Energetika',en:'Energy',de:'Energie'},q:{hu:'Mely épületekben térül meg?',en:'Which buildings pay off?',de:'In welchen Gebäuden rechnet es sich?'}},
+ {n:'04',t:{hu:'Mobilitás',en:'Mobility',de:'Mobilität'},q:{hu:'Hol javít legtöbbet az elérhetőség?',en:'Where does accessibility help most?',de:'Wo hilft Erreichbarkeit am meisten?'}},
+ {n:'05',t:{hu:'Digitalizáció',en:'Digitalisation',de:'Digitalisierung'},q:{hu:'Hogyan lesz közös adat?',en:'How does data become shared?',de:'Wie werden Daten gemeinsam?'}},
+ {n:'06',t:{hu:'Fiatalok',en:'Youth',de:'Jugend'},q:{hu:'Hol hiányzik szolgáltatás és lehetőség?',en:'Where are services and opportunities missing?',de:'Wo fehlen Angebote und Chancen?'}},
+ {n:'07',t:{hu:'Körforgás',en:'Circularity',de:'Kreislaufwirtschaft'},q:{hu:'Hol kapcsolhatók össze az anyagáramok?',en:'Where can material flows connect?',de:'Wo lassen sich Stoffströme koppeln?'}},
+ {n:'08',t:{hu:'Zöld pénzügyek',en:'Green finance',de:'Grüne Finanzen'},q:{hu:'Hová kerüljön a következő forint?',en:'Where should the next forint go?',de:'Wohin soll der nächste Forint fließen?'}}
+];
+const LOOP=[
+ {t:{hu:'ÉSZLELÉS',en:'DETECT',de:'ERFASSEN'},d:{hu:'Terepi adat · lakossági jelzés · szenzor',en:'Field data · citizen reports · sensors',de:'Felddaten · Bürgermeldungen · Sensorik'}},
+ {t:{hu:'PRIORITÁS',en:'PRIORITISE',de:'PRIORISIEREN'},d:{hu:'Kockázat · hatás · költség',en:'Risk · impact · cost',de:'Risiko · Wirkung · Kosten'}},
+ {t:{hu:'BEAVATKOZÁS',en:'ACT',de:'HANDELN'},d:{hu:'Feladat · felelős · határidő',en:'Task · owner · deadline',de:'Aufgabe · Verantwortliche · Frist'}},
+ {t:{hu:'VISSZAMÉRÉS',en:'MEASURE',de:'NACHMESSEN'},d:{hu:'KPI · riport · nyilvánosság',en:'KPIs · reporting · transparency',de:'KPI · Bericht · Transparenz'}}
+];
+const DAYS=[
+ {d:{hu:'1. fázis',en:'1. Phase',de:'1. Phase'},t:{hu:'Vezetői kérdés + interjúk',en:'Executive question + interviews',de:'Führungsfrage + Interviews'},s:{hu:'Vezetői cél · érintetti interjúk · jelenlegi folyamat',en:'Leadership goal · stakeholder interviews · current process',de:'Führungsziel · Stakeholder-Interviews · Ist-Prozess'}},
+ {d:{hu:'2. fázis',en:'2. Phase',de:'2. Phase'},t:{hu:'Folyamat + adat + költség',en:'Process + data + cost',de:'Prozess + Daten + Kosten'},s:{hu:'Hiányok és párhuzamosságok · TCO · piaci költségbenchmark',en:'Gaps and duplication · TCO · market cost benchmark',de:'Lücken und Doppelarbeit · TCO · Marktkosten-Benchmark'}},
+ {d:{hu:'3. fázis',en:'3. Phase',de:'3. Phase'},t:{hu:'Pilot + beszerzési útiterv',en:'Pilot + procurement roadmap',de:'Pilot + Beschaffungsfahrplan'},s:{hu:'Kis bizonyítás · mérhető KPI · több szállítóra nyitott követelmények',en:'Small proof · measurable KPIs · vendor-open requirements',de:'Kleiner Nachweis · messbare KPIs · anbieteroffene Anforderungen'}}
+];
+const REFS=[
+ {city:'Innsbruck · AT',ll:[11.40,47.27],n:{hu:'25 000+',en:'25,000+',de:'25.000+'},l:{hu:'kezelt fa',en:'managed trees',de:'gepflegte Bäume'},d:{hu:'600+ zöldterület · terepi adat és központi karbantartás',en:'600+ green spaces · field data, central maintenance',de:'600+ Grünflächen · Felddaten, zentrale Pflege'}},
+ {city:'Mainz · DE',ll:[8.27,50.00],n:{hu:'2026',en:'2026',de:'2026'},l:{hu:'integrált városi GDI',en:'integrated urban SDI',de:'integrierte städtische GDI'},d:{hu:'A digitális iker alapja — klíma, mobilitás, szociális infrastruktúra',en:'Foundation of the digital twin — climate, mobility, social infrastructure',de:'Basis des Digitalen Zwillings — Klima, Mobilität, Soziales'}},
+ {city:'Warszawa · PL',ll:[21.01,52.23],n:{hu:'7,1 M',en:'7.1M',de:'7,1 Mio.'},l:{hu:'fa, távérzékeléssel',en:'trees via remote sensing',de:'Bäume per Fernerkundung'},d:{hu:'Lombkorona: a város 32%-a · kockázati osztály, terepi app, nyílt térkép',en:'Canopy: 32% of the city · risk classes, field app, open map',de:'Kronendach: 32 % der Stadt · Risikoklassen, Feld-App, offene Karte'}},
+ {city:'Gdańsk · PL',ll:[18.65,54.35],n:{hu:'200+',en:'200+',de:'200+'},l:{hu:'esőkert a városban',en:'rain gardens in the city',de:'Regengärten in der Stadt'},d:{hu:'Cél: 1 millió m³ retenció 2030-ra · szenzoros mérés jelöli ki a sorrendet',en:'Target: 1M m³ retention by 2030 · sensors set the order',de:'Ziel: 1 Mio. m³ Retention bis 2030 · Sensorik bestimmt die Reihenfolge'}},
+ {city:'Csehország · CZ',ll:[14.42,50.09],n:{hu:'90 ezer+',en:'90k+',de:'90.000+'},l:{hu:'elemzett baleset / év',en:'crashes analysed / year',de:'analysierte Unfälle / Jahr'},d:{hu:'Top 10 kockázati hely megyénként · meglévő rendőrségi adatból',en:'Top 10 risk sites per region · from existing police data',de:'Top-10-Risikostellen je Region · aus vorhandenen Polizeidaten'}}
+];
+const AUS_N={hu:'2–3 ezer',en:'2–3k',de:'2–3 Tsd.'};
+
+const I18N={
+hu:{nav_back:'← Főoldal',nav_cta:'Beszéljünk',
+ h_h1:'Több szakpolitika.<br>Egy település.<br><em>Egy közös térkép.</em>',
+ h_sub:'Ön jól döntene a polgármester helyében?',
+ h_c1:'Játék indítása',h_sp:'Oláh Attila · VertiGIS',scroll:'görgessen',
+ g_eb:'A DÖNTÉSJÁTÉK',
+ p_eb:'A KÖZÖS KOORDINÁTA: A HELY',p_h2:'A nyolc fejezet közös koordinátája a hely',
+ p_sub:'Ugyanaz az utca — egyszerre több szakpolitikai kérdés.',
+ l_eb:'MŰKÖDÉS, NEM SZOFTVER',l_h2:'A térkép nem a döntés vége — a végrehajtás kezdete',
+ l_sub:'Ne szoftverrel kezdjünk: a működést értsük meg először.',
+ d_eb:'100 NAPOS ÚTITERV',d_h2:'Az első beszerzés ne szoftver legyen — hanem tiszta döntési helyzet',
+ d_tag:'Tanácsadás → pilot → csak ezután beszerzés',
+ r_eb:'A RÉGIÓBAN MÁR MŰKÖDIK',r_h2:'Egyik projekt sem szoftverrel indult',r_sub:'Kattintson a pontokra a térképen.',
+ aus_l:'önkiszolgáló ügy havonta — Austin (US)',aus_d:'Árvízi információs alkalmazás · ~1,5 FTE kapacitás szabadult fel',
+ e_stat:'költségkülönbség ugyanarra a feladatra — a rosszul meghatározott scope a legdrágább tétel',
+ e_disc:'Saját projektfelmérési tapasztalat — nem általános piaci statisztika.',
+ e_q:'Melyik települési döntést szeretné<br><em>öt hét helyett öt perc alatt</em> meghozni?',
+ e_c1:'Helyzetértékelést kérek',e_c2:'A teljes kínálat →',
+ e_first:'Első lépés: szakértői helyzetértékelés. Szoftver csak utána.',
+ dots:['Előadás','Játék','8 szakpolitika','Működés','100 nap','Referenciák','Kapcsolat']},
+en:{nav_back:'← Home',nav_cta:'Let’s talk',
+ h_h1:'More policy fields.<br>One municipality.<br><em>One shared map.</em>',
+ h_sub:'Would you decide well as the mayor?',
+ h_c1:'Start the game',h_sp:'Attila Oláh · VertiGIS',scroll:'scroll',
+ g_eb:'THE DECISION GAME',
+ p_eb:'THE SHARED COORDINATE: PLACE',p_h2:'The eight chapters share one coordinate: place',
+ p_sub:'The same street — several policy questions at once.',
+ l_eb:'OPERATIONS, NOT SOFTWARE',l_h2:'The map is not the end of the decision — it starts the work',
+ l_sub:'Don’t start with software: understand how things run first.',
+ d_eb:'100-DAY ROADMAP',d_h2:'Your first procurement shouldn’t be software — but a clear decision situation',
+ d_tag:'Advisory → pilot → only then procurement',
+ r_eb:'ALREADY WORKING IN THE REGION',r_h2:'None of these started with software',r_sub:'Click the points on the map.',
+ aus_l:'self-service requests / month — Austin (US)',aus_d:'Flood information app · ~1.5 FTE of capacity freed up',
+ e_stat:'cost difference for the same task — poorly defined scope is the most expensive line item',
+ e_disc:'From my own project assessments — not a general market statistic.',
+ e_q:'Which municipal decision would you like to make<br><em>in five minutes instead of five weeks</em>?',
+ e_c1:'Request an assessment',e_c2:'Full portfolio →',
+ e_first:'Step one: an expert assessment. Software only after.',
+ dots:['Talk','Game','8 policies','Operations','100 days','References','Contact']},
+de:{nav_back:'← Startseite',nav_cta:'Sprechen wir',
+ h_h1:'Mehr Politikfelder.<br>Eine Gemeinde.<br><em>Eine gemeinsame Karte.</em>',
+ h_sub:'Würden Sie als Bürgermeister:in richtig entscheiden?',
+ h_c1:'Spiel starten',h_sp:'Attila Oláh · VertiGIS',scroll:'scrollen',
+ g_eb:'DAS ENTSCHEIDUNGSSPIEL',
+ p_eb:'DIE GEMEINSAME KOORDINATE: DER ORT',p_h2:'Die acht Kapitel teilen eine Koordinate: den Ort',
+ p_sub:'Dieselbe Straße — mehrere Politikfragen zugleich.',
+ l_eb:'BETRIEB, NICHT SOFTWARE',l_h2:'Die Karte ist nicht das Ende der Entscheidung — sie startet die Arbeit',
+ l_sub:'Nicht mit Software beginnen: erst den Betrieb verstehen.',
+ d_eb:'100-TAGE-FAHRPLAN',d_h2:'Die erste Beschaffung sollte keine Software sein — sondern eine klare Entscheidungslage',
+ d_tag:'Beratung → Pilot → erst dann Beschaffung',
+ r_eb:'IN DER REGION BEREITS IM EINSATZ',r_h2:'Keines dieser Projekte begann mit Software',r_sub:'Klicken Sie auf die Punkte der Karte.',
+ aus_l:'Self-Service-Vorgänge / Monat — Austin (US)',aus_d:'Hochwasser-Info-App · ~1,5 VZÄ Kapazität freigesetzt',
+ e_stat:'Kostenunterschied für dieselbe Aufgabe — schlecht definierter Scope ist der teuerste Posten',
+ e_disc:'Aus eigenen Projektanalysen — keine allgemeine Marktstatistik.',
+ e_q:'Welche kommunale Entscheidung möchten Sie<br><em>in fünf Minuten statt in fünf Wochen</em> treffen?',
+ e_c1:'Bestandsaufnahme anfragen',e_c2:'Gesamtes Angebot →',
+ e_first:'Schritt eins: Experten-Bestandsaufnahme. Software erst danach.',
+ dots:['Vortrag','Spiel','8 Politikfelder','Betrieb','100 Tage','Referenzen','Kontakt']}
+};
+
+/* ============ TÉRKÉP ============ */
+const CAM={
+ hero:{center:VENUE,zoom:8.0,pitch:50,bearing:-15},
+ game:{center:[18.6,47.2],zoom:5.8,pitch:55,bearing:-25},
+ pol:{center:[19.0,47.3],zoom:6.6,pitch:45,bearing:10},
+ loop:{center:[17.8,47.8],zoom:5.4,pitch:52,bearing:-20},
+ days:{center:[16.5,48.5],zoom:4.8,pitch:50,bearing:-18},
+ refs:{center:[14.8,50.6],zoom:3.95,pitch:28,bearing:0},
+ end:{center:[13.5,49.0],zoom:3.6,pitch:40,bearing:6}
+};
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let map=null,popup=null,mapReady=false,refMarkers=[];
+function initMap(){
+  if(typeof maplibregl==='undefined'){document.body.classList.add('maperr');return;}
+  try{
+    map=new maplibregl.Map({container:'map',
+      style:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+      center:CAM.hero.center,zoom:CAM.hero.zoom,pitch:CAM.hero.pitch,bearing:CAM.hero.bearing,
+      attributionControl:{compact:true},interactive:true});
+  }catch(e){document.body.classList.add('maperr');return;}
+  map.scrollZoom.disable();map.doubleClickZoom.disable();map.keyboard.disable();
+  map.on('error',e=>{if(!mapReady&&e.error&&/style|source/i.test(String(e.error.message||''))){document.body.classList.add('maperr');}});
+  map.on('load',()=>{
+    mapReady=true;
+    /* helyszín-marker (hero) */
+    const v=document.createElement('div');
+    v.className='mk venue';v.style.setProperty('--c','#FF9F45');
+    v.title='ÉTOSZ Kongresszus 2026 · Budaörs';
+    new maplibregl.Marker({element:v}).setLngLat(VENUE).addTo(map);
+    /* referencia-markerek */
+    REFS.forEach((r,i)=>{
+      const el=document.createElement('div');
+      el.className='mk ref';el.style.setProperty('--c','#2AD1B5');
+      el.addEventListener('click',ev=>{ev.stopPropagation();openPopup(i);});
+      refMarkers.push(new maplibregl.Marker({element:el}).setLngLat(r.ll).addTo(map));
+    });
+  });
+}
+function openPopup(i){
+  const r=REFS[i];
+  if(popup)popup.remove();
+  popup=new maplibregl.Popup({offset:14,closeButton:true})
+    .setLngLat(r.ll)
+    .setHTML(`<div class="pp-c">${r.city}</div><div class="pp-n">${r.n[L]}</div>
+      <div class="pp-l">${r.l[L]}</div><div class="pp-d">${r.d[L]}</div>`)
+    .addTo(map);
+}
+
+/* ============ FEJEZETEK ============ */
+const chapters=['hero','game','pol','loop','days','refs','end'];
+let current='hero';
+const secEls=[...document.querySelectorAll('section')];
+function setChapter(ch){
+  if(ch===current)return;
+  current=ch;
+  document.body.className=document.body.className.replace(/ch-\w+/g,'').trim();
+  document.body.classList.add('ch-'+ch);
+  document.querySelectorAll('#dots a').forEach((d,i)=>d.classList.toggle('active',chapters[i]===ch));
+  if(map&&mapReady){
+    const c=(ch==='game'&&typeof G!=='undefined'&&G.townCam)?G.townCam:CAM[ch];
+    RM?map.jumpTo(c):map.flyTo({...c,duration:2600,essential:true});
+  }
+  if(popup&&ch!=='refs'){popup.remove();popup=null;}
+  /* belépéskor kinyitjuk az első referencia-popupot — látszik, hogy a pontok kattinthatók */
+  if(ch==='refs'){setTimeout(()=>{if(current==='refs'&&!popup&&refMarkers.length)openPopup(0);},1600);}
+}
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add('vis');setChapter(e.target.dataset.ch);}
+}),{threshold:0.45});
+secEls.forEach(s=>io.observe(s));
+document.body.classList.add('ch-hero');
+secEls[0].classList.add('vis');
+
+/* ============ RENDER + I18N ============ */
+let L='hu';
+function buildDots(){
+  const box=document.getElementById('dots');box.innerHTML='';
+  const locked=document.body.classList.contains('locked');
+  chapters.forEach((ch,i)=>{
+    if(locked&&i>1)return; /* a játék végéig csak az első két fejezet */
+    const a=document.createElement('a');
+    a.href='#'+secEls[i].id;a.title=I18N[L].dots[i];
+    if(ch===current)a.classList.add('active');
+    box.appendChild(a);
+  });
+}
+function render(){
+  document.getElementById('polGrid').innerHTML=POL.map(p=>
+    `<div class="p" tabindex="0"><span class="n">${p.n}</span><h3>${p.t[L]}</h3><p>${p.q[L]}</p></div>`).join('');
+  document.getElementById('loopGrid').innerHTML=LOOP.map(x=>
+    `<div><b>${x.t[L]}</b><span>${x.d[L]}</span></div>`).join('');
+  document.getElementById('daysGrid').innerHTML=DAYS.map(x=>
+    `<div class="day"><span class="d">${x.d[L]}</span><div><b>${x.t[L]}</b><span>${x.s[L]}</span></div></div>`).join('');
+  document.getElementById('ausN').textContent=AUS_N[L];
+  //document.getElementById('eventChip').textContent=EVENT[L];
+}
+function applyLang(l){
+  L=l;document.documentElement.lang=l;
+  try{localStorage.setItem('gp-lang',l);}catch(e){}
+  document.querySelectorAll('#lang button').forEach(b=>b.classList.toggle('active',b.dataset.lang===l));
+  const d=I18N[l];
+  if(d.title)document.title=d.title;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{if(d[el.dataset.i18n]!==undefined)el.textContent=d[el.dataset.i18n];});
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{if(d[el.dataset.i18nHtml]!==undefined)el.innerHTML=d[el.dataset.i18nHtml];});
+  render();buildDots();gRender();
+  if(popup){popup.remove();popup=null;}
+}
+document.getElementById('lang').addEventListener('click',e=>{if(e.target.dataset.lang)applyLang(e.target.dataset.lang);});
+
+/* =====================================================
+   DÖNTÉSJÁTÉK v2 — progresszív polgármester-szimuláció
+   1 szakág ×2 → 2 szakág (3 opció) → 3 szakág (4 opció)
+   ===================================================== */
+/* Google Apps Script webhook URL — beállítás: google-sheets-setup.md.
+   Amíg üres, a játék helyi (eszközön belüli) ranglistával fut. */
+const SHEET_WEBHOOK='';
+/* IDŐ A RANGLISTÁN — TESZT: állítsd false-ra, ha az időt el akarod rejteni a rangsorból.
+   (A mérés és a holtverseny-eldöntés ettől függetlenül működik tovább.) */
+const SHOW_TIME=true;
+const MATERIALS=[
+ {id:'etosz2026',file:'anyagok/ETOSZ_2026_eloadas.pdf',
+  label:{hu:'ÉTOSZ Kongresszus 2026 — előadás (PDF) + további adatok',
+         en:'ÉTOSZ Congress 2026 — talk (PDF) + further data',
+         de:'ÉTOSZ-Kongress 2026 — Vortrag (PDF) + weitere Daten'}}
+];
+const W=(hu,en,de)=>({hu,en,de});
+/* Településtípusok — nyelvfüggő városkészletekkel:
+   HU → Magyarország · DE → német nyelvterület (DACH) · EN → angol nyelvterület + Észak-EU + mediterrán */
+const TYPES=[
+ {k:'k',ic:'🏡',n:W('Község','Village','Gemeinde'),s:W('5 000 fő alatt','under 5,000','unter 5.000'),
+  towns:{hu:[['Alsómocsolád',18.243,46.312],['Tihany',17.889,46.913],['Bogács',20.531,47.902],['Hollókő',19.586,48.089],['Nagypáli',16.789,46.917]],
+         en:[['St Davids',-5.269,51.882],['Portree',-6.196,57.413],['Manarola',9.730,44.107],['Oia',25.376,36.461],['Hvar',16.443,43.172]],
+         de:[['Hallstatt',13.649,47.562],['Alpbach',11.943,47.398],['Grindelwald',8.041,46.624],['Oberammergau',11.067,47.598],['Heiligenblut',12.842,47.040]]}},
+ {k:'v',ic:'🏘️',n:W('Kisváros','Small town','Kleinstadt'),s:W('5–20 ezer fő','5–20 thousand','5–20 Tsd.'),
+  towns:{hu:[['Balatonfüred',17.889,46.958],['Kőszeg',16.541,47.389],['Sárospatak',21.566,48.318],['Mórahalom',19.884,46.218],['Tata',18.323,47.653]],
+         en:[['Kinsale',-8.522,51.706],['St Ives',-5.480,50.211],['Rovinj',13.639,45.081],['Nafplio',22.795,37.568],['Taormina',15.288,37.853]],
+         de:[['Zell am See',12.794,47.323],['Bad Ischl',13.620,47.712],['Kufstein',12.166,47.583],['Davos',9.836,46.797],['Füssen',10.698,47.571]]}},
+ {k:'m',ic:'🏙️',n:W('Középváros','Mid-size town','Mittelstadt'),s:W('20–60 ezer fő','20–60 thousand','20–60 Tsd.'),
+  towns:{hu:[['Budaörs',18.959,47.461],['Gödöllő',19.360,47.596],['Vác',19.134,47.776],['Baja',18.954,46.181],['Salgótarján',19.800,48.099]],
+         en:[['Sligo',-8.476,54.270],['Visby',18.290,57.641],['Chania',24.018,35.511],['Pula',13.849,44.867],['Siena',11.331,43.319]],
+         de:[['Baden bei Wien',16.234,48.008],['Schwäbisch Hall',9.737,49.112],['Thun',7.628,46.759],['Leoben',15.090,47.383],['Passau',13.431,48.574]]}},
+ {k:'n',ic:'🌆',n:W('Nagyváros','City','Großstadt'),s:W('60 ezer fő felett','over 60 thousand','über 60 Tsd.'),
+  towns:{hu:[['Debrecen',21.627,47.532],['Szeged',20.148,46.253],['Pécs',18.232,46.072],['Győr',17.635,47.684],['Kecskemét',19.691,46.896]],
+         en:[['Dublin',-6.260,53.350],['Edinburgh',-3.189,55.953],['Copenhagen',12.568,55.676],['Valencia',-0.377,39.470],['Palermo',13.361,38.116]],
+         de:[['München',11.576,48.137],['Wien',16.373,48.208],['Zürich',8.541,47.374],['Graz',15.439,47.071],['Hamburg',9.993,53.551]]}}
+];
+const GT={
+hu:{type_t:'Válasszon településtípust!',
+ type_s:'A helyszínt a térkép sorsolja ki — négy, egyre összetettebb döntés várja.',
+ town_t:n=>'Az Ön települése: '+n,town_s:'Ön a polgármester. Kb. 4 perc.',begin:'Kezdjük →',
+ known:'AMIT MOST TUD:',final:'Végleges döntés',
+ v_best:'A legjobb döntés!',v_mid:'Részben jó irány',v_no:'Az adatok mást mutattak',
+ pts:'pont',bon:b=>'+'+b+' intuíció-bónusz',next:'Következő kör →',res:'Eredmény →',
+ round:i=>i+'. kör',bflag:'· bónusz ✓',total:'Összesen',
+ done_t:'Végeredmény',done_s:(s,m)=>s+' / '+m+' pont',
+ inbox_t:'Beérkeztek a szakosztályi adatok',inbox_s:'Kapcsolja be a rétegeket egyesével!',
+ pend:(n,s)=>'Az összegzéshez kapcsolja be mind a '+n+' réteget ('+s+'/'+n+')',
+ form_t:'Kerüljön fel a ranglistára!',nick:'Becenév (a ranglistán ez látszik)',name:'Teljes név',email:'E-mail cím',
+ consent:'Hozzájárulok, hogy adataimat kapcsolatfelvétel és a kért anyagok megküldése céljából kezeljék.',
+ mat_t:'Kérem az alábbi anyagokat:',submit:'Mentés és ranglista →',sending:'Mentés…',
+ err_req:'Minden mező és a hozzájárulás kitöltése szükséges.',err_mail:'Érvénytelen e-mail cím.',
+ board_t:'Ranglista',rank:r=>'Az Ön helyezése: #'+r,
+ offline:'Kapcsolat nélkül — helyi rangsor. Az adatok mentve.',
+ mats:'Tovább az anyagokhoz →',dl:'Letöltés',
+ thx_mail:'A kért anyagokat e-mailben is elküldjük.',replay:'Újra játszom',
+ none:'Nem kért anyagot — a standnál bármikor elérhető.'},
+en:{type_t:'Choose a settlement type!',
+ type_s:'The map draws your town — four increasingly complex decisions await.',
+ town_t:n=>'Your town: '+n,town_s:'You are the mayor. About 4 minutes.',begin:'Let’s begin →',
+ known:'WHAT YOU KNOW NOW:',final:'Final decision',
+ v_best:'The best decision!',v_mid:'Partly the right direction',v_no:'The data said otherwise',
+ pts:'pts',bon:b=>'+'+b+' intuition bonus',next:'Next round →',res:'Results →',
+ round:i=>'Round '+i,bflag:'· bonus ✓',total:'Total',
+ done_t:'Final score',done_s:(s,m)=>s+' / '+m+' points',
+ inbox_t:'The departments’ data has arrived',inbox_s:'Switch the layers on one by one!',
+ pend:(n,s)=>'Switch on all '+n+' layers for the summary ('+s+'/'+n+')',
+ form_t:'Get on the leaderboard!',nick:'Nickname (shown on the board)',name:'Full name',email:'Email address',
+ consent:'I consent to my data being used to contact me and send the requested materials.',
+ mat_t:'Send me these materials:',submit:'Save & leaderboard →',sending:'Saving…',
+ err_req:'All fields and consent are required.',err_mail:'Invalid email address.',
+ board_t:'Leaderboard',rank:r=>'Your rank: #'+r,
+ offline:'Offline — local ranking. Your data is saved.',
+ mats:'Continue to materials →',dl:'Download',
+ thx_mail:'We will also email the requested materials.',replay:'Play again',
+ none:'No materials requested — available any time at the booth.'},
+de:{type_t:'Wählen Sie einen Gemeindetyp!',
+ type_s:'Die Karte lost Ihren Ort aus — vier zunehmend komplexe Entscheidungen warten.',
+ town_t:n=>'Ihre Gemeinde: '+n,town_s:'Sie sind Bürgermeister:in. Ca. 4 Minuten.',begin:'Los geht’s →',
+ known:'WAS SIE JETZT WISSEN:',final:'Endgültige Entscheidung',
+ v_best:'Die beste Entscheidung!',v_mid:'Teilweise richtig',v_no:'Die Daten sagten etwas anderes',
+ pts:'Punkte',bon:b=>'+'+b+' Intuitionsbonus',next:'Nächste Runde →',res:'Ergebnis →',
+ round:i=>'Runde '+i,bflag:'· Bonus ✓',total:'Gesamt',
+ done_t:'Endergebnis',done_s:(s,m)=>s+' / '+m+' Punkte',
+ inbox_t:'Die Daten der Fachabteilungen sind da',inbox_s:'Schalten Sie die Ebenen einzeln ein!',
+ pend:(n,s)=>'Für das Fazit alle '+n+' Ebenen einschalten ('+s+'/'+n+')',
+ form_t:'Ab auf die Rangliste!',nick:'Spitzname (auf der Rangliste sichtbar)',name:'Vollständiger Name',email:'E-Mail-Adresse',
+ consent:'Ich stimme zu, dass meine Daten zur Kontaktaufnahme und zum Versand der Materialien verarbeitet werden.',
+ mat_t:'Diese Materialien möchte ich:',submit:'Speichern & Rangliste →',sending:'Speichern…',
+ err_req:'Alle Felder und die Zustimmung sind erforderlich.',err_mail:'Ungültige E-Mail-Adresse.',
+ board_t:'Rangliste',rank:r=>'Ihre Platzierung: #'+r,
+ offline:'Offline — lokale Rangliste. Ihre Daten sind gespeichert.',
+ mats:'Weiter zu den Materialien →',dl:'Download',
+ thx_mail:'Die Materialien senden wir zusätzlich per E-Mail.',replay:'Nochmal spielen',
+ none:'Keine Materialien gewählt — am Stand jederzeit verfügbar.'}
+};
+/* rétegszínek */
+const C_HEAT='#ff6b4a',C_WATER='#4aa8ff',C_VULN='#c77bff',C_GREEN='#3ddc97',C_GOLD='#ffd166',C_TEAL='#2AD1B5';
+
+/* =====================================================
+   ELŐRE GENERÁLT GEOMETRIA — determinisztikus (seedelt)
+   egység: ~300 m; (0,0) = településközpont
+   ===================================================== */
+function grng(seed){let t=seed;return()=>{t+=0x6D2B79F5;let r=Math.imul(t^t>>>15,1|t);
+  r^=r+Math.imul(r^r>>>7,61|r);return((r^r>>>14)>>>0)/4294967296;}}
+const DU=0.0042,DV=0.0028;
+let ORIGIN=[19.04,47.5];
+const GP=(u,v)=>[ORIGIN[0]+u*DU,ORIGIN[1]+v*DV];
+function blob(cu,cv,r,seed,irr){
+  irr=irr||0.35;const rnd=grng(seed),n=16,rad=[];
+  for(let i=0;i<n;i++)rad.push(r*(1+(rnd()*2-1)*irr));
+  for(let i=0;i<n;i++)rad[i]=(rad[i]+rad[(i+1)%n]+rad[(i+n-1)%n])/3;
+  const ring=[];
+  for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,rr=rad[i%n];
+    ring.push(GP(cu+Math.cos(a)*rr,cv+Math.sin(a)*rr*0.75));}
+  return ring;
+}
+function polyFC(defs){
+  return{type:'FeatureCollection',features:defs.map(d=>({type:'Feature',
+    properties:{op:d[4]!==undefined?d[4]:0.35},
+    geometry:{type:'Polygon',coordinates:[blob(d[0],d[1],d[2],d[3])]}}))};
+}
+function ptsFC(clusters,seed){
+  const rnd=grng(seed),f=[];
+  clusters.forEach(c=>{
+    for(let i=0;i<c[2];i++){
+      const u=c[0]+((rnd()+rnd())-1)*c[3],v=c[1]+((rnd()+rnd())-1)*c[3]*0.8;
+      f.push({type:'Feature',properties:{w:0.4+rnd()*0.6},
+        geometry:{type:'Point',coordinates:GP(u,v)}});
+    }});
+  return{type:'FeatureCollection',features:f};
+}
+function pathFC(waypointSets,seed){
+  const rnd=grng(seed);
+  return{type:'FeatureCollection',features:waypointSets.map(w=>{
+    const coords=[];
+    for(let i=0;i<w.length-1;i++){
+      const [u1,v1]=w[i],[u2,v2]=w[i+1];
+      coords.push(GP(u1,v1));
+      coords.push(GP((u1+u2)/2+(rnd()-0.5)*0.2,(v1+v2)/2+(rnd()-0.5)*0.2));
+    }
+    coords.push(GP(...w[w.length-1]));
+    return{type:'Feature',properties:{},geometry:{type:'LineString',coordinates:coords}};
+  })};
+}
+function isoFC(cu,cv,radii,seed){
+  const rnd=grng(seed),n=16,base=[];
+  for(let i=0;i<n;i++)base.push(1+(rnd()*2-1)*0.3);
+  for(let i=0;i<n;i++)base[i]=(base[i]+base[(i+1)%n]+base[(i+n-1)%n])/3;
+  return{type:'FeatureCollection',features:radii.map((r,li)=>{
+    const ring=[];
+    for(let i=0;i<=n;i++){const a=i/n*Math.PI*2;
+      ring.push(GP(cu+Math.cos(a)*r*base[i%n],cv+Math.sin(a)*r*base[i%n]*0.75));}
+    return{type:'Feature',properties:{lvl:li},
+      geometry:{type:'Polygon',coordinates:[ring]}};
+  }).reverse()};
+}
+
+/* =====================================================
+   4 KÖR — növekvő komplexitás (rétegek: 2 → 3 → 4 → 5)
+   ===================================================== */
+const ROUNDS=[
+ {disc:[W('Vízgazdálkodás','Water management','Wasserwirtschaft')],
+  lvl:W('1 szakág','1 field','1 Fachbereich'),bonus:50,best:'B',
+  t:W('Villámárvíz után: hova nyúljunk először?','After the flash flood: where to act first?','Nach der Sturzflut: Wo zuerst eingreifen?'),
+  setup:W('A múlt heti felhőszakadás három utcát elöntött; a keret egy beavatkozásra elég.',
+    'Last week’s cloudburst flooded three streets; the budget covers one intervention.',
+    'Der Starkregen letzte Woche überflutete drei Straßen; das Budget reicht für einen Eingriff.'),
+  hints:{hu:['A lakók a mélyen fekvő Fő utcai szakasz védelmét követelik.','A biztosító gyorsjelentése még nem érkezett meg.'],
+         en:['Residents demand protection for the low-lying Main Street section.','The insurer’s rapid report hasn’t arrived yet.'],
+         de:['Die Anwohner fordern Schutz für die tiefliegende Hauptstraße.','Der Schnellbericht der Versicherung steht noch aus.']},
+  opts:[
+   {k:'A',pts:0,cell:[0.5,-0.55],t:W('Mobil gátak a Fő utcára','Mobile barriers on Main Street','Mobile Barrieren für die Hauptstraße'),
+    s:W('Látványos, azonnali védekezés','Visible, immediate defence','Sichtbarer Sofortschutz')},
+   {k:'B',pts:100,cell:[-1.2,1.0],t:W('A felső árkok és átereszek tisztítása','Clear the upstream ditches and culverts','Obere Gräben und Durchlässe räumen'),
+    s:W('Nem látványos, az okot kezeli','Not showy — treats the cause','Unauffällig — behandelt die Ursache')}],
+  layers:[
+   {n:W('Elöntési zónák','Flood zones','Überflutungszonen'),type:'poly',c:C_WATER,defs:[[0.3,-0.5,0.8,11,0.35],[1.1,-0.9,0.6,12,0.3]]},
+   {n:W('Kárbejelentések','Damage reports','Schadensmeldungen'),type:'pts',c:C_HEAT,clusters:[[0.6,-0.7,12,0.4],[-0.5,0.35,5,0.3],[-1.1,0.85,4,0.25]],seed:13}],
+  call:W('A kárpontok a felső vízgyűjtő lejtőjének vonalában sorakoznak — a Fő utca csak a végállomás',
+    'The damage points line up along the upper catchment slope — Main Street is only the end station',
+    'Die Schadenspunkte reihen sich am Hang des oberen Einzugsgebiets — die Hauptstraße ist nur die Endstation'),
+  why:W('A mobil gát a tünetet kezeli egyszer — az áteresz-tisztítás a következő esőnél is véd, töredékáron.',
+    'Barriers treat the symptom once — clearing the culverts protects at the next rain too, at a fraction of the cost.',
+    'Barrieren behandeln das Symptom einmal — geräumte Durchlässe schützen auch beim nächsten Regen, zum Bruchteil der Kosten.')},
+ {disc:[W('Mobilitás','Mobility','Mobilität')],
+  lvl:W('1 szakág','1 field','1 Fachbereich'),bonus:50,best:'B',
+  t:W('Iskolai biztonság: hol avatkozzunk be?','School safety: where to intervene?','Schulwegsicherheit: Wo eingreifen?'),
+  setup:W('A szülők gyalogátkelőt követelnek az iskola elé; egy helyszínre van forrás.',
+    'Parents demand a crossing in front of the school; funding covers one site.',
+    'Eltern fordern einen Übergang vor der Schule; das Budget reicht für einen Standort.'),
+  hints:{hu:['A petíciót 400-an írták alá.','A rendőrség szerint „máshol is történnek koccanások".'],
+         en:['400 people signed the petition.','Police say “fender-benders happen elsewhere too”.'],
+         de:['400 Personen unterschrieben die Petition.','Die Polizei: „Unfälle passieren auch anderswo."']},
+  opts:[
+   {k:'A',pts:0,cell:[-0.75,0.28],t:W('Zebra + lámpa az iskola elé','Crossing + light at the school','Zebrastreifen + Ampel vor der Schule'),
+    s:W('A petíció helyszíne','The petition’s site','Der Ort der Petition')},
+   {k:'B',pts:100,cell:[1.2,-0.8],t:W('Forgalomcsillapítás a vasúti csomópontnál','Traffic calming at the rail junction','Verkehrsberuhigung am Bahnknoten'),
+    s:W('A tényleges gócpontban','At the actual hotspot','Am tatsächlichen Brennpunkt')}],
+  layers:[
+   {n:W('Balesetek','Accidents','Unfälle'),type:'pts',c:C_HEAT,clusters:[[1.2,-0.8,14,0.35],[0,0,4,1.2]],seed:21},
+   {n:W('Gyaloglási izokrón (5/10 perc)','Walking isochrone (5/10 min)','Geh-Isochrone (5/10 Min.)'),type:'iso',c:C_TEAL,center:[-0.6,0.4],radii:[0.8,1.6],seed:22},
+   {n:W('Iskolai útvonalak','School routes','Schulwege'),type:'line',c:C_GOLD,paths:[[[2.4,-1.4],[1.2,-0.8],[0.2,0],[-0.6,0.4]],[[2.2,0.8],[1.2,-0.8]]],seed:23}],
+  call:W('A gyerekbalesetek 70%-a a vasúti csomópontban történt — az iskola előtt már van lámpás átkelő',
+    '70% of child accidents happened at the rail junction — the school already has a signalled crossing',
+    '70 % der Kinderunfälle passierten am Bahnknoten — vor der Schule gibt es bereits eine Ampel'),
+  why:W('A beavatkozás oda való, ahol a kockázat mérhetően koncentrálódik — nem oda, ahol a leghangosabb az igény.',
+    'Intervene where risk measurably concentrates — not where the demand is loudest.',
+    'Eingreifen, wo sich das Risiko messbar konzentriert — nicht dort, wo die Forderung am lautesten ist.')},
+ {disc:[W('Klímaadaptáció','Climate adaptation','Klimaanpassung'),W('Egészségügy','Health','Gesundheit')],
+  lvl:W('2 szakág','2 fields','2 Fachbereiche'),bonus:50,best:'B',
+  t:W('Hőhullám jön: mire költsük a gyorskeretet?','Heatwave incoming: how to spend the rapid fund?','Hitzewelle im Anzug: Wofür das Sofortbudget?'),
+  setup:W('Két hét múlva tartós hőhullámot jeleznek. A keret egy csomagra elég — két szakterület érvei ütköznek.',
+    'A lasting heatwave is forecast in two weeks. The fund covers one package — two departments’ arguments clash.',
+    'In zwei Wochen wird eine anhaltende Hitzewelle erwartet. Das Budget reicht für ein Paket — zwei Fachbereiche streiten.'),
+  hints:{hu:['A belvárosi rendezvénytér árnyékolása régi ígéret.','A háziorvosok több idős rosszullétet jeleznek — helyszínek nélkül.'],
+         en:['Shading the downtown event square is an old promise.','GPs report more elderly heat cases — without locations.'],
+         de:['Die Beschattung des Veranstaltungsplatzes ist ein altes Versprechen.','Hausärzte melden mehr Hitzefälle bei Älteren — ohne Ortsangaben.']},
+  opts:[
+   {k:'A',pts:0,cell:[0,0],t:W('Árnyékolók + párakapuk a belvárosi térre','Shades + mist gates on the central square','Beschattung + Sprühnebel am zentralen Platz'),
+    s:W('Látványos, mindenki élvezi','Visible, everyone enjoys it','Sichtbar, alle genießen es')},
+   {k:'B',pts:150,cell:[2.1,0.55],t:W('Hűsítő pontok + látogatóprogram a két hőszigeti tömbben','Cooling points + visits in the two heat-island blocks','Kühlorte + Besuchsprogramm in den zwei Hitzeinsel-Blöcken'),
+    s:W('Célzottan a kockázati metszetbe','Targeted at the risk overlap','Gezielt in die Risikoschnittmenge')},
+   {k:'C',pts:75,cell:[0.2,0.1],t:W('SMS-hőségriasztás minden 65+ lakosnak','SMS heat alerts to all residents 65+','SMS-Hitzewarnung an alle 65+'),
+    s:W('Olcsó, széles, de célzatlan','Cheap, broad, untargeted','Günstig, breit, unspezifisch')}],
+  layers:[
+   {n:W('Hőtérkép (hotspot)','Heat map (hotspot)','Hitzekarte (Hotspot)'),type:'heat',clusters:[[2.2,0.6,40,0.7],[0.9,1.4,12,0.5]],seed:31},
+   {n:W('75+ egyedül élők sűrűsége','Density of 75+ living alone','Dichte 75+ Alleinlebende'),type:'poly',c:C_VULN,defs:[[2.2,0.55,0.75,32,0.4],[2.0,1.2,0.5,33,0.25],[0.6,-1.1,0.45,34,0.15]]},
+   {n:W('Idősotthonok, gondozók','Care homes, carers','Pflegeheime, Betreuung'),type:'pts',c:C_VULN,clusters:[[2.15,0.5,3,0.25]],seed:35,big:true},
+   {n:W('Tervezett hűsítő pont elérése (10 perc)','Planned cooling point reach (10 min)','Erreichbarkeit Kühlort (10 Min.)'),type:'iso',c:C_TEAL,center:[2.0,0.5],radii:[0.7,1.4],seed:36}],
+  call:W('A hőgóc és a 75+ sűrűség ugyanabban a két tömbben fed át — a belvárosi tér mindkettőn kívül esik',
+    'The heat core and 75+ density overlap in the same two blocks — the central square lies outside both',
+    'Hitzekern und 75+-Dichte überlagern sich in denselben zwei Blöcken — der zentrale Platz liegt außerhalb'),
+  why:W('Kockázat = hőség × sérülékenység × elérés. Ahol a három metszi egymást, ott ment életet a keret. Az SMS jó kiegészítő, de önmagában nem véd.',
+    'Risk = heat × vulnerability × access. Where the three intersect, the fund saves lives. SMS is a good add-on but doesn’t protect on its own.',
+    'Risiko = Hitze × Vulnerabilität × Erreichbarkeit. Wo sich die drei schneiden, rettet das Budget Leben. SMS ist eine gute Ergänzung, schützt aber allein nicht.')},
+ {disc:[W('Vízgazdálkodás','Water management','Wasserwirtschaft'),W('Mobilitás','Mobility','Mobilität'),W('Zöld pénzügyek','Green finance','Grüne Finanzen')],
+  lvl:W('3 szakág','3 fields','3 Fachbereiche'),bonus:75,best:'B',
+  t:W('Klímabiztonsági csomag — mi legyen a program?','The climate-resilience budget — what’s the programme?','Das Klimaresilienz-Budget — was wird das Programm?'),
+  setup:W('A testület egy ülésen dönt a teljes keretről. Három szakterület igényei versengenek — és minden körzet kér valamit.',
+    'The council decides the whole budget in one session. Three departments compete — and every district wants something.',
+    'Der Rat entscheidet das gesamte Budget in einer Sitzung. Drei Fachbereiche konkurrieren — und jeder Bezirk will etwas.'),
+  hints:{hu:['A mérnökiroda kész terve: egy nagy záportározó éppen kiteszi a keretet.','„Az egyenlő elosztás ellen senki nem tiltakozna."'],
+         en:['The engineering firm’s ready plan: one big retention basin costs exactly the budget.','“Nobody would object to an equal split.”'],
+         de:['Der fertige Plan des Ingenieurbüros: ein großes Rückhaltebecken kostet genau das Budget.','„Gegen eine Gleichverteilung würde niemand protestieren."']},
+  opts:[
+   {k:'A',pts:100,cell:[0.4,-0.6],t:W('Minden forrás a központi záportározóra','All funds into the central retention basin','Alles in das zentrale Rückhaltebecken'),
+    s:W('Egy nagy, védhető beruházás','One big, defensible investment','Eine große, vertretbare Investition')},
+   {k:'B',pts:250,cell:[2.2,0.6],t:W('Kombinált csomag a top-3 kockázati zónára','Combined package for the top-3 risk zones','Kombipaket für die Top-3-Risikozonen'),
+    s:W('Esőkertek + biztonságos iskolautak + hűsítő pontok','Rain gardens + safe school routes + cooling points','Regengärten + sichere Schulwege + Kühlorte')},
+   {k:'C',pts:0,cell:[0.2,0.1],t:W('Egyenlő elosztás a 10 körzet között','Equal split across the 10 districts','Gleichverteilung auf die 10 Bezirke'),
+    s:W('Politikailag egyszerű','Politically easy','Politisch einfach')},
+   {k:'D',pts:50,cell:[-0.4,-0.15],t:W('Idén részletes felmérés, döntés jövőre','Detailed survey this year, decision next year','Heuer Erhebung, Entscheidung nächstes Jahr'),
+    s:W('Óvatos, adatvezérelt szándék','Cautious, data-driven intent','Vorsichtig, datengetrieben gemeint')}],
+  layers:[
+   {n:W('Kombinált kockázati index','Combined risk index','Kombinierter Risikoindex'),type:'poly',c:C_HEAT,defs:[[2.2,0.6,0.8,41,0.42],[1.2,-0.8,0.6,42,0.34],[0.4,-0.6,0.55,43,0.26],[-1.4,0.8,0.45,44,0.14]]},
+   {n:W('Incidens-hotspot (3 szakág együtt)','Incident hotspot (3 fields combined)','Vorfalls-Hotspot (3 Bereiche)'),type:'heat',clusters:[[2.2,0.6,30,0.6],[1.2,-0.8,22,0.45],[0.5,-0.6,16,0.4]],seed:45},
+   {n:W('Kritikus útvonalak (iskolabusz, mentés)','Critical routes (school bus, EMS)','Kritische Routen (Schulbus, Rettung)'),type:'line',c:C_GOLD,paths:[[[2.6,1.2],[2.2,0.6],[1.2,-0.8],[0,0]],[[-1.8,-0.6],[0,0],[1.2,-0.8]]],seed:46},
+   {n:W('Javasolt beavatkozási helyszínek','Proposed intervention sites','Vorgeschlagene Eingriffsorte'),type:'pts',c:C_GREEN,clusters:[[2.2,0.6,3,0.3],[1.2,-0.8,2,0.2],[0.4,-0.6,2,0.2]],seed:47,big:true},
+   {n:W('Intézményi elérés (10 perc)','Institutional reach (10 min)','Institutionelle Erreichbarkeit (10 Min.)'),type:'iso',c:C_TEAL,center:[0.1,0.05],radii:[1.0,1.9],seed:48}],
+  call:W('A három szakág kockázata ugyanarra a 3 zónára koncentrálódik — együtt kezelve a hatás többszörös',
+    'All three fields’ risks concentrate on the same 3 zones — treated together the impact multiplies',
+    'Die Risiken aller drei Bereiche konzentrieren sich auf dieselben 3 Zonen — gemeinsam behandelt vervielfacht sich die Wirkung'),
+  why:W('A tározó egy kockázatot kezel, a szétosztás egyet sem. A meglévő adatok már kijelölik a top-3 zónát — a halasztás egy évnyi kockázatot hagy az asztalon.',
+    'The basin treats one risk; the split treats none. Existing data already marks the top-3 zones — postponing leaves a year of risk on the table.',
+    'Das Becken behandelt ein Risiko, die Gleichverteilung keines. Die Daten markieren die Top-3-Zonen bereits — Aufschieben lässt ein Jahr Risiko liegen.')}
+];
+/* ===== 2. SOROZAT — Vihar & energia ===== */
+const ROUNDS2=[
+ {disc:[W('Energetika','Energy','Energie')],lvl:W('1 szakág','1 field','1 Fachbereich'),bonus:50,best:'B',
+  t:W('Viharkár után: hol erősítsük a hálózatot?','After the storm: where to harden the grid?','Nach dem Sturm: Wo das Netz härten?'),
+  setup:W('A múlt havi vihar többórás áramkimaradásokat okozott; egy szakasz megerősítésére van keret.','Last month’s storm caused hours-long outages; funding covers one section.','Der Sturm letzten Monat verursachte stundenlange Ausfälle; das Budget reicht für einen Abschnitt.'),
+  hints:{hu:['A főutcai üzletek hangosan követelik a kábel földbe vitelét.','A szolgáltató hibalistája még feldolgozás alatt.'],
+         en:['Main-street shops loudly demand underground cabling.','The utility’s fault list is still being processed.'],
+         de:['Die Geschäfte an der Hauptstraße fordern lautstark Erdkabel.','Die Störungsliste des Versorgers wird noch ausgewertet.']},
+  opts:[
+   {k:'A',pts:0,cell:[0.2,0],t:W('Földkábel a főutcai szakaszon','Underground cable on the main street','Erdkabel an der Hauptstraße'),s:W('A leglátványosabb helyszín','The most visible site','Der sichtbarste Ort')},
+   {k:'B',pts:100,cell:[-1.6,0.9],t:W('A két leggyakrabban hibásodó külső szakasz megerősítése','Harden the two most fault-prone outer sections','Die zwei störanfälligsten Außenabschnitte härten'),s:W('Ott, ahol a kimaradások keletkeznek','Where the outages originate','Wo die Ausfälle entstehen')}],
+  layers:[
+   {n:W('Kimaradási bejelentések','Outage reports','Ausfallmeldungen'),type:'pts',c:C_HEAT,clusters:[[-1.6,0.9,12,0.4],[-1.0,1.4,6,0.3],[0.3,0,3,0.8]],seed:101},
+   {n:W('Hálózati nyomvonal','Grid route','Netztrasse'),type:'line',c:C_GOLD,paths:[[[-2.4,1.6],[-1.6,0.9],[-0.6,0.3],[0.2,0],[1.4,-0.4]]],seed:102,dash:[3,2]}],
+  call:W('A kimaradások 85%-a a két külső, fás szakaszon keletkezik — a főutca hibái csak továbbgyűrűzések','85% of outages originate on the two outer tree-lined sections — main-street faults are just knock-ons','85 % der Ausfälle entstehen auf den zwei äußeren Abschnitten — die Hauptstraße ist nur Folgewirkung'),
+  why:W('A földkábel ott drága presztízs, ahol alig van hiba — a gócszakaszok megerősítése az egész hálózatot stabilizálja.','Underground cable is costly prestige where faults are rare — hardening the source sections stabilises the whole grid.','Erdkabel sind teures Prestige, wo kaum Fehler auftreten — die Quellabschnitte zu härten stabilisiert das ganze Netz.')},
+ {disc:[W('Zöldfelület','Green space','Grünflächen')],lvl:W('1 szakág','1 field','1 Fachbereich'),bonus:50,best:'B',
+  t:W('Fasorprogram: hova kerüljenek az új fák?','Tree programme: where do the new trees go?','Baumprogramm: Wohin mit den neuen Bäumen?'),
+  setup:W('A viharok után fasor-felújítási keret nyílt; egy programra elég.','After the storms a tree-renewal fund opened; it covers one programme.','Nach den Stürmen gibt es ein Baumerneuerungsbudget; es reicht für ein Programm.'),
+  hints:{hu:['A főtéri díszfasor a város régi álma.','„A kockázatos fákról nincs friss felmérés" — mondja a hivatal.'],
+         en:['An ornamental avenue on the square is an old dream.','“There’s no fresh survey of risky trees,” says the office.'],
+         de:['Eine Zierallee am Hauptplatz ist ein alter Traum.','„Zu Risikobäumen gibt es keine frische Erhebung", so das Amt.']},
+  opts:[
+   {k:'A',pts:0,cell:[0,0.1],t:W('Díszfasor a főtérre','Ornamental avenue on the square','Zierallee am Hauptplatz'),s:W('Reprezentatív, népszerű','Representative, popular','Repräsentativ, beliebt')},
+   {k:'B',pts:100,cell:[1.0,0.5],t:W('Elöregedett fasorok cseréje az iskolakörnyéken','Replace ageing rows around the schools','Überalterte Alleen im Schulumfeld erneuern'),s:W('A kockázat és a haszon metszetében','Where risk meets benefit','Wo Risiko auf Nutzen trifft')}],
+  layers:[
+   {n:W('Fakataszter: kockázatos fák','Tree register: risky trees','Baumkataster: Risikobäume'),type:'pts',c:C_HEAT,clusters:[[1.0,0.5,10,0.35],[1.6,-0.3,5,0.3]],seed:111},
+   {n:W('Elöregedett fasorok','Ageing tree rows','Überalterte Alleen'),type:'line',c:C_VULN,paths:[[[0.4,0.7],[1.0,0.5],[1.7,0.2]],[[1.2,-0.6],[1.7,-0.3]]],seed:112},
+   {n:W('Iskolák 5 perces körzete','5-minute school zone','5-Minuten-Schulzone'),type:'iso',c:C_TEAL,center:[1.1,0.4],radii:[0.7,1.3],seed:113}],
+  call:W('A kockázatos fák sűrűsödése az iskolák 5 perces körzetébe esik — a főtér fái fiatalok és egészségesek','Risky trees cluster inside the 5-minute school zone — the square’s trees are young and healthy','Die Risikobäume häufen sich in der 5-Minuten-Schulzone — die Bäume am Platz sind jung und gesund'),
+  why:W('A fa ott érték, ahol árnyékol, és ott kockázat, ahol korhadt ág lóg az iskolaút fölé — a csere életvédelem is.','A tree is an asset where it shades and a hazard where rotten limbs hang over a school route — replacement is also life safety.','Ein Baum ist dort Wert, wo er Schatten spendet, und dort Risiko, wo morsche Äste über dem Schulweg hängen — der Austausch ist auch Lebensschutz.')},
+ {disc:[W('Energetika','Energy','Energie'),W('Szociális ügyek','Social affairs','Soziales')],lvl:W('2 szakág','2 fields','2 Fachbereiche'),bonus:50,best:'B',
+  t:W('Fűtési szezon jön: mire menjen a szociális energiakeret?','Heating season ahead: how to spend the social energy fund?','Heizsaison voraus: Wofür das Sozial-Energiebudget?'),
+  setup:W('A tél előtt egy gyorskeret áll rendelkezésre — két osztály másra költené.','Before winter one rapid fund is available — two departments would spend it differently.','Vor dem Winter steht ein Sofortbudget bereit — zwei Abteilungen würden es unterschiedlich einsetzen.'),
+  hints:{hu:['A főtéri melegedő konténer jól kommunikálható.','A családsegítő „sok panaszt" említ, címlista nélkül.'],
+         en:['A warming container on the square is easy to communicate.','Family services mention “many complaints”, without addresses.'],
+         de:['Ein Wärmecontainer am Platz ist gut kommunizierbar.','Die Familienhilfe nennt „viele Beschwerden", ohne Adressen.']},
+  opts:[
+   {k:'A',pts:0,cell:[0,0],t:W('Melegedő konténer a főtéren','Warming container on the square','Wärmecontainer am Hauptplatz'),s:W('Látható gondoskodás','Visible care','Sichtbare Fürsorge')},
+   {k:'B',pts:150,cell:[-1.3,-0.7],t:W('Szigetelés + fűtéskorszerűsítés a két leginkább érintett tömbben','Insulation + heating upgrades in the two worst-hit blocks','Dämmung + Heizungssanierung in den zwei am stärksten betroffenen Blöcken'),s:W('Tartós megoldás a gócban','Lasting fix at the core','Dauerhafte Lösung im Kern')},
+   {k:'C',pts:75,cell:[0.2,0.15],t:W('Energiautalvány minden nyugdíjasnak','Energy vouchers for all pensioners','Energiegutscheine für alle Rentner'),s:W('Széles, de szétporladó segítség','Broad but diluted help','Breit, aber verwässert')}],
+  layers:[
+   {n:W('Energiaszegénység-index','Energy poverty index','Energiearmut-Index'),type:'poly',c:C_VULN,defs:[[-1.3,-0.7,0.7,121,0.4],[-0.7,-1.2,0.5,122,0.28],[1.5,0.9,0.45,123,0.14]]},
+   {n:W('Fűtési panaszok (hotspot)','Heating complaints (hotspot)','Heizbeschwerden (Hotspot)'),type:'heat',clusters:[[-1.3,-0.7,35,0.6],[-0.6,-1.2,14,0.4]],seed:124},
+   {n:W('Szociális intézmények','Social facilities','Soziale Einrichtungen'),type:'pts',c:C_GREEN,clusters:[[-1.2,-0.6,3,0.3]],seed:125,big:true},
+   {n:W('Gyalogos elérés (10 perc)','Walking reach (10 min)','Fußläufige Erreichbarkeit (10 Min.)'),type:'iso',c:C_TEAL,center:[-1.25,-0.65],radii:[0.7,1.4],seed:126}],
+  call:W('A panasz-hotspot és az energiaszegénység-index ugyanarra a két tömbre mutat — a főtér messze esik tőlük','The complaint hotspot and the poverty index point to the same two blocks — the square is far from both','Beschwerde-Hotspot und Armutsindex zeigen auf dieselben zwei Blöcke — der Platz liegt weit entfernt'),
+  why:W('Az utalvány egyszer fűt, a szigetelés minden télen — és pont ott, ahol a panaszok és a rászorulók metszete van.','A voucher heats once, insulation every winter — right where complaints and need intersect.','Ein Gutschein heizt einmal, Dämmung jeden Winter — genau dort, wo sich Beschwerden und Bedürftigkeit schneiden.')},
+ {disc:[W('Energetika','Energy','Energie'),W('Zöldfelület','Green space','Grünflächen'),W('Zöld pénzügyek','Green finance','Grüne Finanzen')],lvl:W('3 szakág','3 fields','3 Fachbereiche'),bonus:75,best:'B',
+  t:W('Klímavédelmi hitelkeret — mire vegyük fel?','A climate loan facility — what should it fund?','Ein Klimakredit — wofür aufnehmen?'),
+  setup:W('A bank kedvezményes zöldhitelt kínál; a testület egy programcsomagról dönt.','The bank offers a discounted green loan; the council decides on one programme.','Die Bank bietet einen vergünstigten Grünkredit; der Rat entscheidet über ein Programm.'),
+  hints:{hu:['A napelempark „önmagát fizeti vissza" — mondja a fejlesztő.','Minden intézmény kér valamit a keretből.'],
+         en:['“The solar park pays for itself,” says the developer.','Every institution wants a slice.'],
+         de:['„Der Solarpark zahlt sich selbst ab", sagt der Entwickler.','Jede Einrichtung will ein Stück.']},
+  opts:[
+   {k:'A',pts:100,cell:[-2.0,-1.2],t:W('Napelempark a város szélén','Solar park on the town edge','Solarpark am Stadtrand'),s:W('Egy nagy, egyszerű projekt','One big, simple project','Ein großes, einfaches Projekt')},
+   {k:'B',pts:250,cell:[0.9,0.3],t:W('Kombinált csomag a fogyasztási gócokra: szigetelés + tető-PV + fasor','Combined package for the consumption cores: insulation + rooftop PV + trees','Kombipaket für die Verbrauchskerne: Dämmung + Dach-PV + Bäume'),s:W('Ahol a megtakarítás a legnagyobb','Where savings are largest','Wo die Einsparung am größten ist')},
+   {k:'C',pts:0,cell:[0.2,0.1],t:W('Egyenlő keret minden intézménynek','Equal share for every institution','Gleicher Anteil für jede Einrichtung'),s:W('Mindenki kap, semmi nem változik','Everyone gets some, nothing changes','Alle bekommen etwas, nichts ändert sich')},
+   {k:'D',pts:50,cell:[-0.4,-0.2],t:W('Várakozás az uniós pályázatra','Wait for the EU call','Auf die EU-Ausschreibung warten'),s:W('Olcsóbb lehet — egy év múlva','Might be cheaper — in a year','Vielleicht günstiger — in einem Jahr')}],
+  layers:[
+   {n:W('Energiafogyasztási hőtérkép','Energy consumption heat map','Verbrauchs-Heatmap'),type:'heat',clusters:[[0.9,0.3,30,0.55],[-0.3,0.8,15,0.4]],seed:131},
+   {n:W('Középületek','Public buildings','Öffentliche Gebäude'),type:'pts',c:C_GOLD,clusters:[[0.9,0.3,4,0.3],[-0.3,0.8,3,0.3]],seed:132,big:true},
+   {n:W('Hálózati kapacitás-zónák','Grid capacity zones','Netzkapazitätszonen'),type:'poly',c:C_VULN,defs:[[-2.0,-1.2,0.6,133,0.35],[0.6,0.2,0.7,134,0.2]]},
+   {n:W('Távhő-nyomvonal','District heating route','Fernwärmetrasse'),type:'line',c:C_HEAT,paths:[[[-0.8,1.2],[-0.3,0.8],[0.4,0.4],[0.9,0.3],[1.5,0]]],seed:135,dash:[3,2]},
+   {n:W('Intézményi elérés (10 perc)','Institutional reach (10 min)','Institutionelle Erreichbarkeit (10 Min.)'),type:'iso',c:C_TEAL,center:[0.7,0.3],radii:[1.0,1.8],seed:136}],
+  call:W('A fogyasztás 60%-a a középület-gócokban keletkezik — a napelempark hálózati zónája ráadásul kapacitáskorlátos','60% of consumption arises in the public-building cores — and the solar park’s grid zone is capacity-limited','60 % des Verbrauchs entstehen in den Gebäudekernen — die Netzzone des Solarparks ist zudem kapazitätsbegrenzt'),
+  why:W('A hitel ott térül meg, ahol a fogyasztást csökkenti — a termelésbővítés korlátos hálózaton fél megoldás, a várakozás egy fűtési szezonnyi veszteség.','A loan pays back where it cuts consumption — adding generation on a constrained grid is half a solution; waiting costs a heating season.','Der Kredit rechnet sich, wo er Verbrauch senkt — mehr Erzeugung am begrenzten Netz ist eine halbe Lösung; Warten kostet eine Heizsaison.')}
+];
+/* ===== 3. SOROZAT — Turizmus & örökség ===== */
+const ROUNDS3=[
+ {disc:[W('Turizmus','Tourism','Tourismus')],lvl:W('1 szakág','1 field','1 Fachbereich'),bonus:50,best:'B',
+  t:W('Túlterhelt óváros: mit kezdjünk az autókkal?','Overloaded old town: what about the cars?','Überlastete Altstadt: Was tun mit den Autos?'),
+  setup:W('Főszezonban az óváros megtelik autóval; egy beavatkozásra van keret.','In high season the old town fills with cars; funding covers one intervention.','In der Hochsaison füllt sich die Altstadt mit Autos; das Budget reicht für einen Eingriff.'),
+  hints:{hu:['A vendéglősök több parkolót kérnek „közvetlenül a kapuk elé".','„Aki nem tud megállni, továbbmegy" — szól az érv.'],
+         en:['Restaurateurs want more parking “right at the gates”.','“Whoever can’t park drives on,” goes the argument.'],
+         de:['Die Wirte wollen mehr Parkplätze „direkt vor den Toren".','„Wer nicht parken kann, fährt weiter", lautet das Argument.']},
+  opts:[
+   {k:'A',pts:0,cell:[0.15,0.1],t:W('Több parkoló közvetlenül az óvárosnál','More parking right at the old town','Mehr Parkplätze direkt an der Altstadt'),s:W('A kereskedők kérése','The traders’ request','Der Wunsch der Händler')},
+   {k:'B',pts:100,cell:[-1.8,-0.9],t:W('P+R a város szélén + elektromos kisbusz','Park & ride on the edge + electric shuttle','P+R am Ortsrand + E-Shuttle'),s:W('Az autó kint marad, a vendég bejön','Cars stay out, guests come in','Autos bleiben draußen, Gäste kommen rein')}],
+  layers:[
+   {n:W('Gyalogos zónák terheltsége','Pedestrian zone load','Auslastung der Fußgängerzonen'),type:'poly',c:C_HEAT,defs:[[0.1,0.1,0.6,201,0.4],[0.6,-0.2,0.4,202,0.25]]},
+   {n:W('Parkolási konfliktusok','Parking conflicts','Parkkonflikte'),type:'pts',c:C_GOLD,clusters:[[0.2,0.15,12,0.35],[0.7,-0.2,6,0.3]],seed:203}],
+  call:W('A konfliktuspontok az óvároson belül sűrűsödnek — minden új belső parkoló újabb autót vonz a szűk magba','Conflict points cluster inside the old town — every new inner space attracts another car into the core','Die Konfliktpunkte häufen sich in der Altstadt — jeder neue Innenstellplatz zieht ein weiteres Auto in den Kern'),
+  why:W('A parkolókínálat keresletet szül: a belső férőhely a dugót táplálja, a P+R kiszervezi.','Parking supply breeds demand: inner spaces feed the jam, P+R outsources it.','Parkangebot erzeugt Nachfrage: Innenplätze nähren den Stau, P+R lagert ihn aus.')},
+ {disc:[W('Örökségvédelem','Heritage','Denkmalpflege')],lvl:W('1 szakág','1 field','1 Fachbereich'),bonus:50,best:'B',
+  t:W('Műemléki keret: melyik épület kapja?','Heritage fund: which building gets it?','Denkmalbudget: Welches Gebäude bekommt es?'),
+  setup:W('Egy épület felújítására elég a keret — kettő pályázik.','The fund covers one building — two are candidates.','Das Budget reicht für ein Gebäude — zwei stehen zur Wahl.'),
+  hints:{hu:['A főtéri templomhomlokzat a képeslapok kedvence.','A régi magtárról „ráér az még" — mondják.'],
+         en:['The church façade is the postcard favourite.','“The old granary can wait,” they say.'],
+         de:['Die Kirchenfassade ist das Postkartenmotiv.','„Der alte Speicher kann warten", heißt es.']},
+  opts:[
+   {k:'A',pts:0,cell:[0.1,0.2],t:W('A főtéri templomhomlokzat felújítása','Restore the church façade','Die Kirchenfassade restaurieren'),s:W('Látványos, jó állapotban','Spectacular, in good shape','Spektakulär, in gutem Zustand')},
+   {k:'B',pts:100,cell:[1.3,-0.5],t:W('A statikailag veszélyes magtár megmentése','Save the structurally failing granary','Den statisch gefährdeten Speicher retten'),s:W('Most vagy soha','Now or never','Jetzt oder nie')}],
+  layers:[
+   {n:W('Épületállapot-felmérés','Building condition survey','Bauzustandserhebung'),type:'pts',c:C_HEAT,clusters:[[1.3,-0.5,3,0.15],[0.5,0.4,4,0.5]],seed:211,big:true},
+   {n:W('Örökségvédelmi zóna','Heritage zone','Denkmalzone'),type:'poly',c:C_VULN,defs:[[0.3,0,0.9,212,0.3]]},
+   {n:W('Turistaútvonalak','Tourist routes','Touristenrouten'),type:'line',c:C_GOLD,paths:[[[-0.5,0.5],[0.1,0.2],[0.7,-0.1],[1.3,-0.5]]],seed:213}],
+  call:W('A magtár állapotjelzése kritikus, és a fő turistaútvonal végpontja — a homlokzat még évekig stabil','The granary’s condition is critical and it ends the main tourist route — the façade is stable for years','Der Zustand des Speichers ist kritisch, und er liegt am Ende der Hauptroute — die Fassade hält noch Jahre'),
+  why:W('A felújítás megvárhat egy szép épületet, de az összeomlás nem vár — az örökségvédelem triázs.','Restoration can wait for a pretty building; collapse doesn’t wait — heritage is triage.','Eine Restaurierung kann warten, ein Einsturz nicht — Denkmalpflege ist Triage.')},
+ {disc:[W('Turizmus','Tourism','Tourismus'),W('Mobilitás','Mobility','Mobilität')],lvl:W('2 szakág','2 fields','2 Fachbereiche'),bonus:50,best:'B',
+  t:W('Szezonális dugó: mi oldja fel a parti utat?','Seasonal jams: what unblocks the shore road?','Saisonstau: Was entlastet die Uferstraße?'),
+  setup:W('Nyáron a parti út áll; a két osztály mást javasol.','In summer the shore road stalls; the two departments differ.','Im Sommer steht die Uferstraße; die Abteilungen sind uneins.'),
+  hints:{hu:['Az útszélesítés terve kész, „csak jóvá kell hagyni".','A buszos javaslatot „lassúnak" tartják.'],
+         en:['The widening plan is ready, “just needs approval”.','The bus idea is called “slow”.'],
+         de:['Der Ausbauplan liegt fertig vor, „nur noch genehmigen".','Der Busvorschlag gilt als „langsam".']},
+  opts:[
+   {k:'A',pts:0,cell:[-0.6,-1.1],t:W('Útszélesítés a parti szakaszon','Widen the shore section','Uferabschnitt ausbauen'),s:W('Kész terv, nagy beruházás','Ready plan, big build','Fertiger Plan, großer Bau')},
+   {k:'B',pts:150,cell:[-0.2,-0.9],t:W('Szezonális buszsáv + időzített behajtási zóna','Seasonal bus lane + timed access zone','Saisonale Busspur + zeitgesteuerte Zufahrtszone'),s:W('A mért csúcsokra szabva','Tailored to measured peaks','Auf gemessene Spitzen zugeschnitten')},
+   {k:'C',pts:75,cell:[0.2,0.1],t:W('Fizetős parkolás az egész városban','Paid parking town-wide','Gebührenpflichtiges Parken überall'),s:W('Bevételt hoz, dugót alig old','Raises revenue, barely unjams','Bringt Einnahmen, löst kaum Stau')}],
+  layers:[
+   {n:W('Forgalmi hotspot (nyári csúcs)','Traffic hotspot (summer peak)','Verkehrshotspot (Sommerspitze)'),type:'heat',clusters:[[-0.5,-1.0,30,0.5],[0.3,-0.4,12,0.4]],seed:221},
+   {n:W('Tervezett behajtási zóna','Planned access zone','Geplante Zufahrtszone'),type:'poly',c:C_TEAL,defs:[[0.1,-0.2,0.7,222,0.3]]},
+   {n:W('Buszútvonal-terv','Planned bus route','Geplante Buslinie'),type:'line',c:C_GOLD,paths:[[[-2.0,-1.3],[-1.0,-1.0],[-0.2,-0.9],[0.5,-0.5],[0.8,0.2]]],seed:223},
+   {n:W('Strand 10 perces elérése','10-minute beach reach','10-Minuten-Stranderreichbarkeit'),type:'iso',c:C_WATER,center:[-0.6,-1.1],radii:[0.7,1.4],seed:224}],
+  call:W('A dugó a nap 4 órájában és 800 méteren keletkezik — a szélesítés ide 2 év és tízszeres költség','The jam forms in 4 hours a day over 800 metres — widening takes 2 years and 10× the cost','Der Stau entsteht in 4 Stunden täglich auf 800 Metern — der Ausbau dauert 2 Jahre und kostet das Zehnfache'),
+  why:W('Az időben és térben koncentrált problémára szabályozás a válasz, nem beton — a többletsáv nyáron megtelne, télen üresen állna.','A problem concentrated in time and space calls for regulation, not concrete — an extra lane fills in summer and sits empty in winter.','Ein zeitlich und räumlich konzentriertes Problem verlangt Regelung, nicht Beton — eine Zusatzspur wäre im Sommer voll, im Winter leer.')},
+ {disc:[W('Turizmus','Tourism','Tourismus'),W('Örökségvédelem','Heritage','Denkmalpflege'),W('Zöld pénzügyek','Green finance','Grüne Finanzen')],lvl:W('3 szakág','3 fields','3 Fachbereiche'),bonus:75,best:'B',
+  t:W('Az idegenforgalmi adó kerete — mire fordítsuk?','The tourist tax fund — what should it finance?','Die Kurtaxe — wofür einsetzen?'),
+  setup:W('Rekordbevétel jött össze; a testület egy csomagról dönt, minden érdekcsoport mást akar.','Record revenue is in; the council decides one package, every lobby wants something else.','Rekordeinnahmen sind da; der Rat entscheidet ein Paket, jede Lobby will etwas anderes.'),
+  hints:{hu:['A fesztivál „minden vendéget visszahoz jövőre is".','Egy új látogatóközpont terve is az asztalon van.'],
+         en:['The festival “brings every guest back next year”.','A new visitor centre plan is also on the table.'],
+         de:['Das Festival „bringt jeden Gast nächstes Jahr zurück".','Auch ein neues Besucherzentrum liegt auf dem Tisch.']},
+  opts:[
+   {k:'A',pts:50,cell:[0,0],t:W('Nagy nyári fesztivál + kampány','Big summer festival + campaign','Großes Sommerfestival + Kampagne'),s:W('Egyszeri csúcs, tartós nyom nélkül','One-off peak, no lasting trace','Einmalige Spitze ohne bleibende Wirkung')},
+   {k:'B',pts:250,cell:[0.5,0.15],t:W('Csomag a top-3 túlterhelt zónára: állagmegóvás + terelés + pihenőpontok','Package for the top-3 overloaded zones: preservation + visitor steering + rest points','Paket für die Top-3-Zonen: Substanzschutz + Besucherlenkung + Ruhepunkte'),s:W('A vendégélmény és az örökség együtt','Guest experience and heritage together','Gästeerlebnis und Erbe gemeinsam')},
+   {k:'C',pts:0,cell:[0.2,-0.15],t:W('Egyenlő támogatás minden vállalkozói kérésre','Equal grants for every business request','Gleiche Zuschüsse für alle Anträge'),s:W('Mindenki kap, hatás nélkül','Everyone gets some, without impact','Alle bekommen etwas, ohne Wirkung')},
+   {k:'D',pts:100,cell:[-1.2,0.6],t:W('Új látogatóközpont hitelből','New visitor centre on credit','Neues Besucherzentrum auf Kredit'),s:W('Nagy ház, kérdéses kihasználtság','Big building, uncertain use','Großes Haus, fragliche Auslastung')}],
+  layers:[
+   {n:W('Látogatói hotspot','Visitor hotspot','Besucher-Hotspot'),type:'heat',clusters:[[0.4,0.1,35,0.5],[1.0,-0.4,10,0.35]],seed:231},
+   {n:W('Állagromlás-index','Deterioration index','Verfallsindex'),type:'poly',c:C_HEAT,defs:[[0.5,0.15,0.6,232,0.4],[1.1,-0.45,0.45,233,0.3],[-0.4,0.5,0.4,234,0.15]]},
+   {n:W('Terelő sétaútvonalak','Alternative walking routes','Alternative Spazierrouten'),type:'line',c:C_GREEN,paths:[[[0.1,0.4],[0.7,0.5],[1.2,0.1]],[[0.3,-0.5],[0.9,-0.7]]],seed:235},
+   {n:W('Tervezett pihenőpontok','Planned rest points','Geplante Ruhepunkte'),type:'pts',c:C_TEAL,clusters:[[0.7,0.5,3,0.2],[0.9,-0.6,2,0.2]],seed:236,big:true},
+   {n:W('Óváros 10 perces elérése','10-minute old-town reach','10-Minuten-Altstadterreichbarkeit'),type:'iso',c:C_GOLD,center:[0.3,0],radii:[0.9,1.7],seed:237}],
+  call:W('A látogatói hotspot és az állagromlás ugyanarra a 3 zónára esik — a bevétel forrása egyben a kockázat helye','The visitor hotspot and deterioration hit the same 3 zones — the revenue’s source is also where the risk sits','Besucher-Hotspot und Verfall treffen dieselben 3 Zonen — die Einnahmequelle ist zugleich der Risikoort'),
+  why:W('A fesztivál elköti, a szétosztás elporlasztja, az új épület megduplázza a fenntartást — a csomag ott véd és terel, ahol a bevétel megtermelődik.','The festival spends it, the split dissolves it, a new building doubles upkeep — the package protects and steers where the revenue is generated.','Das Festival verbraucht, die Verteilung verpufft, ein Neubau verdoppelt den Unterhalt — das Paket schützt und lenkt dort, wo die Einnahmen entstehen.')}
+];
+/* ===== 4. SOROZAT — Digitális település & biztonság ===== */
+const ROUNDS4=[
+ {disc:[W('Digitalizáció','Digitalisation','Digitalisierung')],lvl:W('1 szakág','1 field','1 Fachbereich'),bonus:50,best:'B',
+  t:W('Szélessáv-program: melyik ütem az első?','Broadband programme: which phase first?','Breitbandprogramm: Welche Phase zuerst?'),
+  setup:W('Állami támogatás érkezett hálózatfejlesztésre; egy ütemre elég.','State funding arrived for network build-out; it covers one phase.','Fördermittel für den Netzausbau sind da; sie reichen für eine Phase.'),
+  hints:{hu:['Az ingyenes főtéri wifi népszerű ígéret.','„A külterületen úgyis kevesen laknak" — hangzik el.'],
+         en:['Free wifi on the square is a popular promise.','“Few people live out there anyway,” it’s said.'],
+         de:['Gratis-WLAN am Platz ist ein beliebtes Versprechen.','„Draußen wohnen ohnehin wenige", heißt es.']},
+  opts:[
+   {k:'A',pts:0,cell:[0.1,0.05],t:W('Ingyenes wifi a főtéren','Free wifi on the main square','Gratis-WLAN am Hauptplatz'),s:W('Népszerű, gyorsan átadható','Popular, quick to deliver','Beliebt, schnell umgesetzt')},
+   {k:'B',pts:100,cell:[1.8,-0.7],t:W('Az ellátatlan ipari-lakó zóna bekötése','Connect the unserved industrial-residential zone','Die unversorgte Gewerbe-Wohn-Zone anschließen'),s:W('Ahol ma nincs érdemi sáv','Where there is no real bandwidth today','Wo heute kein echtes Netz ist')}],
+  layers:[
+   {n:W('Mai lefedettség','Current coverage','Heutige Versorgung'),type:'poly',c:C_TEAL,defs:[[0,0,1.0,301,0.3],[-1.0,0.6,0.6,302,0.2]]},
+   {n:W('Vállalkozások és távmunkások','Businesses and remote workers','Betriebe und Remote-Worker'),type:'pts',c:C_GOLD,clusters:[[1.8,-0.7,14,0.45],[0.2,0.1,5,0.5]],seed:303}],
+  call:W('A vállalkozások fele a lefedetlen keleti zónában működik — a főtéren ma is három szolgáltató verseng','Half the businesses operate in the uncovered eastern zone — three providers already compete on the square','Die Hälfte der Betriebe liegt in der unversorgten Ostzone — am Platz konkurrieren schon drei Anbieter'),
+  why:W('A wifi ott, ahol már van net: gesztus. A bekötés ott, ahol nincs: gazdaságfejlesztés.','Wifi where there’s already internet is a gesture; connection where there’s none is economic development.','WLAN, wo es Netz gibt, ist eine Geste; Anschluss, wo keines ist, ist Wirtschaftsförderung.')},
+ {disc:[W('Közbiztonság','Public safety','Sicherheit')],lvl:W('1 szakág','1 field','1 Fachbereich'),bonus:50,best:'B',
+  t:W('8 új térfigyelő kamera — hová?','8 new CCTV cameras — where?','8 neue Kameras — wohin?'),
+  setup:W('A bővítés egy ütemben történik; a helyszínlista vitatott.','The expansion happens in one phase; the site list is contested.','Die Erweiterung erfolgt in einer Phase; die Standortliste ist umstritten.'),
+  hints:{hu:['A hivatal környéke „reprezentatív helyszín".','„Éjszaka úgyis mindenhol történik valami."'],
+         en:['The town hall area is “a representative site”.','“Something happens everywhere at night anyway.”'],
+         de:['Das Rathausumfeld sei „repräsentativ".','„Nachts passiert doch überall etwas."']},
+  opts:[
+   {k:'A',pts:0,cell:[0.1,0.1],t:W('Hivatal és főtér köré','Around the town hall and square','Um Rathaus und Hauptplatz'),s:W('Reprezentatív, jól látható','Representative, highly visible','Repräsentativ, gut sichtbar')},
+   {k:'B',pts:100,cell:[1.4,0.8],t:W('A bejelentési gócpontokra','On the incident hotspots','Auf die Vorfalls-Schwerpunkte'),s:W('Ahol az esetek történnek','Where the incidents happen','Wo die Vorfälle passieren')}],
+  layers:[
+   {n:W('Incidens-bejelentések','Incident reports','Vorfallsmeldungen'),type:'pts',c:C_HEAT,clusters:[[1.4,0.8,12,0.35],[-0.9,-1.0,7,0.3],[0.1,0.1,2,0.3]],seed:311},
+   {n:W('Éjszakai gyalogosútvonalak','Night walking routes','Nächtliche Fußwege'),type:'line',c:C_GOLD,paths:[[[0,0],[0.7,0.4],[1.4,0.8]],[[0,0],[-0.5,-0.6],[-0.9,-1.0]]],seed:312},
+   {n:W('Mai kameralefedettség','Current camera coverage','Heutige Kameraabdeckung'),type:'poly',c:C_TEAL,defs:[[0.1,0.1,0.55,313,0.25]]}],
+  call:W('Az esetek 78%-a két gócban történik — a főtér ma is kamerázott','78% of incidents happen in two hotspots — the square is already covered','78 % der Vorfälle passieren in zwei Schwerpunkten — der Platz ist bereits überwacht'),
+  why:W('A kamera nem díszlet: ott hat, ahol az esetek történnek, a duplikált lefedettség csak megnyugtat.','Cameras aren’t scenery: they work where incidents happen; duplicated coverage only reassures.','Kameras sind keine Kulisse: Sie wirken, wo Vorfälle passieren; doppelte Abdeckung beruhigt nur.')},
+ {disc:[W('Digitalizáció','Digitalisation','Digitalisierung'),W('Közigazgatás','Administration','Verwaltung')],lvl:W('2 szakág','2 fields','2 Fachbereiche'),bonus:50,best:'B',
+  t:W('Ügyintézés: app, folyamat vagy nyitvatartás?','Public services: app, process, or opening hours?','Verwaltung: App, Prozess oder Öffnungszeiten?'),
+  setup:W('A lakossági panaszok a sorban állásról szólnak; egy fejlesztésre van keret.','Complaints are about queuing; funding covers one improvement.','Die Beschwerden drehen sich ums Anstehen; das Budget reicht für eine Verbesserung.'),
+  hints:{hu:['„Kell egy modern városi app" — hangzik gyakran.','Az ügyfélszolgálat szerint „minden ügy más".'],
+         en:['“We need a modern city app,” is often heard.','The front office says “every case is different”.'],
+         de:['„Wir brauchen eine moderne Stadt-App", hört man oft.','Das Bürgerbüro sagt: „Jeder Fall ist anders."']},
+  opts:[
+   {k:'A',pts:0,cell:[0.15,0.05],t:W('Prémium városi app fejlesztése','Build a premium city app','Eine Premium-Stadt-App bauen'),s:W('Modern felület a régi folyamatokra','Modern surface on old processes','Moderne Oberfläche auf alten Prozessen')},
+   {k:'B',pts:150,cell:[0.4,0.2],t:W('A 3 leggyakoribb ügytípus teljes online folyamata','Full online flow for the 3 most common case types','Volldigitaler Ablauf für die 3 häufigsten Anliegen'),s:W('Az ügyek 70%-át fedi','Covers 70% of cases','Deckt 70 % der Fälle')},
+   {k:'C',pts:75,cell:[0.1,-0.1],t:W('Hosszabbított nyitvatartás és plusz ablak','Extended hours and an extra desk','Längere Öffnungszeiten und ein Schalter mehr'),s:W('Enyhíti a sort, nem szünteti meg','Eases the queue, doesn’t end it','Lindert die Schlange, beendet sie nicht')}],
+  layers:[
+   {n:W('Ügyfélforgalom (hotspot)','Client traffic (hotspot)','Kundenverkehr (Hotspot)'),type:'heat',clusters:[[0.15,0,25,0.3]],seed:321},
+   {n:W('Ügytípus-sűrűség körzetenként','Case density by district','Falldichte nach Bezirk'),type:'poly',c:C_VULN,defs:[[1.3,0.7,0.6,322,0.35],[-1.0,-0.8,0.5,323,0.3],[0.2,0.9,0.4,324,0.2]]},
+   {n:W('Ügyfélpontok, posták','Service points, post offices','Servicestellen, Post'),type:'pts',c:C_GREEN,clusters:[[0.15,0,2,0.15],[-0.9,-0.75,1,0.05]],seed:325,big:true},
+   {n:W('Ügyfélszolgálat 15 perces elérése','15-minute reach of the front office','15-Minuten-Erreichbarkeit des Bürgerbüros'),type:'iso',c:C_TEAL,center:[0.15,0],radii:[1.0,1.9],seed:326}],
+  call:W('A sorok 70%-át három ügytípus adja, és a külső körzetekből 30+ perc az út — a folyamat a szűk keresztmetszet, nem a felület','Three case types make up 70% of the queues, and outer districts travel 30+ minutes — the bottleneck is the process, not the interface','Drei Anliegen machen 70 % der Schlangen aus, Außenbezirke fahren 30+ Minuten — der Engpass ist der Prozess, nicht die Oberfläche'),
+  why:W('Az app a régi folyamat fényezése, a plusz ablak tüneti kezelés — a végigdigitalizált ügy el sem jön a hivatalig.','An app polishes the old process, an extra desk treats symptoms — a fully digital case never travels to the office at all.','Eine App poliert den alten Prozess, ein Schalter lindert Symptome — ein volldigitaler Fall kommt gar nicht erst ins Amt.')},
+ {disc:[W('Digitalizáció','Digitalisation','Digitalisierung'),W('Közbiztonság','Public safety','Sicherheit'),W('Mobilitás','Mobility','Mobilität')],lvl:W('3 szakág','3 fields','3 Fachbereiche'),bonus:75,best:'B',
+  t:W('„Okos település" keret — mi legyen a gerince?','A “smart town” budget — what’s the backbone?','Ein „Smart Town“-Budget — was wird das Rückgrat?'),
+  setup:W('Három osztály három beszerzést javasol — a keret egy gerincprogramra elég.','Three departments propose three purchases — the budget covers one backbone programme.','Drei Abteilungen schlagen drei Anschaffungen vor — das Budget reicht für ein Rückgratprogramm.'),
+  hints:{hu:['Az okoslámpa-szállító „kulcsrakész megoldást" ígér.','„Minden körzetnek jusson egy okospad" — javasolja egy képviselő.'],
+         en:['The smart-light vendor promises “a turnkey solution”.','“Every district should get a smart bench,” a councillor suggests.'],
+         de:['Der Anbieter für smarte Leuchten verspricht „schlüsselfertig".','„Jeder Bezirk soll eine Smart-Bank bekommen", schlägt ein Rat vor.']},
+  opts:[
+   {k:'A',pts:100,cell:[0,0],t:W('Okos közvilágítás-csere városszerte','Smart streetlight retrofit town-wide','Smarte Straßenbeleuchtung überall'),s:W('Hasznos, de egyetlen szakág','Useful, but a single domain','Nützlich, aber nur ein Bereich')},
+   {k:'B',pts:250,cell:[1.2,0.6],t:W('Közös adatplatform + célzott szenzorok a top-3 zónába','Shared data platform + targeted sensors in the top-3 zones','Gemeinsame Datenplattform + gezielte Sensorik in den Top-3-Zonen'),s:W('Gerinc, amire minden ráépül','A backbone everything builds on','Ein Rückgrat, auf dem alles aufbaut')},
+   {k:'C',pts:0,cell:[0.2,-0.2],t:W('Okospad és kijelző minden körzetbe','A smart bench and screen for every district','Smart-Bank und Display für jeden Bezirk'),s:W('Látványos szétaprózás','Showy fragmentation','Sichtbare Zersplitterung')},
+   {k:'D',pts:50,cell:[-0.5,-0.3],t:W('Kétéves tanulmány konzorciummal','Two-year study with a consortium','Zweijahresstudie mit Konsortium'),s:W('A meglévő adatok már döntésképesek','Existing data already supports a decision','Die vorhandenen Daten reichen schon')}],
+  layers:[
+   {n:W('Kombinált problématérkép','Combined problem map','Kombinierte Problemkarte'),type:'poly',c:C_HEAT,defs:[[1.2,0.6,0.7,331,0.4],[-0.9,-1.0,0.55,332,0.3],[0.3,-0.9,0.5,333,0.22]]},
+   {n:W('Incidens + torlódás hotspot','Incident + congestion hotspot','Vorfalls- + Stau-Hotspot'),type:'heat',clusters:[[1.2,0.6,25,0.5],[-0.9,-1.0,18,0.4],[0.3,-0.9,12,0.4]],seed:334},
+   {n:W('Fő közlekedési tengelyek','Main transport axes','Hauptverkehrsachsen'),type:'line',c:C_GOLD,paths:[[[-2.0,-1.4],[-0.9,-1.0],[0.3,-0.9],[1.4,-0.6]],[[0,0],[1.2,0.6]]],seed:335},
+   {n:W('Javasolt szenzor-helyszínek','Proposed sensor sites','Vorgeschlagene Sensorstandorte'),type:'pts',c:C_GREEN,clusters:[[1.2,0.6,3,0.25],[-0.9,-1.0,2,0.2],[0.3,-0.9,2,0.2]],seed:336,big:true},
+   {n:W('Platform-lefedettség (1. ütem)','Platform coverage (phase 1)','Plattformabdeckung (Phase 1)'),type:'iso',c:C_TEAL,center:[0.2,-0.1],radii:[1.1,2.0],seed:337}],
+  call:W('A három szakág problémái ugyanarra a 3 zónára esnek — közös platform nélkül a szenzoradatok szigetek maradnak','All three domains’ problems fall on the same 3 zones — without a shared platform the sensor data stays siloed','Die Probleme aller drei Bereiche treffen dieselben 3 Zonen — ohne gemeinsame Plattform bleiben die Sensordaten Inseln'),
+  why:W('A lámpacsere egy szakág, a padprogram látvány, a tanulmány halasztás — a platform az, amire minden későbbi okos-megoldás ráépülhet.','The light retrofit is one domain, benches are show, the study is delay — the platform is what every later smart solution can build on.','Die Leuchten sind ein Bereich, die Bänke Schau, die Studie Aufschub — die Plattform ist das Fundament für alles Weitere.')}
+];
+const SETS=[ROUNDS,ROUNDS2,ROUNDS3,ROUNDS4];
+const MAXPTS=ROUNDS.reduce((a,r)=>a+Math.max(...r.opts.map(o=>o.pts))+r.bonus,0);
+
+/* --- játékállapot --- */
+let G={st:'type',type:null,town:null,townCam:null,setIdx:0,lastSet:null,i:0,sc:0,ph:1,p1:null,pick:null,earn:0,ly:[],seen:[],
+      t0:null,time:null,hist:[],board:null,rank:null,offline:false,mats:[],lead:null,gmap:null,gmarks:null};
+let gTick=null;
+function fmtTime(s){const m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0');}
+function gElapsed(){return G.t0?Math.round((Date.now()-G.t0)/1000):0;}
+function gStartTimer(){
+  clearInterval(gTick);
+  gTick=setInterval(()=>{
+    const el=document.getElementById('gTimer');
+    if(el&&G.t0&&(G.st==='q'||G.st==='rev'))el.textContent='⏱ '+fmtTime(gElapsed());
+  },1000);
+}
+function gStopTimer(){clearInterval(gTick);gTick=null;}
+function gKillMap(){if(G.gmap){try{G.gmap.remove();}catch(e){}G.gmap=null;}G.gmarks=null;}
+function gSelType(k){
+  G.type=k;
+  const T=TYPES.find(x=>x.k===k);
+  const pool=T.towns[L]||T.towns.hu;
+  const tw=pool[Math.floor(Math.random()*pool.length)];
+  G.town={name:tw[0],ll:[tw[1],tw[2]]};
+  ORIGIN=G.town.ll;
+  G.townCam={center:G.town.ll,zoom:12.2,pitch:45,bearing:-15};
+  if(map&&mapReady){RM?map.jumpTo(G.townCam):map.flyTo({...G.townCam,duration:3000,essential:true});}
+  G.st='town';gRender();
+}
+function gStart(){
+  /* véletlen sorozat, közvetlen ismétlés nélkül */
+  let s=Math.floor(Math.random()*SETS.length);
+  if(SETS.length>1&&s===G.lastSet)s=(s+1)%SETS.length;
+  G.setIdx=s;G.lastSet=s;
+  G.i=0;G.sc=0;G.hist=[];G.ph=1;G.p1=null;G.pick=null;
+  G.t0=Date.now();G.time=null;gStartTimer();
+  G.st='q';gRender();
+}
+function gReplay(){
+  gKillMap();gStopTimer();
+  G.st='type';G.type=null;G.town=null;G.townCam=null;G.sc=0;G.hist=[];G.t0=null;G.time=null;gRender();
+  document.getElementById('s-game').scrollIntoView({behavior:'smooth'});
+}
+function gCur(){return SETS[G.setIdx][G.i];}
+function gPick(k){
+  if(G.st!=='q')return;
+  if(G.ph===2&&G.gmap){
+    G.pick=k;
+    document.querySelectorAll('#gameBox .g-opt').forEach(b=>b.classList.toggle('picked',b.dataset.k===k));
+    if(G.gmarks)Object.keys(G.gmarks).forEach(x=>G.gmarks[x].classList.toggle('picked',x===k));
+    return;
+  }
+  if(G.ph===1){G.p1=k;G.pick=k;G.ph=2;
+    G.ly=gCur().layers.map(()=>false);G.seen=gCur().layers.map(()=>false);}
+  else G.pick=k;
+  gRender();
+}
+function gToggleLy(i){
+  G.ly[i]=!G.ly[i];
+  if(G.ly[i])G.seen[i]=true;
+  if(G.gmap){
+    const ids=['gf'+i,'gl'+i,'gp'+i,'gh'+i];
+    ids.forEach(id=>{if(G.gmap.getLayer(id))G.gmap.setLayoutProperty(id,'visibility',G.ly[i]?'visible':'none');});
+    const chips=document.querySelectorAll('#gameBox .g-ly');
+    if(chips[i])chips[i].classList.toggle('on',G.ly[i]);
+    updateCall();
+    return;
+  }
+  gRender();
+}
+/* az összegző tanulság csak az összes réteg megtekintése után jelenik meg */
+function updateCall(){
+  const el=document.getElementById('gCall');if(!el)return;
+  const r=gCur(),n=r.layers.length,s=G.seen.filter(Boolean).length;
+  if(s>=n){el.textContent=r.call[L];el.classList.remove('pending');}
+  else{el.textContent=GT[L].pend(n,s);el.classList.add('pending');}
+}
+function gConfirm(){
+  const r=gCur();
+  const opt=r.opts.find(o=>o.k===G.pick);
+  const bonus=(G.pick===r.best&&G.p1===r.best)?r.bonus:0;
+  G.earn=opt.pts+bonus;G.sc+=G.earn;
+  G.hist.push({lvl:r.lvl,earn:G.earn,max:Math.max(...r.opts.map(o=>o.pts))+r.bonus,bonus});
+  G.st='rev';gRender();
+}
+function gNext(){
+  if(G.i+1<SETS[G.setIdx].length){G.i++;G.ph=1;G.p1=null;G.pick=null;G.st='q';}
+  else{G.time=gElapsed();gStopTimer();G.st='done';}
+  gRender();
+}
+function gUnlock(){
+  document.body.classList.remove('locked');
+  buildDots();
+  const el=document.getElementById('s-pol');
+  if(el)setTimeout(()=>el.scrollIntoView({behavior:'smooth'}),60);
+}
+/* --- valós térkép a kártyában, GIS-rétegtípusokkal --- */
+function addLayerToMap(gm,ly,i){
+  const vis=G.ly[i]?'visible':'none';
+  if(ly.type==='poly'){
+    gm.addSource('gs'+i,{type:'geojson',data:polyFC(ly.defs)});
+    gm.addLayer({id:'gf'+i,type:'fill',source:'gs'+i,layout:{visibility:vis},
+      paint:{'fill-color':ly.c,'fill-opacity':['get','op']}});
+    gm.addLayer({id:'gl'+i,type:'line',source:'gs'+i,layout:{visibility:vis},
+      paint:{'line-color':ly.c,'line-opacity':0.85,'line-width':1.3}});
+  }else if(ly.type==='pts'){
+    gm.addSource('gs'+i,{type:'geojson',data:ptsFC(ly.clusters,ly.seed)});
+    gm.addLayer({id:'gp'+i,type:'circle',source:'gs'+i,layout:{visibility:vis},
+      paint:{'circle-color':ly.c,'circle-opacity':0.85,
+        'circle-radius':ly.big?7:['+',2.5,['*',3.5,['get','w']]],
+        'circle-stroke-color':'#081a21','circle-stroke-width':1.2}});
+  }else if(ly.type==='line'){
+    gm.addSource('gs'+i,{type:'geojson',data:pathFC(ly.paths,ly.seed)});
+    gm.addLayer({id:'gl'+i,type:'line',source:'gs'+i,layout:{visibility:vis},
+      paint:Object.assign({'line-color':ly.c,'line-opacity':0.9,'line-width':2.4},
+        ly.dash?{'line-dasharray':ly.dash}:{})});
+  }else if(ly.type==='iso'){
+    gm.addSource('gs'+i,{type:'geojson',data:isoFC(ly.center[0],ly.center[1],ly.radii,ly.seed)});
+    gm.addLayer({id:'gf'+i,type:'fill',source:'gs'+i,layout:{visibility:vis},
+      paint:{'fill-color':ly.c,'fill-opacity':['case',['==',['get','lvl'],0],0.10,0.22]}});
+    gm.addLayer({id:'gl'+i,type:'line',source:'gs'+i,layout:{visibility:vis},
+      paint:{'line-color':ly.c,'line-opacity':0.7,'line-width':1.2,'line-dasharray':[2,2]}});
+  }else if(ly.type==='heat'){
+    gm.addSource('gs'+i,{type:'geojson',data:ptsFC(ly.clusters,ly.seed)});
+    gm.addLayer({id:'gh'+i,type:'heatmap',source:'gs'+i,layout:{visibility:vis},
+      paint:{'heatmap-weight':['get','w'],'heatmap-intensity':1.1,'heatmap-radius':32,'heatmap-opacity':0.75,
+        'heatmap-color':['interpolate',['linear'],['heatmap-density'],
+          0,'rgba(0,0,0,0)',0.25,'rgba(42,209,181,0.35)',0.5,'rgba(255,209,102,0.6)',0.75,'rgba(255,159,69,0.8)',1,'rgba(255,80,60,0.95)']}});
+  }
+}
+function initGameMap(r){
+  const host=document.getElementById('gameMap');
+  if(!host)return;
+  if(typeof maplibregl==='undefined'||document.body.classList.contains('maperr')||!G.town){
+    host.innerHTML='<p style="padding:20px;color:var(--muted);font-size:13px">⚠︎ internet</p>';return;
+  }
+  try{
+    const gm=new maplibregl.Map({container:host,
+      style:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+      center:G.town.ll,zoom:12.9,pitch:30,bearing:-10,attributionControl:{compact:true}});
+    G.gmap=gm;
+    gm.scrollZoom.disable();gm.doubleClickZoom.disable();gm.keyboard.disable();
+    gm.on('load',()=>{
+      r.layers.forEach((ly,i)=>addLayerToMap(gm,ly,i));
+      G.gmarks={};
+      r.opts.forEach(o=>{
+        const el=document.createElement('div');
+        el.className='gm-ab'+(G.pick===o.k?' picked':'');
+        el.textContent=o.k;
+        new maplibregl.Marker({element:el}).setLngLat(GP(o.cell[0],o.cell[1])).addTo(gm);
+        G.gmarks[o.k]=el;
+      });
+    });
+  }catch(e){host.innerHTML='';G.gmap=null;}
+}
+/* --- renderelés --- */
+function opts(r,compact){
+  const o=x=>compact
+    ?`<button class="g-opt compact${G.pick===x.k?' picked':''}" data-k="${x.k}" onclick="gPick('${x.k}')">
+       <span class="ab">${x.k}</span><b>${x.t[L]}</b></button>`
+    :`<button class="g-opt${G.pick===x.k?' picked':''}" data-k="${x.k}" onclick="gPick('${x.k}')">
+       <span class="ab">${x.k}</span><b>${x.t[L]}</b><span>${x.s[L]}</span></button>`;
+  return `<div class="g-opts">${r.opts.map(o).join('')}</div>`;
+}
+function stepsHTML(){
+  return '<div class="steps">'+SETS[G.setIdx].map((_,i)=>`<i class="${i<G.i?'done':i===G.i?'cur':''}"></i>`).join('')+'</div>';
+}
+function gRender(){
+  const box=document.getElementById('gameBox');if(!box)return;
+  gKillMap();
+  const t=GT[L];
+  if(G.st==='type'){
+    box.innerHTML=`<div class="g-center"><h2>${t.type_t}</h2>
+      <p class="sub" style="margin:8px auto 0">${t.type_s}</p></div>
+      <div class="g-types">${TYPES.map(x=>`<button class="g-opt" onclick="gSelType('${x.k}')">
+        <span class="ic">${x.ic}</span><b>${x.n[L]}</b><span>${x.s[L]}</span></button>`).join('')}</div>`;
+    return;
+  }
+  if(G.st==='town'){
+    const T=TYPES.find(x=>x.k===G.type);
+    box.innerHTML=`<div class="g-center">
+      <span class="g-pol">${T.ic} ${T.n[L]}</span>
+      <h2>${t.town_t(G.town.name)}</h2>
+      <p class="sub" style="margin:10px auto 22px">${t.town_s}</p>
+      <button class="btn btn-primary" onclick="gStart()">${t.begin}</button></div>`;
+    return;
+  }
+  if(G.st==='q'){
+    const r=gCur();
+    const head=`<div class="g-top">${stepsHTML()}<span class="g-right"><span class="g-timer" id="gTimer">⏱ ${fmtTime(gElapsed())}</span><span class="g-score">${G.sc}<i> ${t.pts}</i></span></span></div>
+      <p class="g-meta">${r.disc.map(d=>d[L]).join(' + ')}</p>
+      <div class="g-title">${r.t[L]}</div><p class="g-setup">${r.setup[L]}</p>`;
+    if(G.ph===1){
+      box.innerHTML=head+`<div class="g-hints"><b>${t.known}</b><ul>${r.hints[L].map(h=>`<li>${h}</li>`).join('')}</ul></div>`+opts(r,false);
+    }else{
+      const n=r.layers.length,s=G.seen.filter(Boolean).length;
+      box.innerHTML=head+`<div class="g-inbox"><span class="ic">📥</span><div><b>${t.inbox_t}</b><span>${t.inbox_s}</span></div></div>
+        <div class="g-layers">${r.layers.map((ly,i)=>{
+          const col=ly.c||C_HEAT;
+          return `<span class="g-ly${G.ly[i]?' on':''}" onclick="gToggleLy(${i})"><span class="d" style="background:${col}66;border-color:${col}"></span>${ly.n[L]}</span>`;
+        }).join('')}</div>
+        <div id="gameMap" class="gamemap"></div>
+        <div class="g-call${s>=n?'':' pending'}" id="gCall">${s>=n?r.call[L]:t.pend(n,s)}</div>`+opts(r,true)+
+        `<div class="g-cta"><button class="btn btn-primary" onclick="gConfirm()">${t.final}</button></div>`;
+      initGameMap(r);
+    }
+    return;
+  }
+  if(G.st==='rev'){
+    const r=gCur();
+    const opt=r.opts.find(o=>o.k===G.pick);
+    const bestPts=Math.max(...r.opts.map(o=>o.pts));
+    const cls=opt.pts===bestPts?'ok':(opt.pts>0?'mid':'no');
+    const verdict=opt.pts===bestPts?t.v_best:(opt.pts>0?t.v_mid:t.v_no);
+    const grades=r.opts.length>2?`<div class="g-grades">${[...r.opts].sort((a,b)=>b.pts-a.pts).map(o=>
+      `<div class="gr${o.k===G.pick?' chosen':''}${o.pts===bestPts?' best':''}"><span>${o.k} · ${o.t[L]}</span><b>+${o.pts}</b></div>`).join('')}</div>`:'';
+    box.innerHTML=`<div class="g-top">${stepsHTML()}<span class="g-right"><span class="g-timer" id="gTimer">⏱ ${fmtTime(gElapsed())}</span><span class="g-score">${G.sc}<i> ${t.pts}</i></span></span></div>
+      <div class="g-result"><div class="verdict ${cls}">${verdict}</div>
+      <p class="g-why">${r.why[L]}</p>${grades}
+      <div class="g-earn">+${G.earn} ${t.pts}${G.earn>bestPts?' · '+t.bon(r.bonus):''}</div>
+      <button class="btn btn-primary" onclick="gNext()">${G.i+1<SETS[G.setIdx].length?t.next:t.res}</button></div>`;
+    return;
+  }
+  if(G.st==='done'){
+    box.innerHTML=`<div class="g-center"><h2>${t.done_t}</h2>
+      <div class="big" style="font-size:clamp(36px,5.4vw,50px);margin:8px 0 4px">${t.done_s(G.sc,MAXPTS)}</div>
+      ${G.time!=null?`<p class="g-note" style="margin:2px 0 10px">⏱ ${fmtTime(G.time)}</p>`:''}
+      <div class="g-sum">${G.hist.map((h,i)=>
+        `<div class="row"><span>${t.round(i+1)} · ${h.lvl[L]}${h.bonus?' '+t.bflag:''}</span><b>${h.earn} / ${h.max}</b></div>`).join('')}
+        <div class="row tot"><span>${t.total}</span><b>${G.sc} / ${MAXPTS}</b></div></div>
+      <h3 style="font-size:17px;margin-bottom:4px">${t.form_t}</h3></div>
+      <div class="g-form">
+        <input type="text" id="g-nick" placeholder="${t.nick}" maxlength="24">
+        <input type="text" id="g-name" placeholder="${t.name}" maxlength="60">
+        <input type="email" id="g-email" placeholder="${t.email}" maxlength="80">
+        <div style="font-size:13px;font-weight:700;margin-top:4px">${t.mat_t}</div>
+        ${MATERIALS.map(m=>`<label class="g-check"><input type="checkbox" class="g-mat" value="${m.id}" checked>${m.label[L]}</label>`).join('')}
+        <label class="g-check"><input type="checkbox" id="g-consent">${t.consent}</label>
+        <div class="g-err" id="g-err"></div>
+        <button class="btn btn-primary" id="g-submit" onclick="gSubmit()">${t.submit}</button>
+      </div>`;
+    return;
+  }
+  if(G.st==='board'){
+    const rows=(G.board||[]).map((b,i)=>{
+      const me=G.lead&&b.nick===G.lead.nick;
+      /* SHOW_TIME=false esetén az idő eltűnik a sorokból (teszt-kapcsoló a fájl tetején) */
+      return `<div class="row${me?' me':''}"><span>#${i+1} · ${b.nick}</span><b>${b.score}${(SHOW_TIME&&b.time!=null)?' <em>⏱ '+fmtTime(b.time)+'</em>':''}</b></div>`;
+    }).join('');
+    const chosen=MATERIALS.filter(m=>G.mats.includes(m.id));
+    box.innerHTML=`<div class="g-center"><h2>${t.board_t}</h2>
+      ${G.rank?`<p class="sub" style="margin:6px auto 4px">${t.rank(G.rank)}</p>`:''}
+      <div class="g-board">${rows}</div>
+      ${G.offline?`<p class="g-note">${t.offline}</p>`:''}
+      ${chosen.length?`<div class="g-dl">${chosen.map(m=>`<a href="${m.file}" download><span>${m.label[L]}</span><span class="b">${t.dl} ↓</span></a>`).join('')}</div>
+        <p class="g-note" style="margin:0 0 14px">${t.thx_mail}</p>`
+      :`<p class="g-note" style="margin:6px 0 14px">${t.none}</p>`}
+      <button class="btn btn-primary" onclick="gUnlock()">${t.mats}</button><br>
+      <button class="btn-replay" onclick="gReplay()">${t.replay}</button></div>`;
+    return;
+  }
+}
+/* --- mentés + ranglista --- */
+function gSubmit(){
+  const t=GT[L];
+  const nick=document.getElementById('g-nick').value.trim();
+  const name=document.getElementById('g-name').value.trim();
+  const email=document.getElementById('g-email').value.trim();
+  const cons=document.getElementById('g-consent').checked;
+  const mats=[...document.querySelectorAll('.g-mat:checked')].map(x=>x.value);
+  const err=document.getElementById('g-err');
+  if(!nick||!name||!email||!cons){err.textContent=t.err_req;return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.textContent=t.err_mail;return;}
+  G.mats=mats;
+  G.lead={ts:new Date().toISOString(),nick,name,email,lang:L,score:G.sc,max:MAXPTS,time:G.time,materials:mats,consent:true};
+  try{const a=JSON.parse(localStorage.getItem('gp-leads')||'[]');a.push(G.lead);localStorage.setItem('gp-leads',JSON.stringify(a));}catch(e){}
+  const btn=document.getElementById('g-submit');btn.disabled=true;btn.textContent=t.sending;
+  const finish=(board,rank,offline)=>{G.board=board;G.rank=rank;G.offline=offline;G.st='board';gRender();};
+  if(SHEET_WEBHOOK){
+    const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),8000);
+    fetch(SHEET_WEBHOOK,{method:'POST',body:JSON.stringify(G.lead),signal:ctrl.signal})
+      .then(r=>r.json())
+      .then(j=>{clearTimeout(to);
+        if(j&&j.ok)finish(j.board||[],j.rank,false);
+        else{const lb=localBoard(nick,G.sc,G.time);finish(lb.board,lb.rank,true);}})
+      .catch(()=>{clearTimeout(to);const lb=localBoard(nick,G.sc,G.time);finish(lb.board,lb.rank,true);});
+  }else{
+    const lb=localBoard(nick,G.sc,G.time);finish(lb.board,lb.rank,true);
+  }
+}
+function localBoard(nick,score,time){
+  let b=[];try{b=JSON.parse(localStorage.getItem('gp-board')||'null')||[];}catch(e){}
+  if(!b.length)b=[{nick:'TérképZseni',score:700,time:212},{nick:'PolgiMester',score:550,time:247},{nick:'GeoRóka',score:425,time:198},{nick:'AdatVadász',score:300,time:305},{nick:'UrbanLegend',score:175,time:224}];
+  /* jobb eredmény: több pont, azonos pontnál rövidebb idő */
+  const better=(s1,t1,s2,t2)=>s1>s2||(s1===s2&&(t1==null?1e9:t1)<(t2==null?1e9:t2));
+  const me=b.find(x=>x.nick===nick);
+  if(me){if(better(score,time,me.score,me.time)){me.score=score;me.time=time;}}
+  else b.push({nick,score,time});
+  b.sort((x,y)=>y.score-x.score||((x.time==null?1e9:x.time)-(y.time==null?1e9:y.time)));
+  try{localStorage.setItem('gp-board',JSON.stringify(b));}catch(e){}
+  return{board:b.slice(0,10),rank:b.findIndex(x=>x.nick===nick)+1};
+}
+/* rejtett lead-export: tripla katt a zárszekció © feliratára */
+(function(){
+  const hot=document.getElementById('csvHot');if(!hot)return;
+  let n=0,tm=null;
+  hot.addEventListener('click',()=>{
+    n++;clearTimeout(tm);tm=setTimeout(()=>n=0,600);
+    if(n>=3){n=0;exportCSV();}
+  });
+})();
+function exportCSV(){
+  let a=[];try{a=JSON.parse(localStorage.getItem('gp-leads')||'[]');}catch(e){}
+  if(!a.length)return;
+  const esc=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const rows=[['ts','nick','name','email','lang','score','max','time','materials'].join(',')]
+    .concat(a.map(l=>[l.ts,l.nick,l.name,l.email,l.lang,l.score,l.max,l.time,(l.materials||[]).join('|')].map(esc).join(',')));
+  const blob=new Blob(['﻿'+rows.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const u=URL.createObjectURL(blob);const el=document.createElement('a');
+  el.href=u;el.download='geovern-leads.csv';el.click();URL.revokeObjectURL(u);
+}
+
+/* ============ INIT ============ */
+document.body.classList.add('locked'); /* a játék végéig a további szekciók zárva; frissítés után újra */
+let startLang='hu';
+try{const s=localStorage.getItem('gp-lang');if(s&&I18N[s])startLang=s;}catch(e){}
+applyLang(startLang);
+initMap();
+document.getElementById('navCta').addEventListener('click',e=>{
+  if(document.body.classList.contains('locked')){
+    e.preventDefault();
+    document.getElementById('s-game').scrollIntoView({behavior:'smooth'});
+  }
+});
+</script>
+</body>
+</html>
