@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GEOVERN — Referenciák</title>
-<meta name="description" content="60+ projekt, 12 ország, 2008 óta — kormányzati, önkormányzati, vállalati és védelmi GIS-referenciák térképen.">
+<meta name="description" content="90+ referencia és partner, 12 ország — kormányzati, önkormányzati, vállalati, vízügyi, természetvédelmi és egyetemi GIS-referenciák térképen.">
 <meta name="theme-color" content="#0F4A57">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -109,7 +109,7 @@ h2{font-size:clamp(20px,2.6vw,26px);font-weight:900;line-height:1.15;margin-bott
   <span class="eyebrow" data-i18n="eb">REFERENCIÁK</span>
   <h2 data-i18n="h2">Projektek, amelyekben személyesen közreműködtünk</h2>
   <p class="sub" data-i18n="sub">Kattintson a városokra — a térkép szabadon nagyítható.</p>
-  <p class="hint" data-i18n="note">60+ projekt · 12 ország · 2008 óta</p>
+  <p class="hint" data-i18n="note">90+ referencia és partner · 12 ország · 2008 óta</p>
 </div>
 
 <script>
@@ -117,13 +117,13 @@ h2{font-size:clamp(20px,2.6vw,26px);font-weight:900;line-height:1.15;margin-bott
 const I18N={
 hu:{title:'GEOVERN — Referenciák',back:'← Vissza a főoldalra',cta:'Konzultáció',
  eb:'REFERENCIÁK',h2:'Projektek, amelyekben személyesen közreműködtünk',
- sub:'Kattintson a városokra — a térkép szabadon nagyítható.',note:'60+ projekt · 12 ország · 2008 óta'},
+ sub:'Kattintson a városokra — a térkép szabadon nagyítható.',note:'90+ referencia és partner · 12 ország · 2008 óta'},
 en:{title:'GEOVERN — References',back:'← Back to home',cta:'Book a call',
  eb:'REFERENCES',h2:'Projects we personally contributed to',
- sub:'Click the cities — the map is freely zoomable.',note:'60+ projects · 12 countries · since 2008'},
+ sub:'Click the cities — the map is freely zoomable.',note:'90+ references & partners · 12 countries · since 2008'},
 de:{title:'GEOVERN — Referenzen',back:'← Zurück zur Startseite',cta:'Gespräch buchen',
  eb:'REFERENZEN',h2:'Projekte mit persönlicher Mitwirkung',
- sub:'Klicken Sie auf die Städte — die Karte ist frei zoombar.',note:'60+ Projekte · 12 Länder · seit 2008'}
+ sub:'Klicken Sie auf die Städte — die Karte ist frei zoombar.',note:'90+ Referenzen & Partner · 12 Länder · seit 2008'}
 };
 /* ============ ADAT ============ */
 const REF_TAGS={
@@ -134,9 +134,11 @@ const REF_TAGS={
  fmcg:{hu:'FMCG',en:'FMCG',de:'FMCG'},med:{hu:'Média',en:'Media',de:'Medien'},
  it:{hu:'IT',en:'IT',de:'IT'},auto:{hu:'Autóipar',en:'Automotive',de:'Automobil'},
  hea:{hu:'Egészségügy',en:'Health',de:'Gesundheit'},edu:{hu:'Oktatás',en:'Education',de:'Bildung'},
- ngo:{hu:'NGO',en:'NGO',de:'NGO'},ind:{hu:'Ipar',en:'Industry',de:'Industrie'}
+ ngo:{hu:'NGO',en:'NGO',de:'NGO'},ind:{hu:'Ipar',en:'Industry',de:'Industrie'},
+ wat:{hu:'Vízügy',en:'Water management',de:'Wasserwirtschaft'},nat:{hu:'Természetvédelem',en:'Nature conservation',de:'Naturschutz'},rnd:{hu:'Kutatás',en:'Research',de:'Forschung'}
 };
 const N=(hu,en,de)=>({hu,en,de});
+const PART=N('Partneri program','Partner programme','Partnerprogramm');
 /* Fegyveres erők anonimizálva; cégnevek változatlanul, intézménynevek lefordítva */
 const REFP=[
  ['Budapest',[19.04,47.50],[
@@ -159,7 +161,10 @@ const REFP=[
   ['Vodafone',2012,'tel'],
   [N('Katasztrófavédelem (BM OKF)','National disaster management','Katastrophenschutz-Direktion'),2011,'def'],
   [N('Fegyveres erők — meteorológiai szolgálat','Armed forces — meteorological service','Streitkräfte — Wetterdienst'),2008,'def'],
-  [N('Magyar Posta','Magyar Posta (Hungarian Post)','Ungarische Post'),2008,'tr']]],
+  [N('Magyar Posta','Magyar Posta (Hungarian Post)','Ungarische Post'),2008,'tr'],
+  [N('Közép-Duna-völgyi Vízügyi Igazgatóság (KDVVIZIG)','Middle Danube Valley Water Directorate','Wasserdirektion Mittleres Donautal'),0,'wat'],
+  [N('Duna-Ipoly Nemzeti Park Igazgatóság','Danube-Ipoly National Park Directorate','Nationalparkdirektion Donau-Ipoly'),0,'nat'],
+  [N('Eötvös Loránd Tudományegyetem (ELTE)','Eötvös Loránd University (ELTE)','Eötvös-Loránd-Universität (ELTE)'),PART,'edu']]],
  [N('Bécs','Vienna','Wien'),[16.37,48.21],[
   ['ASFINAG',2026,'tr'],['STRABAG',2026,'ind'],['TAG GmbH',2026,'en'],['ÖBB',2025,'tr'],
   [N('Bécs város (MA 30·45·01)','City of Vienna (MA 30·45·01)','Stadt Wien (MA 30·45·01)'),2025,'mun'],
@@ -173,7 +178,37 @@ const REFP=[
  ['Bruck an der Mur',[15.28,47.41],[[N('Bruck an der Mur városa','City of Bruck an der Mur','Stadt Bruck an der Mur'),2026,'mun']]],
  ['Villach',[13.85,46.61],[[N('Villach városa','City of Villach','Stadt Villach'),2026,'mun']]],
  ['Innsbruck',[11.40,47.27],[['ILF Consulting',2026,'en']]],
- ['Győr',[17.63,47.68],[[N('Audi Hungária','Audi Hungary','Audi Ungarn'),2016,'auto']]],
+ ['Győr',[17.63,47.68],[
+  [N('Audi Hungária','Audi Hungary','Audi Ungarn'),2016,'auto'],
+  [N('Észak-dunántúli Vízügyi Igazgatóság (ÉDUVIZIG)','North Transdanubian Water Directorate','Wasserdirektion Nord-Transdanubien'),0,'wat']]],
+ ['Székesfehérvár',[18.41,47.19],[[N('Közép-dunántúli Vízügyi Igazgatóság (KDTVIZIG)','Central Transdanubian Water Directorate','Wasserdirektion Mittel-Transdanubien'),0,'wat']]],
+ ['Szombathely',[16.62,47.23],[[N('Nyugat-dunántúli Vízügyi Igazgatóság (NYUDUVIZIG)','West Transdanubian Water Directorate','Wasserdirektion West-Transdanubien'),0,'wat']]],
+ ['Baja',[18.95,46.18],[[N('Alsó-Duna-völgyi Vízügyi Igazgatóság (ADUVIZIG)','Lower Danube Valley Water Directorate','Wasserdirektion Unteres Donautal'),0,'wat']]],
+ ['Pécs',[18.23,46.07],[
+  [N('Dél-dunántúli Vízügyi Igazgatóság (DDVIZIG)','South Transdanubian Water Directorate','Wasserdirektion Süd-Transdanubien'),0,'wat'],
+  [N('Duna-Dráva Nemzeti Park Igazgatóság','Danube-Drava National Park Directorate','Nationalparkdirektion Donau-Drau'),0,'nat'],
+  [N('Pécsi Tudományegyetem (PTE)','University of Pécs','Universität Pécs'),PART,'edu']]],
+ ['Miskolc',[20.78,48.10],[
+  [N('Észak-magyarországi Vízügyi Igazgatóság (ÉMVIZIG)','North Hungarian Water Directorate','Wasserdirektion Nordungarn'),0,'wat'],
+  [N('Bay Zoltán Alkalmazott Kutatási Alapítvány — BAY-LOGI (Miskolctapolca)','Bay Zoltán Foundation for Applied Research — BAY-LOGI','Bay-Zoltán-Stiftung für angewandte Forschung — BAY-LOGI'),0,'rnd'],
+  [N('Miskolci Egyetem','University of Miskolc','Universität Miskolc'),PART,'edu']]],
+ ['Debrecen',[21.63,47.53],[
+  [N('Tiszántúli Vízügyi Igazgatóság (TIVIZIG)','Trans-Tisza Water Directorate','Wasserdirektion Trans-Theiß'),0,'wat'],
+  [N('Hortobágyi Nemzeti Park Igazgatóság','Hortobágy National Park Directorate','Nationalparkdirektion Hortobágy'),0,'nat'],
+  [N('Debreceni Egyetem','University of Debrecen','Universität Debrecen'),PART,'edu']]],
+ ['Szeged',[20.15,46.25],[
+  [N('Alsó-Tisza-vidéki Vízügyi Igazgatóság (ATIVIZIG)','Lower Tisza Region Water Directorate','Wasserdirektion Untere Theiß'),0,'wat'],
+  [N('Szegedi Tudományegyetem (SZTE)','University of Szeged','Universität Szeged'),PART,'edu']]],
+ ['Szolnok',[20.20,47.17],[[N('Közép-Tisza-vidéki Vízügyi Igazgatóság (KÖTIVIZIG)','Middle Tisza Region Water Directorate','Wasserdirektion Mittlere Theiß'),0,'wat']]],
+ ['Nyíregyháza',[21.72,47.95],[[N('Felső-Tisza-vidéki Vízügyi Igazgatóság (FETIVIZIG)','Upper Tisza Region Water Directorate','Wasserdirektion Obere Theiß'),0,'wat']]],
+ ['Gyula',[21.28,46.65],[[N('Körös-vidéki Vízügyi Igazgatóság (KÖVIZIG)','Körös Region Water Directorate','Wasserdirektion Körös-Gebiet'),0,'wat']]],
+ ['Eger',[20.37,47.90],[[N('Bükki Nemzeti Park Igazgatóság','Bükk National Park Directorate','Nationalparkdirektion Bükk'),0,'nat']]],
+ ['Jósvafő',[20.55,48.48],[[N('Aggteleki Nemzeti Park Igazgatóság','Aggtelek National Park Directorate','Nationalparkdirektion Aggtelek'),0,'nat']]],
+ ['Csopak',[17.92,46.98],[[N('Balaton-felvidéki Nemzeti Park Igazgatóság','Balaton Uplands National Park Directorate','Nationalparkdirektion Balaton-Oberland'),0,'nat']]],
+ ['Sarród',[16.86,47.63],[[N('Fertő-Hanság Nemzeti Park Igazgatóság','Fertő-Hanság National Park Directorate','Nationalparkdirektion Fertő-Hanság'),0,'nat']]],
+ ['Kecskemét',[19.69,46.90],[[N('Kiskunsági Nemzeti Park Igazgatóság','Kiskunság National Park Directorate','Nationalparkdirektion Kiskunság'),0,'nat']]],
+ ['Szarvas',[20.55,46.86],[[N('Körös-Maros Nemzeti Park Igazgatóság','Körös-Maros National Park Directorate','Nationalparkdirektion Körös-Maros'),0,'nat']]],
+ ['Őriszentpéter',[16.42,46.83],[[N('Őrségi Nemzeti Park Igazgatóság','Őrség National Park Directorate','Nationalparkdirektion Őrség'),0,'nat']]],
  ['Mainz',[8.27,50.00],[[N('Mainz város','City of Mainz','Landeshauptstadt Mainz'),2026,'mun']]],
  [N('München','Munich','München'),[11.58,48.14],[['Rohde & Schwarz',2024,'def']]],
  ['Berlin',[13.37,52.52],[['Deutsche Bahn',2021,'tr']]],
@@ -236,7 +271,7 @@ function openRefPopup(i){
   popup=new maplibregl.Popup({offset:16,closeButton:true})
     .setLngLat(r[1])
     .setHTML(`<div class="rp-city">${TT(r[0])} · ${r[2].length}</div>
-      <div class="rp-list">${r[2].map(x=>`<div class="rp-row"><b>${TT(x[0])}</b><span>${x[1]} · ${REF_TAGS[x[2]][L]}</span></div>`).join('')}</div>`)
+      <div class="rp-list">${r[2].map(x=>{const m=[x[1]?(typeof x[1]==='object'?x[1][L]:''+x[1]):null,REF_TAGS[x[2]][L]].filter(Boolean).join(' · ');return `<div class="rp-row"><b>${TT(x[0])}</b><span>${m}</span></div>`;}).join('')}</div>`)
     .addTo(map);
 }
 
