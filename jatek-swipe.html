@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GEOVERN — Krízishét</title>
+<meta name="description" content="Krízishét — mobil döntésjáték: 5 nap, 5 balra-jobbra húzós polgármesteri döntés, élő 3D várostérképen.">
+<meta name="theme-color" content="#050f14">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+:root{
+  --bg:#050f14; --teal:#2AD1B5; --amber:#FF9F45; --red:#ff8a7a;
+  --text:#EAF4F4; --muted:#9BB7BC; --faint:#5E7A80;
+  --card:rgba(6,17,22,.88); --line:rgba(42,209,181,.25);
+  --font:'Roboto',system-ui,sans-serif; --mono:'Roboto Mono',ui-monospace,monospace;
+  --sab:env(safe-area-inset-bottom,0px); --sat:env(safe-area-inset-top,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.45;
+  opacity:0;transition:opacity .5s ease}
+body.in{opacity:1}
+/* A TÉRKÉP A FŐSZEREPLŐ — teljes képernyő, végig él */
+#map{position:fixed;inset:0;z-index:0}
+body.maperr #map{display:none}
+body.maperr::before{content:'';position:fixed;inset:0;z-index:0;
+  background:radial-gradient(900px 600px at 70% 20%,rgba(15,74,87,.55),transparent 60%),var(--bg)}
+/* felső állapotsáv */
+.topbar{position:fixed;top:calc(10px + var(--sat));left:50%;transform:translateX(-50%);z-index:40;
+  display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);
+  border-radius:100px;padding:9px 18px;backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.days{display:flex;gap:7px}
+.days i{width:9px;height:9px;border-radius:50%;border:2px solid var(--faint);display:block}
+.days i.done{background:var(--teal);border-color:var(--teal)}
+.days i.cur{background:var(--amber);border-color:var(--amber);box-shadow:0 0 9px rgba(255,159,69,.8)}
+.tb-t{font:500 13px var(--mono);color:var(--faint)}
+.tb-s{font:500 16px var(--mono);color:var(--amber)}
+.homelink{position:fixed;top:calc(10px + var(--sat));left:10px;z-index:40;
+  font:700 12px var(--mono);letter-spacing:.06em;color:var(--text);background:var(--card);
+  border:1px solid var(--line);border-radius:100px;padding:8px 14px;backdrop-filter:blur(10px);text-decoration:none}
+@media(max-width:430px){.testbadge{display:none}}
+.testbadge{position:fixed;top:calc(10px + var(--sat));right:10px;z-index:40;
+  font:700 10px var(--mono);letter-spacing:.1em;color:#231303;background:var(--amber);border-radius:100px;padding:5px 10px}
+/* alsó lap (bottom sheet) */
+.sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:30;width:100%;max-width:520px;
+  padding:0 12px calc(12px + var(--sab))}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;
+  padding:22px 20px;backdrop-filter:blur(16px);box-shadow:0 -10px 50px rgba(0,0,0,.55)}
+.g-center{text-align:center}
+h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
+.sub{color:var(--muted);font-size:15.5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:15px 28px;border-radius:14px;
+  font-weight:700;font-size:17px;cursor:pointer;border:none;transition:.2s;font-family:var(--font);
+  background:var(--teal);color:#04211d;min-height:52px;touch-action:manipulation}
+.btn:active{transform:scale(.97)}
+.btn-wide{width:100%}
+.btn-replay{background:none;border:none;color:var(--faint);font:500 15px var(--font);cursor:pointer;
+  text-decoration:underline;text-underline-offset:3px;padding:10px;margin-top:10px}
+/* típusválasztó */
+.g-types{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.g-types button{border:2px solid rgba(42,209,181,.28);background:rgba(15,74,87,.3);border-radius:16px;
+  padding:16px 10px;cursor:pointer;color:var(--text);font-family:var(--font);text-align:center;transition:.15s;touch-action:manipulation}
+.g-types button:active{transform:scale(.97);border-color:var(--teal)}
+.g-types .ic{font-size:36px;display:block;margin-bottom:4px}
+.g-types b{font-size:16px;display:block}
+.g-types span{font-size:12.5px;color:var(--faint)}
+/* SWIPE-KÁRTYA */
+.swipewrap{position:relative;touch-action:none}
+.scard{background:linear-gradient(180deg,rgba(10,26,33,.97),rgba(6,17,22,.97));border:1.5px solid var(--line);
+  border-radius:22px;padding:20px 18px 16px;box-shadow:0 18px 60px rgba(0,0,0,.6);
+  cursor:grab;user-select:none;-webkit-user-select:none;will-change:transform;position:relative}
+.scard.drag{cursor:grabbing;transition:none!important}
+.scard.spring{transition:transform .3s cubic-bezier(.2,.8,.3,1.2)}
+.scard.fly{transition:transform .35s ease-in,opacity .35s ease-in;opacity:0}
+.sc-disc{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:var(--teal);margin-bottom:6px}
+.sc-disc .ic{font-size:20px}
+.sc-title{font-size:21px;font-weight:900;line-height:1.2;margin-bottom:6px}
+.sc-setup{font-size:14.5px;color:var(--muted);margin-bottom:12px}
+.sc-chip{display:flex;align-items:center;gap:10px;background:rgba(15,74,87,.25);border-radius:12px;
+  padding:9px 12px;font-size:14px;color:var(--muted);margin-bottom:8px}
+.sc-chip .ic{font-size:18px;flex:none}
+/* bal/jobb opciók a kártya alján */
+.sc-opts{display:flex;justify-content:space-between;gap:10px;margin-top:14px}
+.sc-opt{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;
+  border-radius:14px;border:2px dashed rgba(143,176,181,.3);text-align:center}
+.sc-opt .ic{font-size:26px}
+.sc-opt b{font-size:13.5px;line-height:1.2}
+.sc-opt .dir{font:700 12px var(--mono);color:var(--faint)}
+.sc-opt.hotL{border-color:var(--red);background:rgba(255,138,122,.1)}
+.sc-opt.hotR{border-color:var(--teal);background:rgba(42,209,181,.12)}
+/* pecsétek */
+.stamp{position:absolute;top:14px;font:900 21px var(--font);letter-spacing:.06em;padding:6px 14px;
+  border:3px solid;border-radius:10px;opacity:0;pointer-events:none;text-transform:uppercase}
+.stampL{left:14px;transform:rotate(-12deg);color:var(--red);border-color:var(--red)}
+.stampR{right:14px;transform:rotate(12deg);color:var(--teal);border-color:var(--teal)}
+.sc-hint{text-align:center;font:500 13px var(--mono);color:var(--faint);margin-top:10px}
+/* swipe-affordance: pulzáló szélnyilak + bemutató kéz + meglóduló kártya */
+.chevs{position:absolute;inset:0;pointer-events:none;z-index:4}
+.chev{position:absolute;top:50%;font:900 30px var(--font);line-height:1}
+.chev.cL{left:7px;color:var(--red);animation:chevL 1.6s ease-in-out infinite}
+.chev.cR{right:7px;color:var(--teal);animation:chevR 1.6s ease-in-out infinite}
+@keyframes chevL{0%,100%{transform:translate(0,-50%);opacity:.3}50%{transform:translate(-7px,-50%);opacity:.95}}
+@keyframes chevR{0%,100%{transform:translate(0,-50%);opacity:.3}50%{transform:translate(7px,-50%);opacity:.95}}
+.hand{position:absolute;left:50%;top:56%;font-size:46px;z-index:6;pointer-events:none;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.65));animation:handswipe 2.6s ease-in-out infinite}
+@keyframes handswipe{
+  0%,12%{transform:translate(-50%,0) rotate(0)}
+  30%{transform:translate(calc(-50% + 72px),-8px) rotate(14deg)}
+  48%{transform:translate(-50%,0) rotate(0)}
+  66%{transform:translate(calc(-50% - 72px),-8px) rotate(-14deg)}
+  84%,100%{transform:translate(-50%,0) rotate(0)}
+}
+.scard.demo{animation:nudge 2.6s ease-in-out infinite}
+@keyframes nudge{
+  0%,12%{transform:translateX(0) rotate(0)}
+  30%{transform:translateX(28px) rotate(2deg)}
+  48%{transform:translateX(0) rotate(0)}
+  66%{transform:translateX(-28px) rotate(-2deg)}
+  84%,100%{transform:translateX(0) rotate(0)}
+}
+@media(prefers-reduced-motion:reduce){.scard.demo,.hand,.chev{animation:none}}
+/* 2. fázis: rétegsáv fent + mini-kártya lent */
+.lybar{position:fixed;top:calc(64px + var(--sat));left:0;right:0;z-index:35;display:flex;gap:10px;
+  overflow-x:auto;padding:6px 14px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.lybar::-webkit-scrollbar{display:none}
+.g-ly{flex:none;display:inline-flex;align-items:center;gap:8px;font:700 14.5px var(--font);color:var(--text);
+  border:2px solid rgba(143,176,181,.35);border-radius:14px;padding:10px 14px;min-height:46px;
+  cursor:pointer;user-select:none;background:var(--card);backdrop-filter:blur(10px);touch-action:manipulation}
+.g-ly .ic{font-size:19px}
+.g-ly .d{width:19px;height:19px;border-radius:6px;border:2.5px solid;display:flex;align-items:center;justify-content:center;
+  font:700 12px var(--font);color:#fff}
+.g-ly.on .d::after{content:'✓';text-shadow:0 1px 2px rgba(0,0,0,.85)}
+.g-ly:not(.on){opacity:.5}
+.g-ly:not(.on) .d{background:transparent!important}
+/* desktopon a rétegsor a kártyadoboz fölött ül, nem a képernyő tetején */
+.lyrow{display:none}
+@media(min-width:700px){
+  .lybar{display:none!important}
+  .lyrow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0 0 12px}
+}
+.minicard .sc-title{font-size:17px;margin-bottom:2px}
+.g-call{display:flex;gap:9px;align-items:flex-start;font-size:14px;color:var(--amber);margin-bottom:10px;line-height:1.4}
+.g-call .ic{font-size:18px;flex:none}
+.g-call.pending{color:var(--faint)}
+/* kiértékelő pecsét-overlay */
+.revstamp{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.revstamp .st{font:900 34px var(--font);letter-spacing:.05em;padding:12px 26px;border:5px solid;border-radius:16px;
+  transform:rotate(-8deg) scale(.6);opacity:0;text-transform:uppercase;backdrop-filter:blur(4px);
+  animation:stampin .45s cubic-bezier(.2,.8,.3,1.3) forwards}
+@keyframes stampin{to{transform:rotate(-8deg) scale(1);opacity:1}}
+.revstamp .st.out{animation:stampout .9s ease forwards}
+@keyframes stampout{to{transform:rotate(-8deg) translateY(-70px) scale(.85);opacity:0}}
+.st.ok{color:var(--teal);border-color:var(--teal);background:rgba(6,30,27,.75)}
+.st.no{color:var(--red);border-color:var(--red);background:rgba(35,12,10,.75)}
+.rev-why{font-size:15px;color:var(--muted);margin:6px 0 12px}
+.rev-earn{font:500 26px var(--mono);color:var(--amber);margin-bottom:12px}
+.rev-earn i{font-style:normal;font-size:13px;color:var(--faint)}
+/* következmény-jelek a térképen */
+.cq{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font:900 16px var(--font);box-shadow:0 3px 12px rgba(0,0,0,.6);border:2.5px solid}
+.cq.ok{background:rgba(6,30,27,.9);color:var(--teal);border-color:var(--teal)}
+.cq.bad{background:rgba(35,12,10,.9);color:var(--red);border-color:var(--red)}
+/* űrlap + ranglista */
+.g-form{display:grid;gap:11px;margin-top:14px;text-align:left}
+.g-form input{background:rgba(15,74,87,.3);border:1.5px solid rgba(143,176,181,.32);
+  border-radius:13px;padding:13px 15px;color:var(--text);font:400 16px var(--font);width:100%;min-height:48px}
+.g-form input:focus{outline:none;border-color:var(--teal)}
+.g-check{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);cursor:pointer}
+.g-check input{margin-top:3px;accent-color:var(--teal);width:17px;height:17px;min-height:0}
+.g-err{font-size:13px;color:var(--red);min-height:17px}
+.g-board{margin:12px 0;text-align:left;max-height:34dvh;overflow:auto}
+.g-board .row{display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid rgba(143,176,181,.13);font-size:15px}
+.g-board .row.me{background:rgba(42,209,181,.13);border-radius:10px;border-bottom-color:transparent}
+.g-board .row b{font-family:var(--mono);font-weight:500}
+.g-board .row b em{font-style:normal;color:var(--faint);font-size:11.5px;margin-left:6px}
+.g-note{font-size:12.5px;color:var(--faint);margin-top:8px}
+.g-sum{margin:12px 0;text-align:left}
+.g-sum .row{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(143,176,181,.13);font-size:14.5px}
+.g-sum .row span{color:var(--muted)}
+.g-sum .row b{font-family:var(--mono);font-weight:500}
+.big{font:500 44px var(--mono);color:var(--amber);line-height:1}
+@media(min-width:700px){
+  .sheet{bottom:24px}
+  h2{font-size:27px}
+}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+<a class="homelink" href="index.html">‹ GEOVERN</a>
+<span class="testbadge">BÉTA</span>
+<div class="topbar" id="topbar" hidden>
+  <div class="days" id="days"></div>
+  <span class="tb-t" id="gTimer">⏱ 0:00</span>
+  <span class="tb-s" id="gScore">0</span>
+</div>
+<div class="lybar" id="lybar" hidden></div>
+<div class="sheet" id="sheet"></div>
+<div class="revstamp" id="revstamp" hidden></div>
+
+<script>
+/* =====================================================
+   KRÍZISHÉT — swipe-döntésjáték (elszeparált teszt)
+   Balra/jobbra húzás · egyetlen állandó 3D térkép ·
+   a döntések nyomot hagynak a városon
+   ===================================================== */
+const SHOW_TIME=true;
+const DAYS_HU=['Hétfő','Kedd','Szerda','Csütörtök','Péntek'];
+const TYPES=[
+ {k:'k',ic:'🏡',n:'Község',s:'5 ezer alatt',towns:[['Alsómocsolád',18.243,46.312],['Tihany',17.889,46.913],['Hollókő',19.586,48.089]]},
+ {k:'v',ic:'🏘️',n:'Kisváros',s:'5–20 ezer',towns:[['Balatonfüred',17.889,46.958],['Kőszeg',16.541,47.389],['Tata',18.323,47.653]]},
+ {k:'m',ic:'🏙️',n:'Középváros',s:'20–60 ezer',towns:[['Budaörs',18.959,47.461],['Gödöllő',19.360,47.596],['Vác',19.134,47.776]]},
+ {k:'n',ic:'🌆',n:'Nagyváros',s:'60 ezer felett',towns:[['Debrecen',21.627,47.532],['Szeged',20.148,46.253],['Győr',17.635,47.684]]}
+];
+const C_HEAT='#ff6b4a',C_WATER='#4aa8ff',C_VULN='#c77bff',C_GREEN='#3ddc97',C_GOLD='#ffd166',C_TEAL='#2AD1B5';
+
+/* ---- geometria (~120 m-es egység) ---- */
+function grng(seed){let t=seed;return()=>{t+=0x6D2B79F5;let r=Math.imul(t^t>>>15,1|t);
+  r^=r+Math.imul(r^r>>>7,61|r);return((r^r>>>14)>>>0)/4294967296;}}
+const DU=0.0016,DV=0.00105;
+let ORIGIN=[19.04,47.5];
+const GP=(u,v)=>[ORIGIN[0]+u*DU,ORIGIN[1]+v*DV];
+function blob(cu,cv,r,seed,irr){irr=irr||0.35;const rnd=grng(seed),n=16,rad=[];
+  for(let i=0;i<n;i++)rad.push(r*(1+(rnd()*2-1)*irr));
+  for(let i=0;i<n;i++)rad[i]=(rad[i]+rad[(i+1)%n]+rad[(i+n-1)%n])/3;
+  const ring=[];for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,rr=rad[i%n];
+    ring.push(GP(cu+Math.cos(a)*rr,cv+Math.sin(a)*rr*0.75));}return ring;}
+function polyFC(defs){return{type:'FeatureCollection',features:defs.map(d=>({type:'Feature',
+  properties:{op:d[4]!==undefined?d[4]:0.35},geometry:{type:'Polygon',coordinates:[blob(d[0],d[1],d[2],d[3])]}}))};}
+function ptsFC(clusters,seed){const rnd=grng(seed),f=[];
+  clusters.forEach(c=>{for(let i=0;i<c[2];i++){
+    const u=c[0]+((rnd()+rnd())-1)*c[3],v=c[1]+((rnd()+rnd())-1)*c[3]*0.8;
+    f.push({type:'Feature',properties:{w:0.4+rnd()*0.6},geometry:{type:'Point',coordinates:GP(u,v)}});}});
+  return{type:'FeatureCollection',features:f};}
+function pathFC(sets,seed){const rnd=grng(seed);
+  return{type:'FeatureCollection',features:sets.map(w=>{const c=[];
+    for(let i=0;i<w.length-1;i++){const [u1,v1]=w[i],[u2,v2]=w[i+1];
+      c.push(GP(u1,v1));c.push(GP((u1+u2)/2+(rnd()-0.5)*0.2,(v1+v2)/2+(rnd()-0.5)*0.2));}
+    c.push(GP(...w[w.length-1]));
+    return{type:'Feature',properties:{},geometry:{type:'LineString',coordinates:c}};})};}
+function isoFC(cu,cv,radii,seed){const rnd=grng(seed),n=16,base=[];
+  for(let i=0;i<n;i++)base.push(1+(rnd()*2-1)*0.3);
+  for(let i=0;i<n;i++)base[i]=(base[i]+base[(i+1)%n]+base[(i+n-1)%n])/3;
+  return{type:'FeatureCollection',features:radii.map((r,li)=>{const ring=[];
+    for(let i=0;i<=n;i++){const a=i/n*Math.PI*2;
+      ring.push(GP(cu+Math.cos(a)*r*base[i%n],cv+Math.sin(a)*r*base[i%n]*0.75));}
+    return{type:'Feature',properties:{lvl:li},geometry:{type:'Polygon',coordinates:[ring]}};}).reverse()};}
+
+/* ---- 5 NAP — bináris (bal/jobb) döntések ---- */
+/* L = balra húzás, R = jobbra húzás; best = a helyes irány */
+const WEEK=[
+ {ic:'💧',disc:'Vízgazdálkodás',best:'R',pts:100,bonus:50,
+  t:'Villámárvíz után',setup:'Három utca ázott el. Egy beavatkozásra van pénz.',
+  chips:[['💬','A Fő utca lakói gátat követelnek'],['📋','A biztosítói jelentés még sehol']],
+  L:{ic:'🧱',t:'Mobil gát a Fő utcára',cell:[0.5,-0.55]},
+  R:{ic:'🧹',t:'Árkok, átereszek tisztítása',cell:[-1.2,1.0]},
+  layers:[
+   {ic:'🌊',n:'Elöntés',type:'poly',c:C_WATER,defs:[[0.3,-0.5,0.8,11,0.35],[1.1,-0.9,0.6,12,0.3]]},
+   {ic:'📍',n:'Károk',type:'pts',c:C_HEAT,clusters:[[0.6,-0.7,12,0.4],[-0.5,0.35,5,0.3],[-1.1,0.85,4,0.25]],seed:13}],
+  call:'A károk a lejtő vonalán sorakoznak — fent van a baj.',
+  why:'A gát a tünetet kezeli, a tisztítás az okot.'},
+ {ic:'🚌',disc:'Mobilitás',best:'L',pts:100,bonus:50,
+  t:'Iskolai biztonság',setup:'Egy helyszínre jut forgalombiztonsági keret.',
+  chips:[['💬','400 aláírás: zebrát az iskola elé!'],['🚓','A rendőrség máshova mutat']],
+  L:{ic:'🚧',t:'Csillapítás a csomópontban',cell:[1.2,-0.8]},
+  R:{ic:'🚸',t:'Zebra az iskolához',cell:[-0.75,0.28]},
+  layers:[
+   {ic:'📍',n:'Balesetek',type:'pts',c:C_HEAT,clusters:[[1.2,-0.8,14,0.35],[0,0,4,1.2]],seed:21},
+   {ic:'⏱',n:'Gyaloglás',type:'iso',c:C_TEAL,center:[-0.6,0.4],radii:[0.8,1.6],seed:22},
+   {ic:'🎒',n:'Iskolautak',type:'line',c:C_GOLD,paths:[[[2.4,-1.4],[1.2,-0.8],[0.2,0],[-0.6,0.4]],[[2.2,0.8],[1.2,-0.8]]],seed:23}],
+  call:'A balesetek 70%-a a csomópontban — az iskolánál már van lámpa.',
+  why:'Oda kell, ahol a kockázat mérhető — nem ahol a hang nagy.'},
+ {ic:'⚡',disc:'Energetika',best:'R',pts:100,bonus:50,
+  t:'Vihar után sötét',setup:'Órákig nem volt áram. Egy szakaszra van keret.',
+  chips:[['💬','A boltok földkábelt követelnek a főutcára'],['📋','A hibalista még feldolgozás alatt']],
+  L:{ic:'🔌',t:'Földkábel a főutcán',cell:[0.2,0]},
+  R:{ic:'🌲',t:'A két hibás külső szakasz megerősítése',cell:[-1.6,0.9]},
+  layers:[
+   {ic:'📍',n:'Kimaradások',type:'pts',c:C_HEAT,clusters:[[-1.6,0.9,12,0.4],[-1.0,1.4,6,0.3],[0.3,0,3,0.8]],seed:101},
+   {ic:'⚡',n:'Hálózat',type:'line',c:C_GOLD,paths:[[[-2.4,1.6],[-1.6,0.9],[-0.6,0.3],[0.2,0],[1.4,-0.4]]],seed:102,dash:[3,2]},
+   {ic:'🌪️',n:'Viharzóna',type:'poly',c:C_VULN,defs:[[-1.6,0.9,0.7,103,0.35],[-1.0,1.4,0.5,104,0.25]]}],
+  call:'A kimaradások 85%-a a viharzóna két szakaszán keletkezik.',
+  why:'A gócszakasz erősítése az egész hálózatot stabilizálja.'},
+ {ic:'🌡️',disc:'Klíma × Egészség',best:'L',pts:150,bonus:50,
+  t:'Hőhullám jön',setup:'Két hét múlva hőség. Egy csomagra futja.',
+  chips:[['💬','A tér árnyékolása régi ígéret'],['🩺','A háziorvosok idős rosszulléteket jeleznek']],
+  L:{ic:'🧊',t:'Hűsítő pontok a hőszigeten',cell:[2.1,0.55]},
+  R:{ic:'⛱️',t:'Árnyékolás a főtérre',cell:[0,0]},
+  layers:[
+   {ic:'🔥',n:'Hőtérkép',type:'heat',clusters:[[2.2,0.6,40,0.7],[0.9,1.4,12,0.5]],seed:31},
+   {ic:'👵',n:'75+ lakók',type:'poly',c:C_VULN,defs:[[2.2,0.55,0.75,32,0.4],[2.0,1.2,0.5,33,0.25],[0.6,-1.1,0.45,34,0.15]]},
+   {ic:'🏥',n:'Gondozók',type:'pts',c:C_VULN,clusters:[[2.15,0.5,3,0.25]],seed:35,big:true},
+   {ic:'⏱',n:'Elérés',type:'iso',c:C_TEAL,center:[2.0,0.5],radii:[0.7,1.4],seed:36}],
+  call:'A hőgóc és az idősek ugyanott — a tér kívül esik.',
+  why:'Ott ment életet, ahol hő, kor és elérés metszi egymást.'},
+ {ic:'💰',disc:'Víz × Mobilitás × Pénzügy',best:'R',pts:250,bonus:75,
+  t:'A nagy klímacsomag',setup:'A testület ma dönt a teljes keretről.',
+  chips:[['💬','A mérnökök terve: egy nagy tározó'],['🤝','Az egyenlő osztás ellen senki se szólna']],
+  L:{ic:'🏗️',t:'Minden a tározóra',cell:[0.4,-0.6]},
+  R:{ic:'🎯',t:'Csomag a top-3 zónára',cell:[2.2,0.6]},
+  layers:[
+   {ic:'🟥',n:'Kockázat',type:'poly',c:C_HEAT,defs:[[2.2,0.6,0.8,41,0.42],[1.2,-0.8,0.6,42,0.34],[0.4,-0.6,0.55,43,0.26],[-1.4,0.8,0.45,44,0.14]]},
+   {ic:'🔥',n:'Incidensek',type:'heat',clusters:[[2.2,0.6,30,0.6],[1.2,-0.8,22,0.45],[0.5,-0.6,16,0.4]],seed:45},
+   {ic:'🚌',n:'Kritikus utak',type:'line',c:C_GOLD,paths:[[[2.6,1.2],[2.2,0.6],[1.2,-0.8],[0,0]],[[-1.8,-0.6],[0,0],[1.2,-0.8]]],seed:46},
+   {ic:'🌱',n:'Helyszínek',type:'pts',c:C_GREEN,clusters:[[2.2,0.6,3,0.3],[1.2,-0.8,2,0.2],[0.4,-0.6,2,0.2]],seed:47,big:true},
+   {ic:'⏱',n:'Elérés',type:'iso',c:C_TEAL,center:[0.1,0.05],radii:[1.0,1.9],seed:48}],
+  call:'Három szakág — ugyanaz a 3 zóna.',
+  why:'A tározó egy kockázat — a csomag a metszetre költ.'}
+];
+const MAXPTS=WEEK.reduce((a,r)=>a+r.pts+r.bonus,0);
+
+/* ---- állapot ---- */
+let G={st:'type',type:null,town:null,i:0,sc:0,ph:1,p1:null,earn:0,ly:[],seen:[],
+  t0:null,time:null,hist:[],board:null,rank:null,mats:[],lead:null,marks:[],tutDone:false};
+let map=null,mapReady=false,gTick=null;
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function fmtTime(s){const m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0');}
+function gElapsed(){return G.t0?Math.round((Date.now()-G.t0)/1000):0;}
+function tickUI(){
+  const t=document.getElementById('gTimer');if(t&&G.t0)t.textContent='⏱ '+fmtTime(gElapsed());
+  const s=document.getElementById('gScore');if(s)s.textContent=G.sc;
+  const d=document.getElementById('days');
+  if(d)d.innerHTML=WEEK.map((_,i)=>`<i class="${i<G.i?'done':i===G.i&&G.st!=='type'&&G.st!=='town'?'cur':''}"></i>`).join('');
+}
+function gStartTimer(){clearInterval(gTick);gTick=setInterval(tickUI,1000);}
+
+/* ---- egyetlen állandó térkép ---- */
+function initMap(){
+  if(typeof maplibregl==='undefined'){document.body.classList.add('maperr');return;}
+  try{
+    map=new maplibregl.Map({container:'map',
+      style:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+      center:[19.3,47.2],zoom:5.6,pitch:45,bearing:-15,
+      attributionControl:{compact:true},interactive:true});
+  }catch(e){document.body.classList.add('maperr');return;}
+  map.on('load',()=>{
+    mapReady=true;
+    /* 3D épületek — végig élnek */
+    map.addLayer({id:'b3d',type:'fill-extrusion',source:'carto','source-layer':'building',minzoom:13,
+      filter:['!=',['get','hide_3d'],true],
+      paint:{'fill-extrusion-color':'#16323e',
+        'fill-extrusion-height':['max',5,['coalesce',['get','render_height'],0]],
+        'fill-extrusion-base':['coalesce',['get','render_min_height'],0],
+        'fill-extrusion-opacity':0.9}});
+  });
+}
+/* forduló-rétegek fel/le az állandó térképen */
+function addRoundLayers(r){
+  if(!mapReady)return;
+  r.layers.forEach((ly,i)=>{
+    const vis=G.ly[i]?'visible':'none';
+    if(ly.type==='poly'){
+      map.addSource('gs'+i,{type:'geojson',data:polyFC(ly.defs)});
+      map.addLayer({id:'gf'+i,type:'fill',source:'gs'+i,layout:{visibility:vis},paint:{'fill-color':ly.c,'fill-opacity':['get','op']}});
+      map.addLayer({id:'gl'+i,type:'line',source:'gs'+i,layout:{visibility:vis},paint:{'line-color':ly.c,'line-opacity':0.85,'line-width':1.5}});
+    }else if(ly.type==='pts'){
+      map.addSource('gs'+i,{type:'geojson',data:ptsFC(ly.clusters,ly.seed)});
+      map.addLayer({id:'gp'+i,type:'circle',source:'gs'+i,layout:{visibility:vis},
+        paint:{'circle-color':ly.c,'circle-opacity':0.9,
+          'circle-radius':ly.big?8:['+',3,['*',4,['get','w']]],
+          'circle-stroke-color':'#081a21','circle-stroke-width':1.4}});
+    }else if(ly.type==='line'){
+      map.addSource('gs'+i,{type:'geojson',data:pathFC(ly.paths,ly.seed)});
+      map.addLayer({id:'gl'+i,type:'line',source:'gs'+i,layout:{visibility:vis},
+        paint:Object.assign({'line-color':ly.c,'line-opacity':0.95,'line-width':3},
+          ly.dash?{'line-dasharray':ly.dash}:{})});
+    }else if(ly.type==='iso'){
+      map.addSource('gs'+i,{type:'geojson',data:isoFC(ly.center[0],ly.center[1],ly.radii,ly.seed)});
+      map.addLayer({id:'gf'+i,type:'fill',source:'gs'+i,layout:{visibility:vis},
+        paint:{'fill-color':ly.c,'fill-opacity':['case',['==',['get','lvl'],0],0.10,0.22]}});
+      map.addLayer({id:'gl'+i,type:'line',source:'gs'+i,layout:{visibility:vis},
+        paint:{'line-color':ly.c,'line-opacity':0.75,'line-width':1.5,'line-dasharray':[2,2]}});
+    }else if(ly.type==='heat'){
+      map.addSource('gs'+i,{type:'geojson',data:ptsFC(ly.clusters,ly.seed)});
+      map.addLayer({id:'gh'+i,type:'heatmap',source:'gs'+i,layout:{visibility:vis},
+        paint:{'heatmap-weight':['get','w'],'heatmap-intensity':1.1,'heatmap-radius':34,'heatmap-opacity':0.75,
+          'heatmap-color':['interpolate',['linear'],['heatmap-density'],
+            0,'rgba(0,0,0,0)',0.25,'rgba(42,209,181,0.35)',0.5,'rgba(255,209,102,0.6)',0.75,'rgba(255,159,69,0.8)',1,'rgba(255,80,60,0.95)']}});
+    }
+  });
+}
+function removeRoundLayers(r){
+  if(!mapReady)return;
+  r.layers.forEach((_,i)=>{
+    ['gf'+i,'gl'+i,'gp'+i,'gh'+i].forEach(id=>{if(map.getLayer(id))map.removeLayer(id);});
+    if(map.getSource('gs'+i))map.removeSource('gs'+i);
+  });
+}
+/* következmény-jel: a döntés nyomot hagy a városon */
+function addMark(cell,ok){
+  const el=document.createElement('div');
+  el.className='cq '+(ok?'ok':'bad');
+  el.textContent=ok?'✓':'✗';
+  const mk=new maplibregl.Marker({element:el}).setLngLat(GP(cell[0],cell[1]));
+  if(mapReady)mk.addTo(map);
+  G.marks.push(mk);
+}
+function clearMarks(){G.marks.forEach(m=>{try{m.remove();}catch(e){}});G.marks=[];}
+
+/* ---- játékmenet ---- */
+function gSelType(k){
+  G.type=k;
+  const T=TYPES.find(x=>x.k===k);
+  const tw=T.towns[Math.floor(Math.random()*T.towns.length)];
+  G.town={name:tw[0],ll:[tw[1],tw[2]]};
+  ORIGIN=G.town.ll;
+  if(map&&mapReady){const c={center:G.town.ll,zoom:15.0,pitch:58,bearing:-17};
+    RM?map.jumpTo(c):map.flyTo({...c,duration:3200,essential:true});}
+  G.st='town';render();
+}
+function gStart(){
+  G.i=0;G.sc=0;G.hist=[];G.ph=1;G.p1=null;clearMarks();
+  G.t0=Date.now();G.time=null;gStartTimer();
+  G.st='q';render();
+}
+function commitSwipe(dir){
+  G.tutDone=true; /* az első sikeres húzás után nincs több bemutató */
+  if(navigator.vibrate)try{navigator.vibrate(12);}catch(e){}
+  const r=WEEK[G.i];
+  if(G.ph===1){
+    G.p1=dir;G.ph=2;
+    G.ly=r.layers.map(()=>false);G.seen=r.layers.map(()=>false);
+    render();
+    addRoundLayers(r);
+    if(map&&mapReady&&!RM)map.easeTo({bearing:map.getBearing()+8,duration:4000});
+  }else{
+    const ok=dir===r.best;
+    const bonus=(ok&&G.p1===r.best)?r.bonus:0;
+    G.earn=(ok?r.pts:0)+bonus;G.sc+=G.earn;
+    G.hist.push({day:DAYS_HU[G.i],ic:r.ic,earn:G.earn,max:r.pts+r.bonus,bonus});
+    removeRoundLayers(r);
+    addMark(r[r.best].cell,ok);
+    G.st='rev';G.lastOk=ok;render();
+  }
+  tickUI();
+}
+function gToggleLy(i){
+  G.ly[i]=!G.ly[i];
+  if(G.ly[i])G.seen[i]=true;
+  const r=WEEK[G.i];
+  ['gf'+i,'gl'+i,'gp'+i,'gh'+i].forEach(id=>{if(mapReady&&map.getLayer(id))map.setLayoutProperty(id,'visibility',G.ly[i]?'visible':'none');});
+  document.querySelectorAll('#lybar .g-ly[data-i="'+i+'"], #lyrow .g-ly[data-i="'+i+'"]')
+    .forEach(c=>c.classList.toggle('on',G.ly[i]));
+  const el=document.getElementById('gCall');
+  if(el){const n=r.layers.length,s=G.seen.filter(Boolean).length;
+    if(s>=n){el.innerHTML='<span class="ic">💡</span><span>'+r.call+'</span>';el.classList.remove('pending');}
+    else{el.innerHTML='<span class="ic">🔒</span><span>Kapcsold be mindet ('+s+'/'+n+')</span>';el.classList.add('pending');}}
+}
+function gNext(){
+  clearTimeout(G.stampTO);clearTimeout(G.stampTO2);
+  /* továbblépéskor a pecsét azonnal elkezd felúszni-eltűnni (nem vár 4,5 mp-et) */
+  const rs=document.getElementById('revstamp');
+  const s=rs&&rs.querySelector('.st');
+  if(s){s.classList.add('out');G.stampTO2=setTimeout(()=>{rs.hidden=true;},900);}
+  else if(rs)rs.hidden=true;
+  if(G.i+1<WEEK.length){G.i++;G.ph=1;G.p1=null;G.st='q';render();}
+  else{
+    G.time=gElapsed();clearInterval(gTick);
+    if(map&&mapReady&&!RM)map.flyTo({zoom:13.6,pitch:45,bearing:-10,center:G.town.ll,duration:2800,essential:true});
+    G.st='legacy';render();
+  }
+  tickUI();
+}
+function gReplay(){
+  clearTimeout(G.stampTO);clearTimeout(G.stampTO2);
+  document.getElementById('revstamp').hidden=true;
+  clearMarks();
+  if(G.st==='q'&&G.ph===2)removeRoundLayers(WEEK[G.i]);
+  G.st='type';G.type=null;G.town=null;G.sc=0;G.hist=[];G.t0=null;G.time=null;G.i=0;G.ph=1;
+  clearInterval(gTick);
+  if(map&&mapReady)map.flyTo({center:[19.3,47.2],zoom:5.6,pitch:45,bearing:-15,duration:2000,essential:true});
+  render();tickUI();
+}
+
+/* ---- SWIPE-motor (pointer events: ujj + egér) ---- */
+function bindSwipe(cardId,onCommit){
+  const card=document.getElementById(cardId);if(!card)return;
+  let x0=0,dx=0,dragging=false,w=0;
+  const stL=card.querySelector('.stampL'),stR=card.querySelector('.stampR');
+  const optL=card.querySelector('.sc-opt.oL'),optR=card.querySelector('.sc-opt.oR');
+  const set=()=>{
+    card.style.transform=`translateX(${dx}px) rotate(${dx*0.05}deg)`;
+    const p=Math.min(1,Math.abs(dx)/110);
+    if(dx<0){if(stL)stL.style.opacity=p;if(stR)stR.style.opacity=0;
+      if(optL)optL.classList.add('hotL');if(optR)optR.classList.remove('hotR');}
+    else if(dx>0){if(stR)stR.style.opacity=p;if(stL)stL.style.opacity=0;
+      if(optR)optR.classList.add('hotR');if(optL)optL.classList.remove('hotL');}
+    else{if(stL)stL.style.opacity=0;if(stR)stR.style.opacity=0;}
+  };
+  card.addEventListener('pointerdown',e=>{
+    dragging=true;x0=e.clientX;dx=0;w=card.offsetWidth;
+    card.classList.add('drag');card.classList.remove('spring','demo');
+    const hand=card.querySelector('.hand');if(hand)hand.remove();
+    card.setPointerCapture(e.pointerId);
+  });
+  card.addEventListener('pointermove',e=>{if(!dragging)return;dx=e.clientX-x0;set();});
+  const finish=()=>{
+    if(!dragging)return;dragging=false;
+    card.classList.remove('drag');
+    if(Math.abs(dx)>Math.max(80,w*0.28)){
+      const dir=dx<0?'L':'R';
+      card.classList.add('fly');
+      card.style.transform=`translateX(${dx<0?-w*1.3:w*1.3}px) rotate(${dx<0?-18:18}deg)`;
+      setTimeout(()=>onCommit(dir),240);
+    }else{
+      card.classList.add('spring');dx=0;set();
+    }
+  };
+  card.addEventListener('pointerup',finish);
+  card.addEventListener('pointercancel',finish);
+}
+document.addEventListener('keydown',e=>{
+  if(G.st!=='q')return;
+  if(e.key==='ArrowLeft')commitSwipe('L');
+  if(e.key==='ArrowRight')commitSwipe('R');
+});
+
+/* ---- renderelés ---- */
+function chipsHTML(r){
+  return r.layers.map((ly,i)=>{
+    const col=ly.c||C_HEAT;
+    return `<span class="g-ly${G.ly[i]?' on':''}" data-i="${i}" onclick="gToggleLy(${i})">
+      <span class="d" style="background:${col}66;border-color:${col}"></span><span class="ic">${ly.ic}</span>${ly.n}</span>`;
+  }).join('');
+}
+function optRow(r){
+  return `<div class="sc-opts">
+    <div class="sc-opt oL"><span class="dir">◀ BALRA</span><span class="ic">${r.L.ic}</span><b>${r.L.t}</b></div>
+    <div class="sc-opt oR"><span class="dir">JOBBRA ▶</span><span class="ic">${r.R.ic}</span><b>${r.R.t}</b></div>
+  </div>`;
+}
+function stamps(r){
+  return `<div class="stamp stampL">${r.L.ic}</div><div class="stamp stampR">${r.R.ic}</div>`;
+}
+function render(){
+  const sheet=document.getElementById('sheet');
+  const lybar=document.getElementById('lybar');
+  const topbar=document.getElementById('topbar');
+  lybar.hidden=true;topbar.hidden=(G.st==='type'||G.st==='town');
+  if(G.st==='type'){
+    sheet.innerHTML=`<div class="panel g-center"><h2>Krízishét 🗓️</h2>
+      <p class="sub">5 nap, 5 döntés. Húzd a kártyát balra vagy jobbra! Válassz települést:</p>
+      <div class="g-types">${TYPES.map(x=>`<button onclick="gSelType('${x.k}')">
+        <span class="ic">${x.ic}</span><b>${x.n}</b><span>${x.s}</span></button>`).join('')}</div></div>`;
+    return;
+  }
+  if(G.st==='town'){
+    const T=TYPES.find(x=>x.k===G.type);
+    sheet.innerHTML=`<div class="panel g-center">
+      <div style="font-size:46px;margin-bottom:4px">${T.ic}</div>
+      <h2>${G.town.name}</h2>
+      <p class="sub" style="margin:6px 0 18px">Te vagy a polgármester. Jön egy nehéz hét.</p>
+      <button class="btn btn-wide" onclick="gStart()">Kezdjük a hétfőt →</button></div>`;
+    return;
+  }
+  if(G.st==='q'){
+    const r=WEEK[G.i];
+    if(G.ph===1){
+      const demo=(!G.tutDone&&!RM);
+      sheet.innerHTML=`<div class="swipewrap"><div class="scard${demo?' demo':''}" id="scard">
+        ${stamps(r)}
+        <div class="chevs"><span class="chev cL">‹</span><span class="chev cR">›</span></div>
+        ${demo?'<div class="hand">👆</div>':''}
+        <div class="sc-disc"><span class="ic">${r.ic}</span>${DAYS_HU[G.i]} · ${r.disc}</div>
+        <div class="sc-title">${r.t}</div>
+        <p class="sc-setup">${r.setup}</p>
+        ${r.chips.map(c=>`<div class="sc-chip"><span class="ic">${c[0]}</span>${c[1]}</div>`).join('')}
+        ${optRow(r)}
+        <div class="sc-hint">← húzd el a kártyát →</div>
+      </div></div>`;
+      bindSwipe('scard',commitSwipe);
+    }else{
+      lybar.hidden=false;
+      lybar.innerHTML=chipsHTML(r);
+      const n=r.layers.length;
+      sheet.innerHTML=`<div class="lyrow" id="lyrow">${chipsHTML(r)}</div>
+      <div class="swipewrap"><div class="scard minicard" id="scard">
+        ${stamps(r)}
+        <div class="chevs"><span class="chev cL">‹</span><span class="chev cR">›</span></div>
+        <div class="g-call pending" id="gCall"><span class="ic">🔒</span><span>Kapcsold be mindet (0/${n})</span></div>
+        <div class="sc-title">${r.ic} Végleges döntés?</div>
+        ${optRow(r)}
+        <div class="sc-hint">nézd a térképet · kapcsolgasd a rétegeket · aztán húzd</div>
+      </div></div>`;
+      bindSwipe('scard',commitSwipe);
+    }
+    return;
+  }
+  if(G.st==='rev'){
+    const r=WEEK[G.i],ok=G.lastOk;
+    const rs=document.getElementById('revstamp');
+    rs.hidden=false;
+    rs.innerHTML=`<div class="st ${ok?'ok':'no'}">${ok?'Telitalálat':'Mellément'}</div>`;
+    /* a pecsét ~4,5 mp után magától felúszik és eltűnik */
+    clearTimeout(G.stampTO);clearTimeout(G.stampTO2);
+    G.stampTO=setTimeout(()=>{
+      const s=rs.querySelector('.st');if(s)s.classList.add('out');
+      G.stampTO2=setTimeout(()=>{rs.hidden=true;},900);
+    },4500);
+    sheet.innerHTML=`<div class="panel g-center">
+      <p class="rev-why">${r.why}</p>
+      <div class="rev-earn">+${G.earn}<i> pont${G.earn>r.pts?' · bónusz ✓':''}</i></div>
+      <button class="btn btn-wide" onclick="gNext()">${G.i+1<WEEK.length?DAYS_HU[G.i+1]+' →':'A hét vége →'}</button></div>`;
+    return;
+  }
+  if(G.st==='legacy'){
+    sheet.innerHTML=`<div class="panel g-center">
+      <h2>A hét lenyomata 🗺️</h2>
+      <p class="sub" style="margin-bottom:4px">A döntéseid ott maradtak a városon.</p>
+      <div class="big" style="margin:8px 0 2px">${G.sc}<span style="font-size:18px;color:var(--faint)"> / ${MAXPTS}</span></div>
+      ${G.time!=null?`<p class="g-note">⏱ ${fmtTime(G.time)}</p>`:''}
+      <div class="g-sum">${G.hist.map(h=>
+        `<div class="row"><span>${h.ic} ${h.day}${h.bonus?' · bónusz ✓':''}</span><b>${h.earn} / ${h.max}</b></div>`).join('')}</div>
+      <button class="btn btn-wide" onclick="G.st='form';render()">Fel a ranglistára! 🏆</button>
+      <button class="btn-replay" onclick="gReplay()">Új hét, új település</button></div>`;
+    return;
+  }
+  if(G.st==='form'){
+    sheet.innerHTML=`<div class="panel">
+      <h2 style="text-align:center">Ranglista 🏆</h2>
+      <div class="g-form">
+        <input type="text" id="g-nick" placeholder="Becenév" maxlength="24">
+        <input type="text" id="g-name" placeholder="Teljes név" maxlength="60">
+        <input type="email" id="g-email" placeholder="E-mail" maxlength="80">
+        <label class="g-check"><input type="checkbox" id="g-consent">Hozzájárulok adataim kezeléséhez (kapcsolatfelvétel).</label>
+        <div class="g-err" id="g-err"></div>
+        <button class="btn btn-wide" id="g-submit" onclick="gSubmit()">Mentés →</button>
+      </div></div>`;
+    return;
+  }
+  if(G.st==='board'){
+    const rows=(G.board||[]).map((b,i)=>{
+      const me=G.lead&&b.nick===G.lead.nick;
+      return `<div class="row${me?' me':''}"><span>#${i+1} · ${b.nick}</span><b>${b.score}${(SHOW_TIME&&b.time!=null)?' <em>⏱ '+fmtTime(b.time)+'</em>':''}</b></div>`;
+    }).join('');
+    sheet.innerHTML=`<div class="panel g-center">
+      <h2>Ranglista 🏆</h2>
+      ${G.rank?`<p class="sub">A helyed: <b>#${G.rank}</b></p>`:''}
+      <div class="g-board">${rows}</div>
+      <button class="btn-replay" onclick="gReplay()">Új hét, új település</button></div>`;
+    return;
+  }
+}
+
+/* ---- mentés + helyi ranglista (saját teszt-kulcsok) ---- */
+function gSubmit(){
+  const nick=document.getElementById('g-nick').value.trim();
+  const name=document.getElementById('g-name').value.trim();
+  const email=document.getElementById('g-email').value.trim();
+  const cons=document.getElementById('g-consent').checked;
+  const err=document.getElementById('g-err');
+  if(!nick||!name||!email||!cons){err.textContent='Minden mező és a hozzájárulás kötelező.';return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.textContent='Érvénytelen e-mail.';return;}
+  G.lead={ts:new Date().toISOString(),nick,name,email,score:G.sc,max:MAXPTS,time:G.time,variant:'swipe-test'};
+  try{const a=JSON.parse(localStorage.getItem('gp-sw-leads')||'[]');a.push(G.lead);localStorage.setItem('gp-sw-leads',JSON.stringify(a));}catch(e){}
+  let b=[];try{b=JSON.parse(localStorage.getItem('gp-sw-board')||'null')||[];}catch(e){}
+  if(!b.length)b=[{nick:'TérképZseni',score:800,time:230},{nick:'PolgiMester',score:650,time:260},{nick:'GeoRóka',score:475,time:205}];
+  const better=(s1,t1,s2,t2)=>s1>s2||(s1===s2&&(t1==null?1e9:t1)<(t2==null?1e9:t2));
+  const me=b.find(x=>x.nick===nick);
+  if(me){if(better(G.sc,G.time,me.score,me.time)){me.score=G.sc;me.time=G.time;}}
+  else b.push({nick,score:G.sc,time:G.time});
+  b.sort((x,y)=>y.score-x.score||((x.time==null?1e9:x.time)-(y.time==null?1e9:y.time)));
+  try{localStorage.setItem('gp-sw-board',JSON.stringify(b));}catch(e){}
+  G.board=b.slice(0,10);G.rank=b.findIndex(x=>x.nick===nick)+1;
+  G.st='board';render();
+}
+
+/* ---- init ---- */
+render();tickUI();
+initMap();
+requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.add('in')));
+</script>
+</body>
+</html>
