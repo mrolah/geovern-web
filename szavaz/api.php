@@ -1,8 +1,9 @@
 <?php
 // ÉTOSZ hőhullám-kör — minimális szavazó backend.
 // Minden szavazat egy sor a votes.csv végén (append, zárolással). Az állapot (aktív kör) a state.json-ban.
-// Végpontok:  ?a=state            → {"round":1|2|0}
+// Végpontok:  ?a=state[&cid=..]   → {"round":1|2|0, "mine":{"1":"D"|null,"2":null}}  (cid-del a készülék saját szavazata is)
 //             ?a=results          → {"round":..,"rounds":{"1":{"A":n,...,"n":össz},"2":{...}}}
+//             ?a=mine&cid=..      → {"1":"D"|null,"2":null}   (a készülék saját, érvényes szavazata körönként)
 //             POST ?a=vote        body: cid=..&round=..&opt=A..D   → {"ok":true}
 //             ?a=setround&key=..&round=0|1|2      (0 = zárva)
 //             ?a=reset&key=..     → törli a szavazatokat (a régi fájlt átnevezi)
@@ -21,7 +22,7 @@ function state($STATE) {
   $s = json_decode(file_get_contents($STATE), true);
   return is_array($s) ? $s : ['round' => 1];
 }
-function results($VOTES) {
+function lastVotes($VOTES) {
   $last = [];                                   // [round][cid] = opt  (az utolsó szavazat számít)
   if (file_exists($VOTES)) {
     $fh = fopen($VOTES, 'r');
@@ -35,6 +36,10 @@ function results($VOTES) {
     }
     fclose($fh);
   }
+  return $last;
+}
+function results($VOTES) {
+  $last = lastVotes($VOTES);
   $out = [];
   foreach ([1, 2] as $r) {
     $c = ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0, 'n' => 0];
@@ -45,8 +50,18 @@ function results($VOTES) {
 }
 
 $a = $_GET['a'] ?? '';
-if ($a === 'state') { echo json_encode(state($STATE)); exit; }
+if ($a === 'state') {
+  $out = state($STATE);
+  $cid = preg_replace('/[^a-zA-Z0-9_-]/', '', $_GET['cid'] ?? '');
+  if ($cid !== '') { $last = lastVotes($VOTES); $out['mine'] = ['1' => $last[1][$cid] ?? null, '2' => $last[2][$cid] ?? null]; }
+  echo json_encode($out); exit;
+}
 if ($a === 'results') { echo json_encode(['round' => state($STATE)['round'], 'rounds' => results($VOTES)]); exit; }
+if ($a === 'mine') {
+  $cid = preg_replace('/[^a-zA-Z0-9_-]/', '', $_GET['cid'] ?? '');
+  $last = lastVotes($VOTES);
+  echo json_encode(['1' => $last[1][$cid] ?? null, '2' => $last[2][$cid] ?? null]); exit;
+}
 if ($a === 'vote') {
   $cid = preg_replace('/[^a-zA-Z0-9_-]/', '', $_POST['cid'] ?? '');
   $round = (int)($_POST['round'] ?? 0);
