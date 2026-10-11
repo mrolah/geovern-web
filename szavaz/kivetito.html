@@ -5,47 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kivetítő · Hőhullám</title>
 <style>
-  :root { --bg:#1f1d1b; --ink:#efe6d3; --muted:#b7a585; --bar:#8c7a5e; --bar2:#c9b58f; --panel:#2a2724; }
+  :root { --ink:#efe6d3; --muted:#d8cdb6; --bar:#8c7a5e; --bar2:#d9c49a; --glass:rgba(22,19,16,.74); --track:rgba(255,255,255,.14); }
   * { box-sizing:border-box; }
-  html,body { margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:"Calibri Light","Segoe UI Light","Segoe UI",Helvetica,Arial,sans-serif; }
-  .top { display:flex; justify-content:space-between; align-items:flex-start; padding:34px 48px 0; }
-  h1 { font-weight:300; font-size:44px; margin:0; letter-spacing:.01em; }
-  .q { color:var(--muted); font-size:22px; margin:6px 0 0; }
-  .join { text-align:right; }
-  .join .url { font-size:30px; letter-spacing:.02em; }
-  .join .hint { color:var(--muted); font-size:16px; margin-top:4px; }
-  #qr { margin-top:10px; display:none; background:#fff; padding:8px; border-radius:8px; }
-  #qr.on { display:inline-block; }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:28px; padding:28px 48px 40px; }
-  .grid.single { grid-template-columns:1fr; max-width:1180px; margin:0 auto; }
-  .grid.single .panel { opacity:1; }
+  html,body { margin:0; height:100%; background:#1f1d1b; color:var(--ink); font-family:"Calibri Light","Segoe UI Light","Segoe UI",Helvetica,Arial,sans-serif; overflow:hidden; }
+  /* háttérkép: teljes képernyő, a részletek takarás nélkül a felső ~65 %-ban */
+  #bg { position:fixed; inset:0; background:#1f1d1b center/cover no-repeat; }
+  /* vékony átmenet csak a felső sávon, hogy a cím és a QR olvasható legyen a világos égen */
+  #scrim { position:fixed; left:0; right:0; top:0; height:26vh; background:linear-gradient(to bottom, rgba(0,0,0,.62), rgba(0,0,0,0)); pointer-events:none; }
+
+  .top { position:fixed; left:0; right:0; top:0; display:flex; justify-content:space-between; align-items:flex-start; padding:2.4vh 2.6vw 0; }
+  h1 { font-weight:300; font-size:2.7vw; max-width:64vw; margin:0; letter-spacing:.01em; text-shadow:0 2px 14px rgba(0,0,0,.6); }
+  .q { color:var(--muted); font-size:1.5vw; margin:.4vh 0 0; text-shadow:0 1px 10px rgba(0,0,0,.6); }
+  .join { display:flex; align-items:center; gap:1.2vw; background:var(--glass); backdrop-filter:blur(8px); border-radius:1.2vw; padding:1vw 1.3vw; }
+  .join .url { font-size:1.55vw; letter-spacing:.02em; white-space:nowrap; }
+  .join .hint { color:var(--muted); font-size:1.05vw; margin-top:.3vh; }
+  #qr { width:9.5vw; height:9.5vw; background:#fff; padding:.5vw; border-radius:.6vw; display:none; }
+  #qr.on { display:block; }
+  #qr img, #qr canvas { width:100%; height:100%; display:block; }
+
+  /* eredménysáv alul */
+  .band { position:fixed; left:0; right:0; bottom:0; padding:0 2.6vw 3.6vh; display:grid; grid-template-columns:1fr 1fr; gap:1.4vw; }
+  .band.single { grid-template-columns:1fr; }
+  .panel { background:var(--glass); backdrop-filter:blur(8px); border-radius:1.2vw; padding:1.3vh 1.4vw 1.2vh; opacity:.55; transition:opacity .4s; }
+  .panel.live, .panel.reveal { opacity:1; }
+  .panel.live { outline:1.5px solid var(--bar2); }
   .panel.hidden { display:none; }
-  .panel.reveal { opacity:1; }
-  .reveal .bar i { background:var(--bar2); }
-  .panel { background:var(--panel); border-radius:18px; padding:22px 26px 18px; min-height:420px; opacity:.55; transition:opacity .4s; }
-  .panel.live { opacity:1; outline:1.5px solid var(--bar2); }
-  .panel h2 { font-weight:300; font-size:26px; margin:0 0 4px; }
-  .panel .n { color:var(--muted); font-size:16px; margin-bottom:16px; }
-  .row { display:grid; grid-template-columns:40px 1fr 90px; align-items:center; gap:12px; margin:12px 0; }
-  .row .k { font-size:24px; color:var(--muted); }
-  .bar { height:46px; background:#3a3531; border-radius:10px; overflow:hidden; }
-  .bar i { display:block; height:100%; width:0; background:var(--bar); border-radius:10px; transition:width .6s ease; }
-  .live .bar i { background:var(--bar2); }
-  .row .v { text-align:right; font-size:26px; font-variant-numeric:tabular-nums; }
-  .row .v small { display:block; font-size:14px; color:var(--muted); }
-  .legend { color:var(--muted); font-size:14px; line-height:1.5; margin-top:12px; }
-  .legend b { color:var(--ink); font-weight:400; }
-  .state { position:fixed; left:48px; bottom:14px; color:#6f6353; font-size:13px; }
+  .ph { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.8vh; }
+  .ph h2 { font-weight:300; font-size:1.7vw; margin:0; }
+  .ph .n { color:var(--muted); font-size:1.1vw; }
+  .row { display:grid; grid-template-columns:2.3vw minmax(0,20vw) 1fr 5.2vw; align-items:center; gap:.9vw; margin:.7vh 0; }
+  .single .row { grid-template-columns:2.3vw minmax(0,34vw) 1fr 6vw; }
+  .row .k { width:2.3vw; height:2.3vw; border-radius:50%; background:rgba(255,255,255,.12); color:var(--ink); display:flex; align-items:center; justify-content:center; font-size:1.25vw; }
+  .row .t { font-size:1.05vw; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bar { height:2.6vw; background:var(--track); border-radius:.6vw; overflow:hidden; }
+  .bar i { display:block; height:100%; width:0; background:var(--bar); border-radius:.6vw; transition:width .6s ease; }
+  .live .bar i, .reveal .bar i { background:var(--bar2); }
+  .row .v { text-align:right; font-size:1.5vw; font-variant-numeric:tabular-nums; line-height:1.05; }
+  .row .v small { display:block; font-size:.9vw; color:var(--muted); }
+  .state { position:fixed; left:2.6vw; bottom:.7vh; color:rgba(239,230,211,.55); font-size:.8vw; }
 </style>
 </head>
 <body>
+<div id="bg"></div>
+<div id="scrim"></div>
 <div class="top">
   <div><h1 id="cim"></h1><p class="q" id="kerdes"></p></div>
-  <div class="join"><div class="url" id="url"></div><div class="hint">telefonnal: nyissa meg, és válasszon</div><div id="qr"></div></div>
+  <div class="join"><div><div class="url" id="url"></div><div class="hint">telefonnal: nyissa meg, és válasszon</div></div><div id="qr"></div></div>
 </div>
-<div class="grid">
-  <div class="panel" id="p1"><h2 id="t1"></h2><div class="n" id="n1">—</div><div id="rows1"></div></div>
-  <div class="panel" id="p2"><h2 id="t2"></h2><div class="n" id="n2">—</div><div id="rows2"></div></div>
+<div class="band" id="band">
+  <div class="panel" id="p1"><div class="ph"><h2 id="t1"></h2><div class="n" id="n1">—</div></div><div id="rows1"></div></div>
+  <div class="panel" id="p2"><div class="ph"><h2 id="t2"></h2><div class="n" id="n2">—</div></div><div id="rows2"></div></div>
 </div>
 <div class="state" id="state">kapcsolódás…</div>
 <script src="config.js"></script>
@@ -55,37 +64,43 @@
   const C = window.SZAVAZAS, $ = s => document.querySelector(s);
   $('#cim').textContent = C.CIM; $('#kerdes').textContent = C.KERDES; $('#url').textContent = C.ROVID_URL;
   $('#t1').textContent = C.KOROK[1]; $('#t2').textContent = C.KOROK[2];
-  try { if (window.QRCode) { new QRCode($('#qr'), { text: location.href.replace(/kivetito\.html.*$/, ''), width:128, height:128, correctLevel: QRCode.CorrectLevel.M }); $('#qr').classList.add('on'); } } catch(e) {}
-  // sorok
+  if (C.HATTERKEP) $('#bg').style.backgroundImage = 'url("' + C.HATTERKEP + '")';
+
+  // QR: előre legenerált kép (config.QR_KEP), különben a böngésző rajzolja a szavazó oldal címére
+  const voteUrl = location.href.replace(/kivetito\.html.*$/, '');
+  try {
+    if (C.QR_KEP) { const im = document.createElement('img'); im.src = C.QR_KEP; im.alt = 'QR'; $('#qr').appendChild(im); $('#qr').classList.add('on'); }
+    else if (window.QRCode) { new QRCode($('#qr'), { text: voteUrl, width: 512, height: 512, correctLevel: QRCode.CorrectLevel.M }); $('#qr').classList.add('on'); }
+  } catch(e) {}
+
   for (const r of [1,2]) {
     const box = $('#rows' + r);
     for (const k of ['A','B','C','D']) {
-      box.insertAdjacentHTML('beforeend', `<div class="row"><div class="k">${k}</div><div class="bar"><i id="b${r}${k}"></i></div><div class="v"><span id="v${r}${k}">0</span><small id="s${r}${k}">0 %</small></div></div>`);
+      box.insertAdjacentHTML('beforeend',
+        `<div class="row"><div class="k">${k}</div><div class="t" title="${C.OPCIOK[k]}">${C.OPCIOK[k]}</div><div class="bar"><i id="b${r}${k}"></i></div><div class="v"><span id="v${r}${k}">0</span><small id="s${r}${k}"></small></div></div>`);
     }
-    box.insertAdjacentHTML('beforeend', `<div class="legend">${['A','B','C','D'].map(k => `<b>${k}</b> ${C.OPCIOK[k]}`).join('<br>')}</div>`);
   }
-  // Nézet: automatikus — 1. kör alatt csak az 1. panel, 2. kör alatt csak a 2., lezárva (kör = 0) mindkettő egymás mellett.
-  // Kézi felülírás billentyűvel: 1 / 2 = csak az adott kör, R = mindkettő, A = vissza automatikusra.
-  let manual = null;   // null | 1 | 2 | 'both'
+
+  // Nézet: automatikus — 1. kör alatt csak az 1. panel, 2. kör alatt csak a 2., lezárva (kör = 0) mindkettő.
+  // Kézi felülírás: 1 / 2 = csak az adott kör, R = mindkettő, A = vissza automatikusra.
+  let manual = null;
   function applyView(live) {
     const mode = manual !== null ? manual : (live === 1 ? 1 : live === 2 ? 2 : 'both');
-    const grid = document.querySelector('.grid');
-    grid.classList.toggle('single', mode !== 'both');
+    $('#band').classList.toggle('single', mode !== 'both');
     $('#p1').classList.toggle('hidden', mode === 2);
     $('#p2').classList.toggle('hidden', mode === 1);
     return mode;
   }
   async function tick() {
     try {
-      const res = await fetch(C.API + (C.API.includes('?') ? '&' : '?') + 'a=results&t=' + Date.now(), {cache:'no-store'});
-      const j = await res.json();
+      const j = await window.SZAVAZAS_get('a=results');
       const live = Number(j.round) || 0;
       const mode = applyView(live);
       for (const r of [1,2]) {
         const c = j.rounds[String(r)] || {A:0,B:0,C:0,D:0,n:0};
         const n = c.n || 0, max = Math.max(1, c.A, c.B, c.C, c.D);
         $('#p' + r).classList.toggle('live', live === r);
-        $('#p' + r).classList.toggle('reveal', live === 0);   // lezárva: mindkét kör teljes fénnyel — ez a reveal
+        $('#p' + r).classList.toggle('reveal', live === 0);
         $('#n' + r).textContent = n + ' szavazat' + (live === r ? ' · él' : (live === 0 ? ' · lezárva' : ''));
         for (const k of ['A','B','C','D']) {
           $('#b' + r + k).style.width = (100 * c[k] / max) + '%';
@@ -93,8 +108,8 @@
           $('#s' + r + k).textContent = n ? Math.round(100 * c[k] / n) + ' %' : '';
         }
       }
-      $('#state').textContent = 'aktív kör: ' + (live || 'zárva — eredmény') + ' · nézet: ' + (manual === null ? 'automatikus' : 'kézi (' + (mode === 'both' ? 'mindkettő' : mode + '. kör') + ')') + ' · frissítve ' + new Date().toLocaleTimeString('hu-HU') + ' · billentyű: 1 / 2 / R = kézi nézet, A = automatikus';
-    } catch(e) { $('#state').textContent = 'nincs kapcsolat a backenddel — ' + C.API; }
+      $('#state').textContent = 'aktív kör: ' + (live || 'zárva — eredmény') + ' · nézet: ' + (manual === null ? 'automatikus' : 'kézi') + ' · ' + new Date().toLocaleTimeString('hu-HU') + ' · billentyű: 1 / 2 / R = kézi nézet, A = automatikus';
+    } catch(e) { $('#state').textContent = 'nincs kapcsolat a backenddel — ' + (e && e.message ? e.message : '') + ' — ' + C.API; }
   }
   document.addEventListener('keydown', e => {
     const k = e.key.toLowerCase();
