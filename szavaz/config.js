@@ -2,7 +2,7 @@
 window.SZAVAZAS = {
   // Backend végpont. PHP-s tárhelyen: "api.php" (ugyanebben a mappában).
   // Statikus tárhelyen (nincs PHP): az Apps Script web app URL-je, pl. "https://script.google.com/macros/s/XXXX/exec"
-  API: "https://script.google.com/macros/s/AKfycbxCx9wsOAp7rEH0J26u3rTP25MFukJh1j9QSFxYJI7bH5f7dkPv1pZksoZaWHqOdSA4yQ/exec",
+  API: "api.php",
 
   // A kérdés és a négy opció — mindkét körben ugyanaz
   CIM: "Hőhullám. Három hét. 40 millió forint.",
@@ -16,6 +16,7 @@ window.SZAVAZAS = {
   KOROK: { 1: "1. kör — vakon", 2: "2. kör — a rétegekkel" },
 
   // A kivetítőn megjelenő rövid cím (ezt írd át a saját domainre)
-  ROVID_URL: "https://mrolah.github.io/geovern-web/szavaz",
-  FRISSITES_MS: 2000
+  ROVID_URL: "pelda.hu/szavaz",
+  FRISSITES_MS: 2000,          // kivetítő és vezérlő
+  SZAVAZO_FRISSITES_MS: 3000   // a telefonok — 60 készüléknél is belefér az Apps Script korlátaiba
 };
