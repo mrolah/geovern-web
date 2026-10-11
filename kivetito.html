@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kivetítő · Hőhullám</title>
+<style>
+  :root { --bg:#1f1d1b; --ink:#efe6d3; --muted:#b7a585; --bar:#8c7a5e; --bar2:#c9b58f; --panel:#2a2724; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:"Calibri Light","Segoe UI Light","Segoe UI",Helvetica,Arial,sans-serif; }
+  .top { display:flex; justify-content:space-between; align-items:flex-start; padding:34px 48px 0; }
+  h1 { font-weight:300; font-size:44px; margin:0; letter-spacing:.01em; }
+  .q { color:var(--muted); font-size:22px; margin:6px 0 0; }
+  .join { text-align:right; }
+  .join .url { font-size:30px; letter-spacing:.02em; }
+  .join .hint { color:var(--muted); font-size:16px; margin-top:4px; }
+  #qr { margin-top:10px; display:none; background:#fff; padding:8px; border-radius:8px; }
+  #qr.on { display:inline-block; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:28px; padding:28px 48px 40px; }
+  .panel { background:var(--panel); border-radius:18px; padding:22px 26px 18px; min-height:420px; opacity:.55; transition:opacity .4s; }
+  .panel.live { opacity:1; outline:1.5px solid var(--bar2); }
+  .panel h2 { font-weight:300; font-size:26px; margin:0 0 4px; }
+  .panel .n { color:var(--muted); font-size:16px; margin-bottom:16px; }
+  .row { display:grid; grid-template-columns:40px 1fr 90px; align-items:center; gap:12px; margin:12px 0; }
+  .row .k { font-size:24px; color:var(--muted); }
+  .bar { height:46px; background:#3a3531; border-radius:10px; overflow:hidden; }
+  .bar i { display:block; height:100%; width:0; background:var(--bar); border-radius:10px; transition:width .6s ease; }
+  .live .bar i { background:var(--bar2); }
+  .row .v { text-align:right; font-size:26px; font-variant-numeric:tabular-nums; }
+  .row .v small { display:block; font-size:14px; color:var(--muted); }
+  .legend { color:var(--muted); font-size:14px; line-height:1.5; margin-top:12px; }
+  .legend b { color:var(--ink); font-weight:400; }
+  .state { position:fixed; left:48px; bottom:14px; color:#6f6353; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <div><h1 id="cim"></h1><p class="q" id="kerdes"></p></div>
+  <div class="join"><div class="url" id="url"></div><div class="hint">telefonnal: nyissa meg, és válasszon</div><div id="qr"></div></div>
+</div>
+<div class="grid">
+  <div class="panel" id="p1"><h2 id="t1"></h2><div class="n" id="n1">—</div><div id="rows1"></div></div>
+  <div class="panel" id="p2"><h2 id="t2"></h2><div class="n" id="n2">—</div><div id="rows2"></div></div>
+</div>
+<div class="state" id="state">kapcsolódás…</div>
+<script src="config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+  const C = window.SZAVAZAS, $ = s => document.querySelector(s);
+  $('#cim').textContent = C.CIM; $('#kerdes').textContent = C.KERDES; $('#url').textContent = C.ROVID_URL;
+  $('#t1').textContent = C.KOROK[1]; $('#t2').textContent = C.KOROK[2];
+  try { if (window.QRCode) { new QRCode($('#qr'), { text: location.href.replace(/kivetito\.html.*$/, ''), width:128, height:128, correctLevel: QRCode.CorrectLevel.M }); $('#qr').classList.add('on'); } } catch(e) {}
+  // sorok
+  for (const r of [1,2]) {
+    const box = $('#rows' + r);
+    for (const k of ['A','B','C','D']) {
+      box.insertAdjacentHTML('beforeend', `<div class="row"><div class="k">${k}</div><div class="bar"><i id="b${r}${k}"></i></div><div class="v"><span id="v${r}${k}">0</span><small id="s${r}${k}">0 %</small></div></div>`);
+    }
+    box.insertAdjacentHTML('beforeend', `<div class="legend">${['A','B','C','D'].map(k => `<b>${k}</b> ${C.OPCIOK[k]}`).join('<br>')}</div>`);
+  }
+  let show = {1:true, 2:true};
+  async function tick() {
+    try {
+      const res = await fetch(C.API + (C.API.includes('?') ? '&' : '?') + 'a=results&t=' + Date.now(), {cache:'no-store'});
+      const j = await res.json();
+      const live = Number(j.round) || 0;
+      for (const r of [1,2]) {
+        const c = j.rounds[String(r)] || {A:0,B:0,C:0,D:0,n:0};
+        const n = c.n || 0, max = Math.max(1, c.A, c.B, c.C, c.D);
+        $('#p' + r).classList.toggle('live', live === r);
+        $('#n' + r).textContent = n + ' szavazat' + (live === r ? ' · él' : '');
+        for (const k of ['A','B','C','D']) {
+          const v = show[r] ? c[k] : 0;
+          $('#b' + r + k).style.width = (100 * v / max) + '%';
+          $('#v' + r + k).textContent = show[r] ? v : '·';
+          $('#s' + r + k).textContent = (n && show[r]) ? Math.round(100 * v / n) + ' %' : '';
+        }
+      }
+      $('#state').textContent = 'aktív kör: ' + (live || 'zárva') + ' · frissítve ' + new Date().toLocaleTimeString('hu-HU') + ' · billentyű: 1 / 2 = kör elrejtése-mutatása, R = mindkettő';
+    } catch(e) { $('#state').textContent = 'nincs kapcsolat a backenddel — ' + C.API; }
+  }
+  document.addEventListener('keydown', e => { if (e.key === '1') show[1] = !show[1]; if (e.key === '2') show[2] = !show[2]; if (e.key.toLowerCase() === 'r') { show = {1:true, 2:true}; } tick(); });
+  tick(); setInterval(tick, C.FRISSITES_MS || 2000);
+})();
+</script>
+</body>
+</html>
