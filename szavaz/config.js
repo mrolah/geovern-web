@@ -2,7 +2,7 @@
 window.SZAVAZAS = {
   // Backend végpont. PHP-s tárhelyen: "api.php" (ugyanebben a mappában).
   // Statikus tárhelyen (nincs PHP): az Apps Script web app URL-je, pl. "https://script.google.com/macros/s/XXXX/exec"
-  API: "api.php",
+  API: "https://script.google.com/macros/s/AKfycbxr_M0Xegv6YJ6TvZ2qqBViAMFKyUazaBBzYSOZwTlNbRskXxQdcXGNA-9jGNB05DlPrQ/exec",
 
   // A kérdés és a négy opció — mindkét körben ugyanaz
   CIM: "Hőhullám. Három hét. 40 millió forint.",
