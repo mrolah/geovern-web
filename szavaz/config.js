@@ -16,6 +16,6 @@ window.SZAVAZAS = {
   KOROK: { 1: "1. kör — vakon", 2: "2. kör — a rétegekkel" },
 
   // A kivetítőn megjelenő rövid cím (ezt írd át a saját domainre)
-  ROVID_URL: "https://mrolah.github.io/geovern-web/",
+  ROVID_URL: "https://mrolah.github.io/geovern-web/szavaz",
   FRISSITES_MS: 2000
 };
