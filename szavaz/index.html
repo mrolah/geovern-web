@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Szavazás · Hőhullám</title>
+<style>
+  :root { --bg:#f4efe6; --ink:#2b2622; --beige:#8c7a5e; --taupe:#7a6a52; --card:#fffdf8; --ok:#4f7a4a; --line:#d8cdb6; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .wrap { max-width:520px; margin:0 auto; padding:20px 16px 40px; }
+  .round { font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--beige); margin-bottom:8px; }
+  h1 { font-size:24px; font-weight:600; line-height:1.2; margin:0 0 6px; }
+  .q { font-size:17px; color:var(--taupe); margin:0 0 18px; }
+  .opt { display:block; width:100%; text-align:left; background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:14px 14px 14px 56px; margin:0 0 10px; font-size:17px; line-height:1.3; color:var(--ink); position:relative; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .opt b { position:absolute; left:14px; top:12px; width:30px; height:30px; border-radius:50%; background:var(--line); color:var(--taupe); font-weight:700; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .opt.sel { border-color:var(--taupe); background:#efe6d3; }
+  .opt.sel b { background:var(--taupe); color:#fff; }
+  .opt:disabled { opacity:.5; cursor:default; }
+  .msg { margin-top:14px; min-height:24px; font-size:15px; color:var(--taupe); }
+  .msg.ok { color:var(--ok); }
+  .closed { background:#fff; border:1.5px dashed var(--line); border-radius:14px; padding:18px; text-align:center; color:var(--taupe); font-size:17px; }
+  .foot { margin-top:26px; font-size:12px; color:#9a8c74; line-height:1.4; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="round" id="round">—</div>
+  <h1 id="cim"></h1>
+  <p class="q" id="kerdes"></p>
+  <div id="opts"></div>
+  <div class="msg" id="msg"></div>
+  <div class="foot">Névtelen szavazás. Egy készülékről körönként egy szavazat számít — a választás a kör lezárásáig módosítható.</div>
+</div>
+<script src="config.js"></script>
+<script>
+(function(){
+  const C = window.SZAVAZAS;
+  const $ = s => document.querySelector(s);
+  // kliens-azonosító: véletlen, csak a készüléken, a kettős szavazás szűréséhez
+  let cid = null;
+  try { cid = localStorage.getItem('etosz_cid'); if (!cid) { cid = Math.random().toString(36).slice(2,10) + Date.now().toString(36); localStorage.setItem('etosz_cid', cid); } } catch(e) { cid = 'x' + Math.random().toString(36).slice(2,12); }
+  let round = 0, chosen = {};
+  try { chosen = JSON.parse(localStorage.getItem('etosz_chosen') || '{}'); } catch(e) {}
+
+  $('#cim').textContent = C.CIM; $('#kerdes').textContent = C.KERDES;
+  const opts = $('#opts');
+  for (const k of ['A','B','C','D']) {
+    const b = document.createElement('button'); b.className = 'opt'; b.dataset.k = k;
+    b.innerHTML = '<b>' + k + '</b>' + C.OPCIOK[k];
+    b.addEventListener('click', () => vote(k));
+    opts.appendChild(b);
+  }
+  function paint() {
+    const r = $('#round');
+    if (round === 1 || round === 2) {
+      r.textContent = C.KOROK[round];
+      opts.style.display = '';
+      for (const b of opts.children) { b.disabled = false; b.classList.toggle('sel', chosen[round] === b.dataset.k); }
+      $('#msg').className = 'msg' + (chosen[round] ? ' ok' : '');
+      $('#msg').textContent = chosen[round] ? ('Rögzítve: ' + chosen[round] + ' ✓  (módosítható)') : 'Válasszon egyet.';
+    } else {
+      r.textContent = 'A szavazás most zárva';
+      for (const b of opts.children) b.disabled = true;
+      $('#msg').className = 'msg'; $('#msg').textContent = 'Várjuk a következő kört — az oldal magától frissül.';
+    }
+  }
+  async function getState() {
+    try { const res = await fetch(C.API + (C.API.includes('?') ? '&' : '?') + 'a=state&t=' + Date.now(), {cache:'no-store'}); const j = await res.json(); round = Number(j.round) || 0; } catch(e) { /* hálózati hiba: marad az előző állapot */ }
+    paint();
+  }
+  async function vote(k) {
+    if (!(round === 1 || round === 2)) return;
+    $('#msg').className = 'msg'; $('#msg').textContent = 'Küldés…';
+    try {
+      const body = new URLSearchParams({cid, round, opt:k});
+      const res = await fetch(C.API + (C.API.includes('?') ? '&' : '?') + 'a=vote', {method:'POST', body, cache:'no-store'});
+      const j = await res.json();
+      if (j.ok) { chosen[round] = k; try { localStorage.setItem('etosz_chosen', JSON.stringify(chosen)); } catch(e) {} }
+      else if (j.err === 'closed') { round = Number(j.round) || 0; }
+    } catch(e) { $('#msg').textContent = 'Nem ment át — próbálja újra.'; return; }
+    paint();
+  }
+  getState(); setInterval(getState, C.FRISSITES_MS || 2000);
+})();
+</script>
+</body>
+</html>
