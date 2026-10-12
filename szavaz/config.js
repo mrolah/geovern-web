@@ -2,7 +2,7 @@
 window.SZAVAZAS = {
   // Backend végpont. PHP-s tárhelyen: "api.php" (ugyanebben a mappában).
   // Statikus tárhelyen (nincs PHP): az Apps Script web app URL-je, pl. "https://script.google.com/macros/s/XXXX/exec"
-  API: "https://script.google.com/macros/s/AKfycbwwW6FcM-BYfLlw4ns5eU_rip11f1n0MMbW4UuhceplPq04MMlOYaeFQEDM15p_8jiwpg/exec",   // Attila Apps Script web appja (GitHub Pages = statikus, ezért NEM api.php)
+  API: "https://script.google.com/macros/s/AKfycbzhOlBS62Ml7zs9Xirg0xNWx617vx9Cz7y5iO_sPpe0rU5Nj3BPERqiamqRAwmaeCf1TA/exec",   // Attila Apps Script web appja (GitHub Pages = statikus, ezért NEM api.php)
 
   // A kérdés és a négy opció — mindkét körben ugyanaz
   CIM: "Hőhullám. Három hét. 40 millió forint.",
