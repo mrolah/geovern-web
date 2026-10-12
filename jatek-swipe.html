@@ -171,7 +171,9 @@ h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
 .g-check input{margin-top:3px;accent-color:var(--teal);width:17px;height:17px;min-height:0}
 .g-err{font-size:13px;color:var(--red);min-height:17px}
 .g-board{margin:12px 0;text-align:left;max-height:34dvh;overflow:auto}
-.g-board .row{display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid rgba(143,176,181,.13);font-size:15px}
+.g-board .row{display:flex;justify-content:space-between;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(143,176,181,.13);font-size:15px}
+.g-board .row span{min-width:0}
+.g-board .row .borg{display:block;font-style:normal;font-size:11px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .g-board .row.me{background:rgba(42,209,181,.13);border-radius:10px;border-bottom-color:transparent}
 .g-board .row b{font-family:var(--mono);font-weight:500}
 .g-board .row b em{font-style:normal;color:var(--faint);font-size:11.5px;margin-left:6px}
@@ -208,7 +210,7 @@ h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
    ===================================================== */
 /* Google Apps Script webhook — a Krízishét eredményei Google Sheetbe
    (beüzemelés: google-sheets-setup.md, „Krízishét" szakasz; üresen helyi rangsor fut) */
-const SHEET_WEBHOOK='https://script.google.com/macros/s/AKfycbx7Lq52ZcTT4ymVIErqxAgnADyNcStpUlG0Z0pt-07C2qzP4jlR1IeY24HjXI_FZv8C/exec';
+const SHEET_WEBHOOK='';
 const SHOW_TIME=true;
 const DAYS_HU=['Hétfő','Kedd','Szerda','Csütörtök','Péntek'];
 const TYPES=[
@@ -638,7 +640,7 @@ function render(){
   if(G.st==='board'){
     const rows=(G.board||[]).map((b,i)=>{
       const me=G.lead&&b.nick===G.lead.name;
-      return `<div class="row${me?' me':''}"><span>#${i+1} · ${b.nick}</span><b>${b.score}${(SHOW_TIME&&b.time!=null)?' <em>⏱ '+fmtTime(b.time)+'</em>':''}</b></div>`;
+      return `<div class="row${me?' me':''}"><span>#${i+1} · ${esc(b.nick)}${b.org?`<i class="borg">${esc(b.org)}</i>`:''}</span><b>${b.score}${(SHOW_TIME&&b.time!=null)?' <em>⏱ '+fmtTime(b.time)+'</em>':''}</b></div>`;
     }).join('');
     sheet.innerHTML=`<div class="panel g-center">
       <h2>Ranglista 🏆</h2>
@@ -674,19 +676,20 @@ function gSubmit(){
       .then(r=>r.json())
       .then(j=>{clearTimeout(to);
         if(j&&j.ok)finish(j.board||[],j.rank,false);
-        else{const lb=localBoard(name,G.sc,G.time);finish(lb.board,lb.rank,true);}})
-      .catch(()=>{clearTimeout(to);const lb=localBoard(name,G.sc,G.time);finish(lb.board,lb.rank,true);});
+        else{const lb=localBoard(name,G.sc,G.time,org);finish(lb.board,lb.rank,true);}})
+      .catch(()=>{clearTimeout(to);const lb=localBoard(name,G.sc,G.time,org);finish(lb.board,lb.rank,true);});
   }else{
-    const lb=localBoard(name,G.sc,G.time);finish(lb.board,lb.rank,true);
+    const lb=localBoard(name,G.sc,G.time,org);finish(lb.board,lb.rank,true);
   }
 }
-function localBoard(nick,score,time){
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function localBoard(nick,score,time,org){
   let b=[];try{b=JSON.parse(localStorage.getItem('gp-sw-board')||'null')||[];}catch(e){}
-  if(!b.length)b=[{nick:'Térkép Zsófi',score:800,time:230},{nick:'Polgi Mester',score:650,time:260},{nick:'Geo Róka',score:475,time:205}];
+  if(!b.length)b=[{nick:'Térkép Zsófi',org:'Főépítészi iroda',score:800,time:230},{nick:'Polgi Mester',org:'Polgármesteri hivatal',score:650,time:260},{nick:'Geo Róka',org:'Térinformatikai kft.',score:475,time:205}];
   const better=(s1,t1,s2,t2)=>s1>s2||(s1===s2&&(t1==null?1e9:t1)<(t2==null?1e9:t2));
   const me=b.find(x=>x.nick===nick);
-  if(me){if(better(score,time,me.score,me.time)){me.score=score;me.time=time;}}
-  else b.push({nick,score,time});
+  if(me){if(better(score,time,me.score,me.time)){me.score=score;me.time=time;me.org=org||me.org;}}
+  else b.push({nick,score,time,org:org||''});
   b.sort((x,y)=>y.score-x.score||((x.time==null?1e9:x.time)-(y.time==null?1e9:y.time)));
   try{localStorage.setItem('gp-sw-board',JSON.stringify(b));}catch(e){}
   return{board:b.slice(0,10),rank:b.findIndex(x=>x.nick===nick)+1};
