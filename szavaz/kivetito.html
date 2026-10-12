@@ -8,8 +8,9 @@
   :root { --ink:#efe6d3; --muted:#d8cdb6; --bar:#8c7a5e; --bar2:#d9c49a; --glass:rgba(22,19,16,.74); --track:rgba(255,255,255,.14); }
   * { box-sizing:border-box; }
   html,body { margin:0; height:100%; background:#1f1d1b; color:var(--ink); font-family:"Calibri Light","Segoe UI Light","Segoe UI",Helvetica,Arial,sans-serif; overflow:hidden; }
-  /* háttérkép: teljes képernyő, a részletek takarás nélkül a felső ~65 %-ban */
-  #bg { position:fixed; inset:0; background:#1f1d1b center/cover no-repeat; }
+  /* háttérkép: két réteg, áttűnéssel váltanak (a jelenetek képei előre betöltve) */
+  .bg { position:fixed; inset:0; background:#1f1d1b center/cover no-repeat; opacity:0; transition:opacity .7s ease; }
+  .bg.on { opacity:1; }
   /* vékony átmenet csak a felső sávon, hogy a cím és a QR olvasható legyen a világos égen */
   #scrim { position:fixed; left:0; right:0; top:0; height:26vh; background:linear-gradient(to bottom, rgba(0,0,0,.62), rgba(0,0,0,0)); pointer-events:none; }
 
@@ -43,10 +44,15 @@
   .row .v { text-align:right; font-size:1.5vw; font-variant-numeric:tabular-nums; line-height:1.05; }
   .row .v small { display:block; font-size:.9vw; color:var(--muted); }
   .state { position:fixed; left:2.6vw; bottom:.7vh; color:rgba(239,230,211,.55); font-size:.8vw; }
+
+  /* „csak a kép” jelenetek (0 és a rétegek): a szavazófelület, a QR és a cím eltűnik, a kép tisztán látszik */
+  body.bare #scrim, body.bare .top, body.bare .band, body.bare .state { display:none; }
+  body.bare.err .state { display:block; color:#e8b9a5; }
 </style>
 </head>
 <body>
-<div id="bg"></div>
+<div class="bg" id="bgA"></div>
+<div class="bg" id="bgB"></div>
 <div id="scrim"></div>
 <div class="top">
   <div><h1 id="cim"></h1><p class="q" id="kerdes"></p></div>
@@ -62,9 +68,24 @@
 <script>
 (function(){
   const C = window.SZAVAZAS, $ = s => document.querySelector(s);
+  const N = C.NEZETEK || { 0: { kep: C.HATTERKEP || '' } };
   $('#cim').textContent = C.CIM; $('#kerdes').textContent = C.KERDES; $('#url').textContent = C.ROVID_URL;
   $('#t1').textContent = C.KOROK[1]; $('#t2').textContent = C.KOROK[2];
-  if (C.HATTERKEP) $('#bg').style.backgroundImage = 'url("' + C.HATTERKEP + '")';
+
+  // a jelenetek képei előre betöltve, hogy a váltás a terem wifijén is azonnali legyen
+  for (const v of Object.keys(N)) if (N[v].kep) { const im = new Image(); im.src = N[v].kep; }
+
+  // háttérváltás áttűnéssel (két réteg)
+  let shownKep = null, front = 'A';
+  function setBg(kep) {
+    if (kep === shownKep) return;
+    shownKep = kep;
+    const next = front === 'A' ? 'B' : 'A';
+    const el = $('#bg' + next), old = $('#bg' + front);
+    el.style.backgroundImage = kep ? 'url("' + kep + '")' : 'none';
+    el.classList.add('on'); old.classList.remove('on');
+    front = next;
+  }
 
   // QR: előre legenerált kép (config.QR_KEP), különben a böngésző rajzolja a szavazó oldal címére
   const voteUrl = location.href.replace(/kivetito\.html.*$/, '');
@@ -81,21 +102,28 @@
     }
   }
 
-  // Nézet: automatikus — 1. kör alatt csak az 1. panel, 2. kör alatt csak a 2., lezárva (kör = 0) mindkettő.
-  // Kézi felülírás: 1 / 2 = csak az adott kör, R = mindkettő, A = vissza automatikusra.
-  let manual = null;
-  function applyView(live) {
-    const mode = manual !== null ? manual : (live === 1 ? 1 : live === 2 ? 2 : 'both');
+  // Jelenet: a vezérlő állítja (a szerver „view” mezője); kézi felülírás a laptopon: 0–6 = jelenet, A = vissza a vezérlőre.
+  //   kor nélküli jelenet (0, rétegek): csak a kép.  kor = 1: 1. panel.  kor = 2: élő 2. kör alatt a 2. panel,
+  //   lezárás után (kör = 0) mindkettő egymás mellett = reveal.  R = mindkét panel kényszerítve.
+  let manualView = null, manualBoth = false;
+  function applyView(serverView, live) {
+    const v = manualView !== null ? manualView : serverView;
+    const n = N[v] || N[0] || {};
+    setBg(n.kep || '');
+    const bare = !n.kor;
+    document.body.classList.toggle('bare', bare);
+    let mode = 'both';
+    if (!bare && !manualBoth) mode = n.kor === 1 ? 1 : (live === 2 ? 2 : 'both');
     $('#band').classList.toggle('single', mode !== 'both');
     $('#p1').classList.toggle('hidden', mode === 2);
     $('#p2').classList.toggle('hidden', mode === 1);
-    return mode;
+    return v;
   }
   async function tick() {
     try {
       const j = await window.SZAVAZAS_get('a=results');
       const live = Number(j.round) || 0;
-      const mode = applyView(live);
+      const v = applyView(Number(j.view) || 0, live);
       for (const r of [1,2]) {
         const c = j.rounds[String(r)] || {A:0,B:0,C:0,D:0,n:0};
         const n = c.n || 0, max = Math.max(1, c.A, c.B, c.C, c.D);
@@ -108,12 +136,16 @@
           $('#s' + r + k).textContent = n ? Math.round(100 * c[k] / n) + ' %' : '';
         }
       }
-      $('#state').textContent = 'aktív kör: ' + (live || 'zárva — eredmény') + ' · nézet: ' + (manual === null ? 'automatikus' : 'kézi') + ' · ' + new Date().toLocaleTimeString('hu-HU') + ' · billentyű: 1 / 2 / R = kézi nézet, A = automatikus';
-    } catch(e) { $('#state').textContent = 'nincs kapcsolat a backenddel — ' + (e && e.message ? e.message : '') + ' — ' + C.API; }
+      document.body.classList.remove('err');
+      $('#state').textContent = 'jelenet: ' + v + (manualView !== null ? ' (kézi)' : '') + ' · aktív kör: ' + (live || 'zárva — eredmény') + ' · ' + new Date().toLocaleTimeString('hu-HU') + ' · billentyű: 0–6 jelenet, R mindkét panel, A vissza a vezérlőre';
+    } catch(e) { document.body.classList.add('err'); $('#state').textContent = 'nincs kapcsolat a backenddel — ' + (e && e.message ? e.message : '') + ' — ' + C.API; }
   }
   document.addEventListener('keydown', e => {
     const k = e.key.toLowerCase();
-    if (k === '1') manual = 1; else if (k === '2') manual = 2; else if (k === 'r') manual = 'both'; else if (k === 'a') manual = null; else return;
+    if (/^[0-9]$/.test(k) && N[k]) manualView = Number(k);
+    else if (k === 'r') manualBoth = !manualBoth;
+    else if (k === 'a') { manualView = null; manualBoth = false; }
+    else return;
     tick();
   });
   tick(); setInterval(tick, C.FRISSITES_MS || 2000);

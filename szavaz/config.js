@@ -3,7 +3,7 @@ window.SZAVAZAS = {
   // Backend végpont. PHP-s tárhelyen: "api.php" (ugyanebben a mappában).
   // Statikus tárhelyen (nincs PHP): az Apps Script web app URL-je, pl. "https://script.google.com/macros/s/XXXX/exec"
   API: "https://script.google.com/macros/s/AKfycbxOa1WeBrhUUeO5FQDX68zJpDVrNNsHZFvmA7gqZVNvef65igJJMMp9s-CT5lQDaLJR-A/exec",   // Attila Apps Script web appja (GitHub Pages = statikus, ezért NEM api.php)
- 
+
   // A kérdés és a négy opció — mindkét körben ugyanaz
   CIM: "Hőhullám. Három hét. 40 millió forint.",
   KERDES: "Mire költi a város az azonnali keretet?",
@@ -14,15 +14,28 @@ window.SZAVAZAS = {
     D: "Hőségriasztó rendszer: szenzorok, SMS-riasztás, önkéntesek az idősekhez"
   },
   KOROK: { 1: "1. kör — vakon", 2: "2. kör — a rétegekkel" },
- 
+
+  // A kivetítő jelenetei — a vezérlő gombjai ebből épülnek, ebben a sorrendben.
+  //   kep:  a háttérkép (a mappában)
+  //   kor:  melyik szavazókört nyitja meg a gomb (1 vagy 2); ha nincs, a szavazás zárva, és a kivetítőn CSAK a kép látszik
+  //   nev:  a vezérlő gombjának felirata
+  NEZETEK: {
+    0: { nev: "Indulás — csak a városkép, üresen",            kep: "varos.jpg" },
+    1: { nev: "1. kör — vakon (városkép + szavazás + QR)",    kep: "varos.jpg",            kor: 1 },
+    2: { nev: "Réteg: hiányzó lombkorona",                    kep: "reteg-lombkorona.jpg" },
+    3: { nev: "Réteg: sérülékeny lakók",                      kep: "reteg-serulekeny.jpg" },
+    4: { nev: "Réteg: hőség",                                 kep: "reteg-hoseg.jpg" },
+    5: { nev: "Réteg: gyalogos forgalom",                     kep: "reteg-gyalogos.jpg" },
+    6: { nev: "2. kör — a rétegekkel (összes réteg + szavazás + QR)", kep: "retegek-osszes.jpg", kor: 2 }
+  },
+
   // A kivetítőn megjelenő rövid cím (ezt írd át a saját domainre)
   ROVID_URL: "mrolah.github.io/geovern-web/szavaz/",
-  HATTERKEP: "varos.jpg",      // a kivetítő háttérképe (a mappában), üres string = nincs kép
-  QR_KEP: "qr.png",                  // opcionális: előre legenerált QR-kép fájlneve (pl. "qr.png"); üresen a böngésző rajzolja
+  QR_KEP: "qr.png",            // opcionális: előre generált QR-kép fájlneve; üresen a böngésző rajzolja
   FRISSITES_MS: 2000,          // kivetítő és vezérlő
   SZAVAZO_FRISSITES_MS: 3000   // a telefonok — 60 készüléknél is belefér az Apps Script korlátaiba
 };
- 
+
 // Közös lekérő: a választ szövegként olvassa, és érthető hibát ad, ha nem JSON jön vissza
 // (pl. a config.js API mezője még api.php-ra mutat egy statikus tárhelyen → a PHP forrása jön vissza).
 window.SZAVAZAS_get = async function (query, init) {

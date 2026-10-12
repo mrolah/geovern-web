@@ -5,24 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vezérlő · Hőhullám</title>
 <style>
-  body { font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:#f4efe6; color:#2b2622; margin:0; padding:24px 16px; }
+  body { font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:#f4efe6; color:#2b2622; margin:0; padding:20px 14px 40px; }
   .wrap { max-width:460px; margin:0 auto; }
-  h1 { font-size:20px; font-weight:600; margin:0 0 14px; }
-  button { display:block; width:100%; padding:16px; margin:0 0 10px; font-size:18px; border-radius:12px; border:1.5px solid #d8cdb6; background:#fffdf8; cursor:pointer; }
+  h1 { font-size:20px; font-weight:600; margin:0 0 12px; }
+  .lbl { font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#8c7a5e; margin:16px 0 6px; }
+  button { display:flex; align-items:center; gap:12px; width:100%; padding:13px 14px; margin:0 0 8px; font-size:16px; text-align:left; border-radius:12px; border:1.5px solid #d8cdb6; background:#fffdf8; color:#2b2622; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  button .n { flex:0 0 32px; height:32px; border-radius:50%; background:#efe6d3; color:#7a6a52; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  button .t { flex:1; line-height:1.25; }
+  button .t small { display:block; color:#8c7a5e; font-size:12px; margin-top:2px; }
+  button.vote { border-color:#b9a988; background:#fbf6ea; }
   button.on { background:#7a6a52; color:#fff; border-color:#7a6a52; }
+  button.on .n { background:#fff; color:#7a6a52; }
+  button.on .t small { color:#e7dcc6; }
+  button.plain { display:block; text-align:center; padding:14px; }
   button.danger { color:#8a2f2f; }
-  .st { margin:14px 0; color:#7a6a52; font-size:15px; }
-  input { width:100%; padding:12px; font-size:16px; border-radius:10px; border:1.5px solid #d8cdb6; margin-bottom:12px; }
+  .st { margin:14px 0 0; color:#7a6a52; font-size:15px; line-height:1.4; white-space:pre-line; }
+  input { width:100%; padding:12px; font-size:16px; border-radius:10px; border:1.5px solid #d8cdb6; margin-bottom:4px; box-sizing:border-box; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Hőhullám-kör · vezérlő</h1>
-  <input id="key" type="password" placeholder="kulcs (api.php: $KEY)">
-  <button id="b1">1. kör nyitása — vakon</button>
-  <button id="b2">2. kör nyitása — a rétegekkel</button>
-  <button id="b0">Szavazás lezárása</button>
-  <button id="bx" class="danger">Nullázás (új próba előtt)</button>
+  <input id="key" type="password" placeholder="kulcs (Code.gs: KEY / api.php: $KEY)">
+  <div class="lbl">Kivetítő — jelenetek sorban</div>
+  <div id="views"></div>
+  <div class="lbl">Szavazás</div>
+  <button id="b0" class="plain">Szavazás lezárása — a kép marad, az eredmény látszik</button>
+  <button id="bx" class="plain danger">Nullázás (új próba előtt) — töröl, és visszaáll az Indulásra</button>
   <div class="st" id="st">—</div>
 </div>
 <script src="config.js"></script>
@@ -30,24 +39,39 @@
 (function(){
   const C = window.SZAVAZAS, $ = s => document.querySelector(s);
   try { $('#key').value = sessionStorage.getItem('etosz_key') || ''; } catch(e) {}
-  const api = (q) => fetch(C.API + (C.API.includes('?') ? '&' : '?') + q + '&t=' + Date.now(), {cache:'no-store'}).then(r => r.json());
+  const api = (q) => window.SZAVAZAS_get(q);
+
+  // jelenetgombok a config.js NEZETEK listájából
+  const box = $('#views');
+  for (const v of Object.keys(C.NEZETEK).map(Number).sort((a, b) => a - b)) {
+    const n = C.NEZETEK[v];
+    const b = document.createElement('button');
+    b.id = 'v' + v; b.className = n.kor ? 'vote' : '';
+    b.innerHTML = '<span class="n">' + v + '</span><span class="t">' + n.nev +
+      '<small>' + (n.kor ? ('megnyitja a ' + n.kor + '. kört · ') : 'szavazás zárva · ') + 'kép: ' + n.kep + '</small></span>';
+    b.onclick = () => set('a=setview&view=' + v + '&round=' + (n.kor || 0));
+    box.appendChild(b);
+  }
+
   async function refresh() {
-    try { const j = await api('a=results'); const r = Number(j.round) || 0;
-      for (const [id, v] of [['b1',1],['b2',2],['b0',0]]) $('#' + id).classList.toggle('on', r === v);
-      $('#st').textContent = 'aktív kör: ' + (r || 'zárva') + ' · 1. kör: ' + j.rounds['1'].n + ' szavazat · 2. kör: ' + j.rounds['2'].n + ' szavazat';
-    } catch(e) { $('#st').textContent = 'nincs kapcsolat — ' + C.API; }
+    try {
+      const j = await api('a=results');
+      const r = Number(j.round) || 0, v = Number(j.view) || 0;
+      for (const k of Object.keys(C.NEZETEK)) $('#v' + k).classList.toggle('on', Number(k) === v);
+      $('#b0').classList.toggle('on', r === 0 && !!(C.NEZETEK[v] || {}).kor);   // lezárva egy szavazós jeleneten = eredmény látszik
+      const nev = (C.NEZETEK[v] || {}).nev || '?';
+      $('#st').textContent = 'kivetítő: ' + v + ' · ' + nev + '\naktív kör: ' + (r || 'zárva') + ' · 1. kör: ' + j.rounds['1'].n + ' szavazat · 2. kör: ' + j.rounds['2'].n + ' szavazat';
+    } catch(e) { $('#st').textContent = 'nincs kapcsolat — ' + (e && e.message ? e.message : '') + ' — ' + C.API; }
   }
   async function set(q) {
     const key = $('#key').value; try { sessionStorage.setItem('etosz_key', key); } catch(e) {}
-    const j = await api(q + '&key=' + encodeURIComponent(key));
+    let j; try { j = await api(q + '&key=' + encodeURIComponent(key)); } catch(e) { alert('Nincs kapcsolat: ' + e.message); return; }
     if (!j.ok) alert('Nem sikerült: ' + (j.err === 'key' ? 'rossz kulcs' : JSON.stringify(j)));
     refresh();
   }
-  $('#b1').onclick = () => set('a=setround&round=1');
-  $('#b2').onclick = () => set('a=setround&round=2');
   $('#b0').onclick = () => set('a=setround&round=0');
   $('#bx').onclick = () => { if (confirm('Biztosan törlöd az összes szavazatot? (a régi fájl .bak néven megmarad)')) set('a=reset'); };
-  refresh(); setInterval(refresh, 3000);
+  refresh(); setInterval(refresh, C.FRISSITES_MS || 3000);
 })();
 </script>
 </body>

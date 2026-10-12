@@ -41,7 +41,7 @@
   let cid = null;
   try { cid = localStorage.getItem('etosz_cid'); if (!cid) { cid = Math.random().toString(36).slice(2,10) + Date.now().toString(36); localStorage.setItem('etosz_cid', cid); } } catch(e) { cid = 'x' + Math.random().toString(36).slice(2,12); }
   let round = 0, chosen = {};        // chosen: a SZERVER szerint érvényes saját szavazat körönként — nem a készülék emlékezete
-  const api = q => fetch(C.API + (C.API.includes('?') ? '&' : '?') + q + '&t=' + Date.now(), {cache:'no-store'}).then(r => r.json());
+  const api = q => window.SZAVAZAS_get(q);
 
   $('#cim').textContent = C.CIM; $('#kerdes').textContent = C.KERDES;
   const opts = $('#opts');
@@ -69,17 +69,18 @@
   }
   async function getState() {
     // egy kérés: aktív kör + a készülék saját, szerver szerinti szavazata (nullázás után ez üres lesz)
+    let err = null;
     try { const j = await api('a=state&cid=' + encodeURIComponent(cid)); round = Number(j.round) || 0; if (j.mine) chosen = { 1: j.mine['1'] || null, 2: j.mine['2'] || null }; }
-    catch(e) { /* hálózati hiba: marad az előző állapot */ }
+    catch(e) { err = e; /* hálózati hiba: marad az előző állapot */ }
     paint();
+    if (err) { $('#msg').className = 'msg'; $('#msg').textContent = 'Nincs kapcsolat: ' + err.message; }
   }
   async function vote(k) {
     if (!(round === 1 || round === 2)) return;
     $('#msg').className = 'msg'; $('#msg').textContent = 'Küldés…';
     try {
       const body = new URLSearchParams({cid, round, opt:k});
-      const res = await fetch(C.API + (C.API.includes('?') ? '&' : '?') + 'a=vote', {method:'POST', body, cache:'no-store'});
-      const j = await res.json();
+      const j = await window.SZAVAZAS_get('a=vote', {method:'POST', body});
       if (j.ok) { chosen[round] = k; }
       else if (j.err === 'closed') { round = Number(j.round) || 0; await getMine(); }
     } catch(e) { $('#msg').textContent = 'Nem ment át — próbálja újra.'; return; }
