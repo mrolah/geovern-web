@@ -43,9 +43,6 @@ body.maperr::before{content:'';position:fixed;inset:0;z-index:0;
 .homelink{position:fixed;top:calc(10px + var(--sat));left:10px;z-index:40;
   font:700 12px var(--mono);letter-spacing:.06em;color:var(--text);background:var(--card);
   border:1px solid var(--line);border-radius:100px;padding:8px 14px;backdrop-filter:blur(10px);text-decoration:none}
-@media(max-width:430px){.testbadge{display:none}}
-.testbadge{position:fixed;top:calc(10px + var(--sat));right:10px;z-index:40;
-  font:700 10px var(--mono);letter-spacing:.1em;color:#231303;background:var(--amber);border-radius:100px;padding:5px 10px}
 /* alsó lap (bottom sheet) */
 .sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:30;width:100%;max-width:520px;
   padding:0 12px calc(12px + var(--sab))}
@@ -194,7 +191,6 @@ h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
 
 <div id="map"></div>
 <a class="homelink" href="index.html">‹ GEOVERN</a>
-<span class="testbadge">BÉTA</span>
 <div class="topbar" id="topbar" hidden>
   <div class="days" id="days"></div>
   <span class="tb-t" id="gTimer">⏱ 0:00</span>
@@ -210,6 +206,9 @@ h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
    Balra/jobbra húzás · egyetlen állandó 3D térkép ·
    a döntések nyomot hagynak a városon
    ===================================================== */
+/* Google Apps Script webhook — a Krízishét eredményei Google Sheetbe
+   (beüzemelés: google-sheets-setup.md, „Krízishét" szakasz; üresen helyi rangsor fut) */
+const SHEET_WEBHOOK='';
 const SHOW_TIME=true;
 const DAYS_HU=['Hétfő','Kedd','Szerda','Csütörtök','Péntek'];
 const TYPES=[
@@ -433,7 +432,7 @@ function commitSwipe(dir){
     const ok=dir===r.best;
     const bonus=(ok&&G.p1===r.best)?r.bonus:0;
     G.earn=(ok?r.pts:0)+bonus;G.sc+=G.earn;
-    G.hist.push({day:DAYS_HU[G.i],ic:r.ic,earn:G.earn,max:r.pts+r.bonus,bonus});
+    G.hist.push({day:DAYS_HU[G.i],ic:r.ic,earn:G.earn,max:r.pts+r.bonus,bonus,pick:dir,ok});
     removeRoundLayers(r);
     addMark(r[r.best].cell,ok);
     G.st='rev';G.lastOk=ok;render();
@@ -473,6 +472,7 @@ function gReplay(){
   clearMarks();
   if(G.st==='q'&&G.ph===2)removeRoundLayers(WEEK[G.i]);
   G.st='type';G.type=null;G.town=null;G.sc=0;G.hist=[];G.t0=null;G.time=null;G.i=0;G.ph=1;
+  G.lead=null;G.board=null;G.rank=null;G.offline=false;
   clearInterval(gTick);
   if(map&&mapReady)map.flyTo({center:[19.3,47.2],zoom:5.6,pitch:45,bearing:-15,duration:2000,essential:true});
   render();tickUI();
@@ -545,7 +545,7 @@ function render(){
   lybar.hidden=true;topbar.hidden=(G.st==='type'||G.st==='town');
   if(G.st==='type'){
     sheet.innerHTML=`<div class="panel g-center"><h2>Krízishét 🗓️</h2>
-      <p class="sub">5 nap, 5 döntés. Húzd a kártyát balra vagy jobbra! Válassz települést:</p>
+      <p class="sub">5 nap, 5 döntés. Válassz települést:</p>
       <div class="g-types">${TYPES.map(x=>`<button onclick="gSelType('${x.k}')">
         <span class="ic">${x.ic}</span><b>${x.n}</b><span>${x.s}</span></button>`).join('')}</div></div>`;
     return;
@@ -625,10 +625,11 @@ function render(){
     sheet.innerHTML=`<div class="panel">
       <h2 style="text-align:center">Ranglista 🏆</h2>
       <div class="g-form">
-        <input type="text" id="g-nick" placeholder="Becenév" maxlength="24">
-        <input type="text" id="g-name" placeholder="Teljes név" maxlength="60">
+        <input type="text" id="g-name" placeholder="Név" maxlength="60">
+        <input type="text" id="g-org" placeholder="Szervezet" maxlength="80">
         <input type="email" id="g-email" placeholder="E-mail" maxlength="80">
-        <label class="g-check"><input type="checkbox" id="g-consent">Hozzájárulok adataim kezeléséhez (kapcsolatfelvétel).</label>
+        <label class="g-check"><input type="checkbox" id="g-prezi" checked>Kérem a prezit! 📑</label>
+        <label class="g-check"><input type="checkbox" id="g-consent">Hozzájárulok adataim kezeléséhez (kapcsolatfelvétel, anyagküldés) — opcionális.</label>
         <div class="g-err" id="g-err"></div>
         <button class="btn btn-wide" id="g-submit" onclick="gSubmit()">Mentés →</button>
       </div></div>`;
@@ -636,13 +637,15 @@ function render(){
   }
   if(G.st==='board'){
     const rows=(G.board||[]).map((b,i)=>{
-      const me=G.lead&&b.nick===G.lead.nick;
+      const me=G.lead&&b.nick===G.lead.name;
       return `<div class="row${me?' me':''}"><span>#${i+1} · ${b.nick}</span><b>${b.score}${(SHOW_TIME&&b.time!=null)?' <em>⏱ '+fmtTime(b.time)+'</em>':''}</b></div>`;
     }).join('');
     sheet.innerHTML=`<div class="panel g-center">
       <h2>Ranglista 🏆</h2>
       ${G.rank?`<p class="sub">A helyed: <b>#${G.rank}</b></p>`:''}
       <div class="g-board">${rows}</div>
+      ${G.offline?`<p class="g-note">Az eredmény most helyben mentődött — a központi ranglista épp nem elérhető.</p>`:''}
+      ${(G.lead&&G.lead.prezi)?`<a class="btn btn-wide" style="display:block;text-decoration:none;margin-top:10px" href="anyagok/ETOSZ_2026_eloadas.pdf" download>Prezi letöltése 📑</a><p class="g-note">E-mailben is küldjük.</p>`:''}
       <button class="btn-replay" onclick="gReplay()">Új hét, új település</button></div>`;
     return;
   }
@@ -650,25 +653,43 @@ function render(){
 
 /* ---- mentés + helyi ranglista (saját teszt-kulcsok) ---- */
 function gSubmit(){
-  const nick=document.getElementById('g-nick').value.trim();
   const name=document.getElementById('g-name').value.trim();
+  const org=document.getElementById('g-org').value.trim();
   const email=document.getElementById('g-email').value.trim();
-  const cons=document.getElementById('g-consent').checked;
+  const prezi=document.getElementById('g-prezi').checked;
+  const cons=document.getElementById('g-consent').checked; /* opcionális */
   const err=document.getElementById('g-err');
-  if(!nick||!name||!email||!cons){err.textContent='Minden mező és a hozzájárulás kötelező.';return;}
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.textContent='Érvénytelen e-mail.';return;}
-  G.lead={ts:new Date().toISOString(),nick,name,email,score:G.sc,max:MAXPTS,time:G.time,variant:'swipe-test'};
+  if(!name){err.textContent='A név megadása kötelező.';return;}
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.textContent='Érvényes e-mail cím kell.';return;}
+  /* teljes eredménysor: összpont + idő + körönkénti irány/pont — a Google Sheetbe is ez megy */
+  G.lead={ts:new Date().toISOString(),name,org,email,consent:cons,prezi,
+    score:G.sc,max:MAXPTS,time:G.time,town:G.town?G.town.name:'',type:G.type||'',variant:'krizishet',
+    days:G.hist.map(h=>({day:h.day,pick:h.pick,ok:!!h.ok,earn:h.earn,max:h.max,bonus:!!h.bonus}))};
   try{const a=JSON.parse(localStorage.getItem('gp-sw-leads')||'[]');a.push(G.lead);localStorage.setItem('gp-sw-leads',JSON.stringify(a));}catch(e){}
+  const btn=document.getElementById('g-submit');btn.disabled=true;btn.textContent='Mentés…';
+  const finish=(board,rank,offline)=>{G.board=board;G.rank=rank;G.offline=offline;G.st='board';render();};
+  if(SHEET_WEBHOOK){
+    const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),8000);
+    fetch(SHEET_WEBHOOK,{method:'POST',body:JSON.stringify(G.lead),signal:ctrl.signal})
+      .then(r=>r.json())
+      .then(j=>{clearTimeout(to);
+        if(j&&j.ok)finish(j.board||[],j.rank,false);
+        else{const lb=localBoard(name,G.sc,G.time);finish(lb.board,lb.rank,true);}})
+      .catch(()=>{clearTimeout(to);const lb=localBoard(name,G.sc,G.time);finish(lb.board,lb.rank,true);});
+  }else{
+    const lb=localBoard(name,G.sc,G.time);finish(lb.board,lb.rank,true);
+  }
+}
+function localBoard(nick,score,time){
   let b=[];try{b=JSON.parse(localStorage.getItem('gp-sw-board')||'null')||[];}catch(e){}
-  if(!b.length)b=[{nick:'TérképZseni',score:800,time:230},{nick:'PolgiMester',score:650,time:260},{nick:'GeoRóka',score:475,time:205}];
+  if(!b.length)b=[{nick:'Térkép Zsófi',score:800,time:230},{nick:'Polgi Mester',score:650,time:260},{nick:'Geo Róka',score:475,time:205}];
   const better=(s1,t1,s2,t2)=>s1>s2||(s1===s2&&(t1==null?1e9:t1)<(t2==null?1e9:t2));
   const me=b.find(x=>x.nick===nick);
-  if(me){if(better(G.sc,G.time,me.score,me.time)){me.score=G.sc;me.time=G.time;}}
-  else b.push({nick,score:G.sc,time:G.time});
+  if(me){if(better(score,time,me.score,me.time)){me.score=score;me.time=time;}}
+  else b.push({nick,score,time});
   b.sort((x,y)=>y.score-x.score||((x.time==null?1e9:x.time)-(y.time==null?1e9:y.time)));
   try{localStorage.setItem('gp-sw-board',JSON.stringify(b));}catch(e){}
-  G.board=b.slice(0,10);G.rank=b.findIndex(x=>x.nick===nick)+1;
-  G.st='board';render();
+  return{board:b.slice(0,10),rank:b.findIndex(x=>x.nick===nick)+1};
 }
 
 /* ---- init ---- */
