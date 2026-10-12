@@ -30,7 +30,7 @@ window.SZAVAZAS = {
   },
 
   // A kivetítőn megjelenő rövid cím (ezt írd át a saját domainre)
-  ROVID_URL: "mrolah.github.io/geovern-web/szavaz/",
+  ROVID_URL: "https://tinyurl.com/ETOSZ2026",
   QR_KEP: "qr.png",            // opcionális: előre generált QR-kép fájlneve; üresen a böngésző rajzolja
   FRISSITES_MS: 2000,          // kivetítő és vezérlő
   SZAVAZO_FRISSITES_MS: 3000   // a telefonok — 60 készüléknél is belefér az Apps Script korlátaiba
