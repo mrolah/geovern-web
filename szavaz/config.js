@@ -8,9 +8,9 @@ window.SZAVAZAS = {
   CIM: "Hőhullám. Három hét. 40 millió forint.",
   KERDES: "Mire költi a város az azonnali keretet?",
   OPCIOK: {
-    A: "Párakapuk, ivókutak és napvitorlák a főtéren és a piacon",
-    B: "Hűtött közösségi pont minden városrészben, egyenlően elosztva",
-    C: "Árnyékolás és azonnali fásítás a lakótelepi bölcsőde, az idősek klubja és a rendelő körül",
+    A: "FŐTÉR és PIAC: párakapuk, ivókutak és napvitorlák",
+    B: "MINDEN VÁROSRÉSZBEN: hűtött közösségi pontok, egyenlően elosztva",
+    C: "LAKÓTELEP: árnyékolás és azonnali fásítás a bölcsőde, az idősek klubja és a rendelő körül",
     D: "Hőségriasztó rendszer: szenzorok, SMS-riasztás, önkéntesek az idősekhez"
   },
   KOROK: { 1: "1. kör — vakon", 2: "2. kör — a rétegekkel" },
