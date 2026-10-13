@@ -320,6 +320,7 @@ const MAXPTS=WEEK.reduce((a,r)=>a+r.pts+r.bonus,0);
 /* ---- állapot ---- */
 let G={st:'type',type:null,town:null,i:0,sc:0,ph:1,p1:null,earn:0,ly:[],seen:[],
   t0:null,time:null,hist:[],board:null,rank:null,mats:[],lead:null,marks:[],tutDone:false};
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches; /* csak a térképmozgáshoz — a kéz ettől függetlenül látszik */
 let map=null,mapReady=false,gTick=null;
 function fmtTime(s){const m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0');}
 function gElapsed(){return G.t0?Math.round((Date.now()-G.t0)/1000):0;}
