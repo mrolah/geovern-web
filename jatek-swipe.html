@@ -676,20 +676,21 @@ function gSubmit(){
       .then(r=>r.json())
       .then(j=>{clearTimeout(to);
         if(j&&j.ok)finish(j.board||[],j.rank,false);
-        else{const lb=localBoard(name,G.sc,G.time,org);finish(lb.board,lb.rank,true);}})
-      .catch(()=>{clearTimeout(to);const lb=localBoard(name,G.sc,G.time,org);finish(lb.board,lb.rank,true);});
+        else{const lb=localBoard(name,G.sc,G.time,org,email);finish(lb.board,lb.rank,true);}})
+      .catch(()=>{clearTimeout(to);const lb=localBoard(name,G.sc,G.time,org,email);finish(lb.board,lb.rank,true);});
   }else{
-    const lb=localBoard(name,G.sc,G.time,org);finish(lb.board,lb.rank,true);
+    const lb=localBoard(name,G.sc,G.time,org,email);finish(lb.board,lb.rank,true);
   }
 }
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function localBoard(nick,score,time,org){
+function localBoard(nick,score,time,org,email){
+  const em=String(email||'').trim().toLowerCase(); /* név+e-mail együtt azonosít egy játékost */
   let b=[];try{b=JSON.parse(localStorage.getItem('gp-sw-board')||'null')||[];}catch(e){}
   if(!b.length)b=[{nick:'Térkép Zsófi',org:'Főépítészi iroda',score:800,time:230},{nick:'Polgi Mester',org:'Polgármesteri hivatal',score:650,time:260},{nick:'Geo Róka',org:'Térinformatikai kft.',score:475,time:205}];
   const better=(s1,t1,s2,t2)=>s1>s2||(s1===s2&&(t1==null?1e9:t1)<(t2==null?1e9:t2));
-  const me=b.find(x=>x.nick===nick);
+  const me=b.find(x=>x.nick===nick&&String(x.email||'').trim().toLowerCase()===em);
   if(me){if(better(score,time,me.score,me.time)){me.score=score;me.time=time;me.org=org||me.org;}}
-  else b.push({nick,score,time,org:org||''});
+  else b.push({nick,score,time,org:org||'',email:em});
   b.sort((x,y)=>y.score-x.score||((x.time==null?1e9:x.time)-(y.time==null?1e9:y.time)));
   try{localStorage.setItem('gp-sw-board',JSON.stringify(b));}catch(e){}
   return{board:b.slice(0,10),rank:b.findIndex(x=>x.nick===nick)+1};
