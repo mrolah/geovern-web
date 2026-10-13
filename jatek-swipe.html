@@ -120,7 +120,8 @@ h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
   66%{transform:translateX(-28px) rotate(-2deg)}
   84%,100%{transform:translateX(0) rotate(0)}
 }
-@media(prefers-reduced-motion:reduce){.scard.demo,.hand,.chev{animation:none}}
+/* csökkentett animációnál a kéz statikusan is látszik, csak nem mozog */
+@media(prefers-reduced-motion:reduce){.scard.demo,.hand,.chev{animation:none}.hand{transform:translate(-50%,0)}}
 /* 2. fázis: rétegsáv fent + mini-kártya lent */
 .lybar{position:fixed;top:calc(64px + var(--sat));left:0;right:0;z-index:35;display:flex;gap:10px;
   overflow-x:auto;padding:6px 14px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -320,7 +321,6 @@ const MAXPTS=WEEK.reduce((a,r)=>a+r.pts+r.bonus,0);
 let G={st:'type',type:null,town:null,i:0,sc:0,ph:1,p1:null,earn:0,ly:[],seen:[],
   t0:null,time:null,hist:[],board:null,rank:null,mats:[],lead:null,marks:[],tutDone:false};
 let map=null,mapReady=false,gTick=null;
-const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function fmtTime(s){const m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0');}
 function gElapsed(){return G.t0?Math.round((Date.now()-G.t0)/1000):0;}
 function tickUI(){
@@ -564,7 +564,7 @@ function render(){
   if(G.st==='q'){
     const r=WEEK[G.i];
     if(G.ph===1){
-      const demo=(!G.tutDone&&!RM);
+      const demo=!G.tutDone; /* a kéz csökkentett animációnál is látszik (statikusan) */
       sheet.innerHTML=`<div class="swipewrap"><div class="scard${demo?' demo':''}" id="scard">
         ${stamps(r)}
         <div class="chevs"><span class="chev cL">‹</span><span class="chev cR">›</span></div>
