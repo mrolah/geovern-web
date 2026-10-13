@@ -38,9 +38,13 @@ header{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:c
 .lang button{background:none;border:none;color:var(--faint);font:700 12px var(--mono);padding:4px 9px;border-radius:6px;cursor:pointer}
 .lang button.active{background:var(--teal);color:#04211d}
 .wrap{max-width:780px;margin:0 auto;padding:108px 22px 70px}
-.doc{background:var(--card);border:1px solid var(--cardline);border-radius:18px;
+.doc{position:relative;background:var(--card);border:1px solid var(--cardline);border-radius:18px;
   padding:clamp(24px,4.5vw,44px);backdrop-filter:blur(14px);box-shadow:0 24px 60px rgba(0,0,0,.5)}
 .doc[hidden]{display:none}
+.x{position:absolute;top:14px;right:14px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(143,176,181,.3);border-radius:50%;color:var(--muted);font-size:16px;line-height:1;
+  background:rgba(5,15,20,.4);transition:.2s}
+.x:hover{color:var(--text);border-color:var(--teal);background:rgba(42,209,181,.14);text-decoration:none}
 h1{font-size:clamp(24px,3.4vw,32px);font-weight:900;line-height:1.15;margin-bottom:6px}
 .upd{font:500 12px var(--mono);letter-spacing:.08em;color:var(--faint);margin-bottom:26px;display:block}
 h2{font-size:16.5px;font-weight:700;color:var(--teal);margin:28px 0 8px}
@@ -76,6 +80,7 @@ li::before{content:'·';position:absolute;left:4px;color:var(--teal);font-weight
 <div class="wrap">
 
 <div class="doc" data-l="hu">
+  <a class="x" data-fade href="index.html" aria-label="Bezárás / Close">✕</a>
   <h1>Adatkezelési tájékoztató</h1>
   <span class="upd">HATÁLYOS: 2026. OKTÓBER 13.</span>
 
@@ -105,6 +110,7 @@ li::before{content:'·';position:absolute;left:4px;color:var(--teal);font-weight
   <div class="foot"><span>© 2026 GEOVERN</span><span><a data-fade href="impresszum.html">Impresszum →</a></span></div>
 </div>
 <div class="doc" data-l="en" hidden>
+  <a class="x" data-fade href="index.html" aria-label="Bezárás / Close">✕</a>
   <h1>Privacy notice</h1>
   <span class="upd">EFFECTIVE: 13 OCTOBER 2026</span>
 
@@ -134,6 +140,7 @@ li::before{content:'·';position:absolute;left:4px;color:var(--teal);font-weight
   <div class="foot"><span>© 2026 GEOVERN</span><span><a data-fade href="impresszum.html">Imprint →</a></span></div>
 </div>
 <div class="doc" data-l="de" hidden>
+  <a class="x" data-fade href="index.html" aria-label="Bezárás / Close">✕</a>
   <h1>Datenschutzerklärung</h1>
   <span class="upd">STAND: 13. OKTOBER 2026</span>
 
