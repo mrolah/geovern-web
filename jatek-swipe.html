@@ -639,7 +639,7 @@ function render(){
   }
   if(G.st==='board'){
     const rows=(G.board||[]).map((b,i)=>{
-      const me=G.lead&&b.nick===G.lead.name;
+      const me=G.lead&&b.nick===G.lead.name&&(b.email==null||b.email===String(G.lead.email||'').trim().toLowerCase());
       return `<div class="row${me?' me':''}"><span>#${i+1} · ${esc(b.nick)}${b.org?`<i class="borg">${esc(b.org)}</i>`:''}</span><b>${b.score}${(SHOW_TIME&&b.time!=null)?' <em>⏱ '+fmtTime(b.time)+'</em>':''}</b></div>`;
     }).join('');
     sheet.innerHTML=`<div class="panel g-center">
