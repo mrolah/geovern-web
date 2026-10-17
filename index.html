@@ -60,6 +60,25 @@ header{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:c
 .btn-ghost:hover{border-color:var(--teal);color:var(--teal)}
 .nav-cta{padding:9px 18px;font-size:13.5px}
 @media(max-width:640px){.nav-cta{display:none}}
+/* ---------- MOBIL MENÜ ---------- */
+.burger{display:none;width:42px;height:42px;flex:none;position:relative;cursor:pointer;
+  background:rgba(5,15,20,.5);border:1px solid rgba(143,176,181,.3);border-radius:10px;backdrop-filter:blur(6px)}
+.burger span{position:absolute;left:11px;right:11px;height:2px;background:var(--text);border-radius:2px;transition:.25s}
+.burger span:nth-child(1){top:13px}
+.burger span:nth-child(2){top:20px}
+.burger span:nth-child(3){top:27px}
+body.mopen .burger span:nth-child(1){top:20px;transform:rotate(45deg)}
+body.mopen .burger span:nth-child(2){opacity:0}
+body.mopen .burger span:nth-child(3){top:20px;transform:rotate(-45deg)}
+#mnav{display:none;position:fixed;top:68px;left:12px;right:12px;z-index:49;
+  background:rgba(7,24,30,.97);border:1px solid rgba(42,209,181,.22);border-radius:16px;
+  padding:10px;backdrop-filter:blur(14px);box-shadow:0 24px 60px rgba(0,0,0,.55)}
+#mnav a{display:block;padding:13px 16px;border-radius:10px;font-size:15px;font-weight:700;color:var(--text)}
+#mnav a:active,#mnav a:hover{background:rgba(42,209,181,.12);color:var(--teal)}
+body.mopen #mnav{display:block}
+@media(max-width:900px){.navlink{display:none}.burger{display:block}}
+@media(min-width:901px){#mnav{display:none!important}}
+@media(max-width:640px){.logo .wm{height:34px}header{padding:12px 14px;gap:10px}}
 /* ---------- CHAPTER DOTS ---------- */
 #dots{position:fixed;right:22px;top:50%;transform:translateY(-50%);z-index:50;display:flex;flex-direction:column;gap:14px}
 #dots a{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--faint);display:block;transition:.25s}
@@ -191,7 +210,17 @@ input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;height:4px}
     <button data-lang="de">DE</button>
   </div>
   <a href="#s-ct" class="btn btn-primary nav-cta" data-i18n="nav_cta">Konzultáció</a>
+  <button class="burger" id="burger" aria-label="Menü" onclick="document.body.classList.toggle('mopen')">
+    <span></span><span></span><span></span>
+  </button>
 </header>
+
+<nav id="mnav">
+  <a data-fade href="referenciak.html" data-i18n="nav_ref">Referenciák</a>
+  <a data-fade href="jatek-swipe.html" data-i18n="nav_sw">Krízishét</a>
+  <a data-fade href="rendezvenyek.html" data-i18n="nav_ev">Rendezvények</a>
+  <a href="#s-ct" data-i18n="nav_cta" onclick="document.body.classList.remove('mopen')">Konzultáció</a>
+</nav>
 
 <nav id="dots"></nav>
 
