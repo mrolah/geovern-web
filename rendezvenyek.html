@@ -57,6 +57,11 @@ h2{font-size:clamp(20px,2.8vw,27px);font-weight:900;line-height:1.2}
 .ev-body{padding:10px clamp(20px,4vw,38px) clamp(22px,4vw,34px)}
 h3{font-size:15px;font-weight:700;color:var(--teal);margin:24px 0 10px;letter-spacing:.02em}
 h3 .day{font:500 11px var(--mono);letter-spacing:.14em;color:var(--faint);margin-left:8px}
+/* napváltó fülek */
+.tabs{display:flex;gap:8px;margin:22px 0 6px}
+.tab{background:none;border:1.5px solid rgba(143,176,181,.32);border-radius:100px;
+  padding:9px 18px;color:var(--muted);font:700 13.5px var(--font);cursor:pointer;transition:.15s}
+.tab.active{background:var(--teal);border-color:var(--teal);color:#04211d}
 .tl{list-style:none}
 .tl li{display:flex;gap:14px;padding:7px 0;border-bottom:1px solid rgba(143,176,181,.1);font-size:14.5px;color:var(--muted)}
 .tl li:last-child{border-bottom:none}
@@ -131,39 +136,44 @@ h3 .day{font:500 11px var(--mono);letter-spacing:.14em;color:var(--faint);margin
       <div class="badges">
         <span class="badge">2026. DECEMBER 4–5.</span>
         <span class="badge amber">GRAZ · AUSZTRIA</span>
-        <span class="badge amber">🎄 ADVENT</span>
+        <span class="badge amber">ADVENT</span>
       </div>
       <h2>Önkormányzati látogatás Grazban — advent</h2>
     </div>
     <div class="ev-body">
 
-      <h3>Program <span class="day">1. NAP · PÉNTEK</span></h3>
-      <ul class="tl">
-        <li><span class="t">13:00</span><span>Érkezés · könnyű egyéni ebéd</span></li>
-        <li><span class="t">14:00</span><span><b>Városháza: a polgármester fogadása</b> — Graz működése, digitális közigazgatás</span></li>
-        <li><span class="t">17:00</span><span><b>Vezetett óvárosi séta</b> (1–2 óra)</span></li>
-        <li><span class="t">este</span><span>Adventi vásár a Hauptplatzon 🎄 — forralt bor, puncs, stájer vacsora</span></li>
-      </ul>
-
-      <h3>Program <span class="day">2. NAP · SZOMBAT</span></h3>
-      <ul class="tl">
-        <li><span class="t">08:30</span><span><b>Közös reggeli és kerekasztal</b> (8:30–10:30), meghívott vendéggel —
-          mit vihet haza egy magyar önkormányzat?</span></li>
-        <li><span class="t">10:30</span><span><b>Ressourcenpark Graz</b> — a város modern hulladékudvara: szelektív gyűjtés és újrahasznosítás a gyakorlatban (üzemlátogatás)</span></li>
-        <li><span class="t">14:00</span><span>Hazaindulás</span></li>
-      </ul>
+      <div class="tabs">
+        <button class="tab active" onclick="showDay(1,this)">1. nap — péntek</button>
+        <button class="tab" onclick="showDay(2,this)">2. nap — szombat</button>
+      </div>
+      <div id="day1">
+        <ul class="tl">
+          <li><span class="t">13:00</span><span>Érkezés · könnyű egyéni ebéd</span></li>
+          <li><span class="t">14:00</span><span><b>Városháza: a polgármester fogadása</b> — Graz működése, digitális közigazgatás</span></li>
+          <li><span class="t">17:00</span><span><b>Vezetett óvárosi séta</b> (1–2 óra)</span></li>
+          <li><span class="t">este</span><span>Adventi vásár a Hauptplatzon — forralt bor, puncs, stájer vacsora</span></li>
+        </ul>
+      </div>
+      <div id="day2" hidden>
+        <ul class="tl">
+          <li><span class="t">08:30</span><span><b>Közös reggeli és kerekasztal</b> (8:30–10:30), meghívott vendéggel —
+            mit vihet haza egy magyar önkormányzat?</span></li>
+          <li><span class="t">10:30</span><span><b>Ressourcenpark Graz</b> — a város modern hulladékudvara: szelektív gyűjtés és újrahasznosítás a gyakorlatban (üzemlátogatás)</span></li>
+          <li><span class="t">14:00</span><span>Hazaindulás</span></li>
+        </ul>
+      </div>
 
       <h3>Várható költség <span class="day">INDIKATÍV — LÉTSZÁMTÓL FÜGG</span></h3>
       <ul class="tl">
-        <li><span class="t">🚌</span><span>Szervezett busz (Bp.–Graz–Bp.): <b>~25–35 ezer Ft/fő</b></span></li>
-        <li><span class="t">🏨</span><span>1 éj reggelivel, kétágyas: <b>3★ ~35–45 · 4★ ~50–65 ezer Ft/fő</b></span></li>
-        <li><span class="t">🎟️</span><span>Vezetett túra, programok: <b>~10–15 ezer Ft/fő</b></span></li>
-        <li><span class="t">Σ</span><span><b>Összesen kb. 70–115 ezer Ft/fő</b> + egyéni étkezés · a végleges árat az igényfelmérés után adjuk</span></li>
+        <li><span>Szervezett busz (Bp.–Graz–Bp.): <b>~25–35 ezer Ft/fő</b></span></li>
+        <li><span>1 éj reggelivel, kétágyas: <b>3★ ~35–45 · 4★ ~50–65 ezer Ft/fő</b></span></li>
+        <li><span>Vezetett túra, programok: <b>~10–15 ezer Ft/fő</b></span></li>
+        <li><span><b>Összesen kb. 70–115 ezer Ft/fő</b> + egyéni étkezés · a végleges árat az igényfelmérés után adjuk</span></li>
       </ul>
 
       <!-- ── elő-jelentkezés ── -->
       <div class="reg" id="reg">
-        <h3>Gyors elő-jelentkezés — igényfelmérés 📝</h3>
+        <h3>Gyors elő-jelentkezés — igényfelmérés</h3>
         <p class="regnote"><b style="color:var(--amber)">Elő-jelentkezés: 2026. október 30-ig.</b>
           Nem kötelező érvényű — a végleges programot és árat az igények alapján küldjük e-mailben.</p>
         <div class="f" id="form">
@@ -196,7 +206,6 @@ h3 .day{font:500 11px var(--mono);letter-spacing:.14em;color:var(--faint);margin
           <button class="btn" id="r-btn" onclick="regSubmit()">Elő-jelentkezés elküldése →</button>
         </div>
         <div class="done" id="done">
-          <div class="big">✅</div>
           <h4>Köszönjük az elő-jelentkezést!</h4>
           <p>Az igényfelmérés lezárása után e-mailben jelentkezünk a részletes programmal és az árakkal.</p>
         </div>
@@ -241,6 +250,11 @@ document.querySelectorAll('a[data-fade]').forEach(a=>a.addEventListener('click',
   setTimeout(()=>location.href=a.getAttribute('href'),380);
 }));
 
+function showDay(n,btn){
+  document.getElementById('day1').hidden=n!==1;
+  document.getElementById('day2').hidden=n!==2;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b===btn));
+}
 const pick=n=>{const r=document.querySelector('input[name="'+n+'"]:checked');return r?r.value:'';};
 function regSubmit(){
   const name=document.getElementById('r-name').value.trim();
