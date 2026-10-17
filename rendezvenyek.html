@@ -69,6 +69,7 @@ h3 .day{font:500 11px var(--mono);letter-spacing:.14em;color:var(--faint);margin
 .tl b{color:var(--text);font-weight:700}
 .tl .prop{font:500 10.5px var(--mono);letter-spacing:.08em;color:var(--teal);
   border:1px solid rgba(42,209,181,.35);border-radius:100px;padding:1px 8px;margin-left:6px;white-space:nowrap}
+.tl.cost .t{min-width:92px}
 .opt{background:rgba(15,74,87,.25);border:1px dashed rgba(143,176,181,.3);border-radius:12px;
   padding:12px 16px;margin:14px 0;font-size:14px;color:var(--muted)}
 .opt b{color:var(--text)}
@@ -164,11 +165,11 @@ h3 .day{font:500 11px var(--mono);letter-spacing:.14em;color:var(--faint);margin
       </div>
 
       <h3>Várható költség <span class="day">INDIKATÍV — LÉTSZÁMTÓL FÜGG</span></h3>
-      <ul class="tl">
-        <li><span>Szervezett busz (Bp.–Graz–Bp.): <b>~25–35 ezer Ft/fő</b></span></li>
-        <li><span>1 éj reggelivel, kétágyas: <b>3★ ~35–45 · 4★ ~50–65 ezer Ft/fő</b></span></li>
-        <li><span>Vezetett túra, programok: <b>~10–15 ezer Ft/fő</b></span></li>
-        <li><span><b>Összesen kb. 70–115 ezer Ft/fő</b> + egyéni étkezés · a végleges árat az igényfelmérés után adjuk</span></li>
+      <ul class="tl cost">
+        <li><span class="t">Utazás</span><span>Szervezett busz (Bp.–Graz–Bp.) — <b>~25–35 ezer Ft/fő</b></span></li>
+        <li><span class="t">Szállás</span><span>1 éj reggelivel, kétágyas — <b>3★ ~35–45 · 4★ ~50–65 ezer Ft/fő</b></span></li>
+        <li><span class="t">Programok</span><span>Vezetett túra, belépők — <b>~10–15 ezer Ft/fő</b></span></li>
+        <li><span class="t">Összesen</span><span><b>kb. 70–115 ezer Ft/fő</b> + egyéni étkezés · a végleges árat az igényfelmérés után adjuk</span></li>
       </ul>
 
       <!-- ── elő-jelentkezés ── -->
