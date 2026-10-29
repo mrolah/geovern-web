@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Karcsú vagy túlméretezett? — GEOVERN játékok</title>
+<meta name="description" content="Nyolc gyors párválasztás: melyik ad többet egy forintért? Tározó vagy esőkertek, új szoftver vagy egy jó kérdés. Lakossági döntésjáték nagy számokkal.">
+<meta name="theme-color" content="#FAFAF7">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23E63946' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23E63946'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<script src="gv.js"></script>
+<style>
+:root{--bg:#FAFAF7;--ink:#111;--muted:#666;--red:#E63946;--green:#2A9D8F;--line:rgba(0,0,0,.14);
+  --font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;--gv-accent:var(--ink);--gv-accent-ink:#fff;--gv-line:var(--line)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.45;min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;max-width:620px;margin:0 auto}
+.home{font:700 12px var(--mono);letter-spacing:.08em;color:var(--ink);text-decoration:none;border-bottom:2px solid var(--ink)}
+.ctr{font:500 13px var(--mono);color:var(--muted)}
+.ctr b{color:var(--red);font-weight:700}
+main{max-width:620px;margin:0 auto;padding:0 16px 40px}
+.rule{height:3px;background:var(--ink);margin:4px 0 18px}
+.eyebrow{font:500 11px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--red);display:block;margin-bottom:10px}
+h1{font:900 clamp(34px,10vw,64px)/.98 var(--font);letter-spacing:-.03em;margin-bottom:14px}
+h2{font:900 clamp(22px,6vw,30px)/1.1 var(--font);letter-spacing:-.02em;margin-bottom:14px}
+p{color:#333;font-size:16px}p+p{margin-top:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:15px 22px;border-radius:0;font:700 16px var(--font);cursor:pointer;border:2px solid var(--ink);background:var(--ink);color:#fff;width:100%;min-height:52px;touch-action:manipulation}
+.btn:active{background:#333}.btn-light{background:transparent;color:var(--ink)}
+.row{display:flex;gap:10px;margin-top:16px}
+.timer{height:6px;background:var(--line);margin:10px 0 16px;position:relative;overflow:hidden}
+.timer i{position:absolute;left:0;top:0;bottom:0;background:var(--red);width:100%;transform-origin:left;animation:shrink 10s linear forwards}
+@keyframes shrink{to{transform:scaleX(0)}}
+.timer.stop i{animation-play-state:paused}
+.pair{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:560px){.pair{grid-template-columns:1fr 1fr}}
+.c{border:2px solid var(--ink);padding:18px 16px;text-align:left;background:#fff;cursor:pointer;font-family:var(--font);position:relative;transition:.12s;min-height:118px;display:flex;flex-direction:column;justify-content:space-between;gap:10px;color:var(--ink)}
+.c:active{transform:scale(.985)}
+.c .t{font:700 18px/1.25 var(--font)}
+.c .s{font-size:13.5px;color:var(--muted)}
+.c .n{font:700 clamp(28px,8vw,40px)/1 var(--mono);letter-spacing:-.02em;opacity:0;transform:translateY(6px);transition:.4s}
+.c .n small{font:500 12px var(--mono);color:var(--muted);display:block;margin-top:4px;letter-spacing:.06em}
+.c.rev .n{opacity:1;transform:none}
+.c.win{background:var(--ink);color:#fff}.c.win .s,.c.win .n small{color:#bbb}
+.c.lose{opacity:.55}
+.c.win::after{content:'TÖBBET AD';position:absolute;top:-10px;right:10px;background:var(--green);color:#fff;font:700 10px var(--mono);letter-spacing:.14em;padding:3px 8px}
+.c[disabled]{cursor:default}
+.lesson{margin-top:16px;border-top:3px solid var(--ink);padding-top:12px}
+.lesson b{font:900 17px var(--font);display:block;margin-bottom:4px}
+.lesson p{font-size:15px}
+.ratio{display:inline-block;font:700 13px var(--mono);background:var(--red);color:#fff;padding:3px 8px;margin-left:6px;vertical-align:2px}
+.big{font:900 clamp(60px,22vw,120px)/.9 var(--font);letter-spacing:-.05em;margin:8px 0 4px}
+.big small{font:500 14px var(--mono);letter-spacing:.1em;color:var(--muted);display:block;margin-top:8px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.stats div{border-top:2px solid var(--ink);padding-top:8px}
+.stats span{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:block}
+.stats b{font:700 24px var(--mono)}
+.list{margin-top:10px;font-size:14px}
+.list div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.list i{font-style:normal;font:700 13px var(--mono)}
+.ok{color:var(--green)}.no{color:var(--red)}
+footer{max-width:620px;margin:0 auto;padding:0 16px 30px;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header><a class="home" id="homelink" href="../jatekok.html">← JÁTÉKOK</a><span class="ctr" id="ctr"><span data-town>MINTAVÁROS</span></span></header>
+<main id="main"></main>
+<footer>A számok illusztratív nagyságrendek, a hazai önkormányzati gyakorlatból és a régió mért példáiból (Varsó lombkorona-térkép, Gdańsk esőkertek, BKK M4 mobilcella-elemzés, New York SRTS). Nem egy konkrét település költségvetése.</footer>
+<script>
+/* =====================================================================
+   KARCSÚ VAGY TÚLMÉRETEZETT? — 8 pár, 10 másodperc, nagy számok
+   A kérdés mindig ugyanaz: melyik ad többet egy forintért?
+   ===================================================================== */
+document.getElementById('homelink').href=GV.hubUrl();
+const townTxt=GV.TOWN.name?GV.esc(GV.TOWN.name):'a település';
+const P=[
+ {q:'Villámárvíz után',a:{t:'Nagy záportározó',s:'Egy nagy mű a város szélén',n:'2 Mrd Ft',sub:'3 év · a tünetet kezeli'},b:{t:'40 esőkert + az árkok tisztítása',s:'Sok kicsi, ott, ahol a víz gyűlik',n:'300 M Ft',sub:'1 év · az okot kezeli'},best:'b',ratio:'7×',
+  l:'A gát a tünetet kezeli, a tisztítás az okot.',e:'Gdańsk egy villámárvíz után előbb mérőhálózatot épített, aztán több mint kétszáz esőkertet. A pincék szárazak maradtak, amikor negyven perc alatt egy havi eső esett.'},
+ {q:'Hol hiányzik a fa?',a:{t:'Új fakataszter-szoftver beszerzése',s:'Licenc, bevezetés, oktatás — aztán majd felmérjük',n:'60 M Ft',sub:'18 hónap · még nincs adat'},b:{t:'Egy kérdés a meglévő légifelvételre',s:'Lombkorona-térkép a már megvett ortofotóból',n:'8 M Ft',sub:'2 hónap · kész térkép'},best:'b',ratio:'7×',
+  l:'Szoftver-első reflex: előbb a beszerzés, aztán a kérdés.',e:'Varsó hétmillió lombkoronát számolt meg lézerrel és légifelvételből — fajta, lombozat, egészség. Nem szoftverrel indult. Egy kérdéssel: hol hiányzik a fa?'},
+ {q:'Iskolai biztonság',a:{t:'„Okos” sebességkijelző tábla a kapu elé',s:'Villog, mér, a szülők kérik',n:'4 M Ft / db',sub:'hatás: ~0 két hét után'},b:{t:'Fekvőrendőr a 300 méteres kereszteződésbe',s:'A balesettérkép alapján kiválasztva',n:'2 M Ft',sub:'gyerekbaleset −44%'},best:'b',ratio:'−44% vs 0',
+  l:'Oda kell, ahol a kockázat mérhető — nem ahol a hang nagy.',e:'New Yorkban ugyanazok az eszközök a balesettérképpel kiválasztott iskoláknál −44%-ot adtak, máshol nullát. A holland „gyerekes” táblák két hét után semmit.'},
+ {q:'Vihar után sötét',a:{t:'Földkábel a főutcán',s:'A boltok követelik',n:'400 M Ft',sub:'a kimaradások 15%-a'},b:{t:'A két hibás külső szakasz megerősítése',s:'Ahol a hibalista szerint szakad',n:'90 M Ft',sub:'a kimaradások 85%-a'},best:'b',ratio:'4×',
+  l:'A gócszakasz erősítése az egész hálózatot stabilizálja.',e:'A hibalista már megvolt. Csak senki nem tette térképre, mielőtt a boltok megszólaltak.'},
+ {q:'Hőségriasztás',a:{t:'Saját városi app fejlesztése',s:'Push-értesítés, térkép, letöltés',n:'45 M Ft',sub:'letöltik: a lakók 4%-a'},b:{t:'SMS-riasztás + önkéntesek az idősekhez',s:'A háziorvosi listáról',n:'3 M Ft',sub:'elér: a 75+ lakók 80%-a'},best:'b',ratio:'15×',
+  l:'Inkább szolgáltatás, mint beton — és inkább ott, ahol a sérülékeny lakó van.',e:'Aki hőségben rosszul lesz, nem appot tölt le. A háziorvos tudja, kit kell felhívni. Ez is adat — csak nem térinformatikai.'},
+ {q:'Mikor van a csúcs?',a:{t:'Új, teljes körű közlekedési felmérés',s:'Számlálók, kérdőív, tanulmány',n:'25 M Ft',sub:'8 hónap'},b:{t:'A meglévő mobilcella-adat új kérdéssel',s:'Amit a szolgáltató amúgy is mér',n:'0 Ft',sub:'2 hét'},best:'b',ratio:'∞',
+  l:'Meglévő adat. Új kérdés. Jobb menetrend. Nem vettek semmit.',e:'A BKK kétszáz nap anonim mobilcella-adatából derült ki: nyári pénteken a csúcs nem este fél hétkor van, hanem délután fél kettőkor. Átrakták a sűrű követést. Megmérték újra. Stimmelt.'},
+ {q:'Hőhullám, 40 millió',a:{t:'Hűtött közösségi pont minden városrészben',s:'Egyenlően elosztva — senki se szólhat',n:'40 M Ft',sub:'eléri a veszélyeztetettek 20%-át'},b:{t:'Árnyékolás és fásítás a bölcsőde, a rendelő és az idősek klubja körül',s:'Ahol a négy réteg metszi egymást',n:'40 M Ft',sub:'eléri a veszélyeztetettek 70%-át'},best:'b',ratio:'3,5×',
+  l:'Ugyanannyi pénz. Más utca.',e:'A zsigeri döntés ott költ, ahol látszik, vagy ahol mindenki kap. Az adatos ott, ahol a hőtérkép, a lombkorona-hiány és a sérülékeny lakók egymásra esnek.'},
+ {q:'Térinformatika a hivatalba',a:{t:'Rendszerbevezetés, aztán majd lesznek kérdések',s:'Szerver, licenc, 3 modul, oktatás',n:'120 M Ft',sub:'szép adat, kérdés nélkül'},b:{t:'Előbb a vezetői kérdés, aztán egy pilot-térkép',s:'Egy utca, egy délelőtt, meglévő adat',n:'6 M Ft',sub:'egy döntés, ami megváltozott'},best:'b',ratio:'20×',
+  l:'A rosszul feltett kérdés: ugyanarra a feladatra 10–20-szoros költségkülönbség.',e:'Nem a szoftver a drága. Az, hogy ki és mit kérdezett az elején. Minden településen máshol szakad el a lánc — ezért kezdődik egy jó projekt egy utcával, nem egy beszerzéssel.'}
+];
+let S={st:'intro',i:0,picked:null,log:[],t0:0,timer:null};
+const main=document.getElementById('main');
+const ctr=document.getElementById('ctr');
+const money=s=>s;
+function render(){
+  if(S.st==='intro'){ctr.innerHTML=townTxt.toUpperCase();main.innerHTML=`<span class="eyebrow">Lakossági döntésjáték · 2 perc</span>
+   <h1>Karcsú vagy túl&shy;méretezett?</h1><div class="rule"></div>
+   <p>Nyolc pár. Mindegyiknél ugyanaz a kérdés: <b>melyik ad többet egy forintért?</b> A számokat nem látod előre — csak amikor döntöttél.</p>
+   <p>Tíz másodperc párja. A testületnek sincs több.</p>
+   <div class="row"><button class="btn" onclick="start()">Kezdjük</button></div>`;return;}
+  if(S.st==='q'){const p=P[S.i];const rv=S.picked!=null;ctr.innerHTML=`<b>${S.i+1}</b> / ${P.length}`;
+   main.innerHTML=`<span class="eyebrow">${p.q}</span><h2>Melyik ad többet egy forintért?</h2>
+   <div class="timer ${rv?'stop':''}" id="timer"><i></i></div>
+   <div class="pair">${['a','b'].map(k=>{const o=p[k];const cls=rv?(k===p.best?'win':'lose'):'';return `<button class="c ${rv?'rev':''} ${cls}" ${rv?'disabled':''} onclick="pick('${k}')"><span><span class="t">${o.t}</span><br><span class="s">${o.s}</span></span><span class="n">${o.n}<small>${o.sub}</small></span></button>`;}).join('')}</div>
+   ${rv?`<div class="lesson"><b>${S.picked===p.best?'Igen.':S.picked==='x'?'Lejárt az idő.':'Nem — pedig így dönt a legtöbb testület.'} <span class="ratio">${p.ratio}</span></b><p><b>${p.l}</b> ${p.e}</p></div>
+   <div class="row"><button class="btn" onclick="next()">${S.i<P.length-1?'Következő pár':'Eredmény'}</button></div>`:''}`;
+   if(!rv){clearTimeout(S.timer);S.timer=setTimeout(()=>{if(S.st==='q'&&S.picked==null)pick('x');},10000);S.t0=Date.now();}
+   return;}
+  if(S.st==='final'){const ok=S.log.filter(l=>l.ok).length;const avg=Math.round(S.log.reduce((a,l)=>a+l.ms,0)/S.log.length/100)/10;
+   ctr.innerHTML='KÉSZ';main.innerHTML=`<span class="eyebrow">A hét lenyomata</span>
+   <div class="big">${ok}<small>/ ${P.length} JÓ VÁLASZ</small></div>
+   <h2>${ok>=7?'Te a karcsú oldalon állsz.':ok>=4?'Félúton — a reflex még erős.':'A nagy mű csábít. Nem vagy egyedül.'}</h2>
+   <div class="stats"><div><span>Átlagos döntés</span><b>${avg} mp</b></div><div><span>Tanulság</span><b>10–20×</b></div></div>
+   <p>Ugyanarra a feladatra tíz-hússzoros költségkülönbség — attól függően, hogy ki és mit kérdezett az elején. Nem a szoftver drága, hanem a rosszul feltett kérdés.</p>
+   <div class="list">${S.log.map((l,i)=>`<div><span>${P[i].q}</span><i class="${l.ok?'ok':'no'}">${l.ok?'✓':l.pick==='x'?'⏱':'✗'} ${P[i].ratio}</i></div>`).join('')}</div>
+   ${GV.endPanel({game:'karcsu',share:'Karcsú vagy túlméretezett? '+ok+'/'+P.length+' jó válasz.'})}`;return;}
+}
+function start(){S.st='q';S.i=0;S.picked=null;S.log=[];render();window.scrollTo({top:0});}
+function pick(k){if(S.picked!=null)return;clearTimeout(S.timer);S.picked=k;S.log.push({q:P[S.i].q,pick:k,ok:k===P[S.i].best,ms:Date.now()-S.t0});render();}
+function next(){if(S.i<P.length-1){S.i++;S.picked=null;S.st='q';render();window.scrollTo({top:0});}
+  else{S.st='final';GV.record('karcsu',{answers:S.log,correct:S.log.filter(l=>l.ok).length});render();window.scrollTo({top:0});}}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lassít és mér — GEOVERN játékok</title>
+<meta name="description" content="Száguldanak az iskola melletti utcában. Tábla, kijelző, küszöb vagy 30-as zóna — és mérsz-e? Tizenkét hét szimuláció: ami nem mér, az a következő döntést vakon hagyja.">
+<meta name="theme-color" content="#0e1620">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%233DDC97' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%233DDC97'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<script src="gv.js"></script>
+<style>
+:root{--bg:#0e1620;--panel:#141f2b;--panel2:#1a2836;--green:#3DDC97;--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b6b;--text:#E6EEF3;--muted:#8aa0ae;--line:rgba(61,220,151,.25);
+  --font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;--gv-accent:var(--green);--gv-accent-ink:#06261a;--gv-line:var(--line)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:15px;line-height:1.5;min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;max-width:680px;margin:0 auto}
+.home{font:700 12px var(--mono);letter-spacing:.08em;color:var(--green);text-decoration:none;border:1px solid var(--line);padding:7px 12px;border-radius:6px}
+.live{display:inline-flex;align-items:center;gap:7px;font:700 11px var(--mono);letter-spacing:.14em;color:var(--muted)}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red);animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+main{max-width:680px;margin:0 auto;padding:0 16px 40px}
+.card{background:var(--panel);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:18px 16px;margin-bottom:14px}
+.eyebrow{font:500 11px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--green);display:block;margin-bottom:8px}
+h1{font:700 clamp(22px,6vw,30px)/1.15 var(--font);margin-bottom:8px}
+h2{font:700 19px/1.2 var(--font);margin-bottom:8px}
+p{color:var(--muted);font-family:var(--font);font-size:15.5px}p+p{margin-top:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:13px 20px;border-radius:8px;font:700 15px var(--mono);cursor:pointer;border:1px solid var(--green);background:var(--green);color:#06261a;width:100%;min-height:50px;touch-action:manipulation}
+.btn:active{transform:scale(.985)}.btn[disabled]{opacity:.35;cursor:default}
+.btn-ghost{background:transparent;color:var(--green)}
+.row{display:flex;gap:10px;margin-top:14px}
+.opts{display:grid;gap:8px;margin-top:10px}
+.opt{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 12px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:var(--panel2);cursor:pointer;color:var(--text);font-family:var(--mono);text-align:left}
+.opt b{display:block;font:700 14.5px var(--font)}.opt small{display:block;color:var(--muted);font-size:12px;font-family:var(--font)}
+.opt .pr{font:700 14px var(--mono);color:var(--amber);white-space:nowrap}
+.opt.pick{border-color:var(--green);box-shadow:inset 0 0 0 1px var(--green)}
+.opt.truth .pr{color:var(--green)}
+.tog{display:flex;gap:8px;margin-top:10px}
+.tog button{flex:1;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:var(--panel2);color:var(--text);font:700 14px var(--mono);cursor:pointer}
+.tog button.on{border-color:var(--green);background:rgba(61,220,151,.12);color:var(--green)}
+.hud{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.k{background:var(--panel2);border-radius:8px;padding:10px;border:1px solid rgba(255,255,255,.06)}
+.k span{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.k b{display:block;font:700 22px/1.1 var(--mono);margin-top:3px}
+.k.na b{color:var(--muted);font-size:14px;line-height:1.3;margin-top:8px}
+.k.g b{color:var(--green)}.k.a b{color:var(--amber)}
+.chart{background:#0b1218;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px;position:relative}
+canvas{display:block;width:100%;height:auto}
+.nodata{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:12px;letter-spacing:.1em;background:repeating-linear-gradient(45deg,rgba(255,255,255,.02) 0 6px,transparent 6px 12px)}
+.nodata b{display:block;font-size:14px;color:var(--amber);letter-spacing:.14em;margin-bottom:4px}
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:8px}
+.leg i{display:inline-block;width:14px;height:3px;margin-right:6px;vertical-align:3px}
+.msg{border-left:3px solid var(--amber);background:rgba(255,159,69,.08);padding:10px 12px;border-radius:0 8px 8px 0;margin-top:12px;font-family:var(--font);font-size:15px}
+.msg.g{border-color:var(--green);background:rgba(61,220,151,.08)}
+.msg b{display:block;margin-bottom:3px}
+.truth{margin-top:10px;font-size:13px}
+.truth div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.score{font:700 30px var(--mono);color:var(--green)}
+.score small{font:500 12px var(--mono);color:var(--muted)}
+footer{max-width:680px;margin:0 auto;padding:0 16px 30px;font-size:12px;color:var(--muted);font-family:var(--font)}
+</style>
+</head>
+<body>
+<header><a class="home" id="homelink" href="../jatekok.html">← JÁTÉKOK</a><span class="live"><i></i><span id="hdr">ISKOLA UTCA · <span data-town>MINTAVÁROS</span></span></span></header>
+<main id="main"></main>
+<footer>A hatásgörbék mért értékeléseket követnek: táblák −0,75 km/h, két hét után nulla (SWOV, 478 885 mérés); sebességkijelzők rövid távú 2–5 km/h, kopó hatás; küszöb −10 km/h körül, tartós; 30-as zóna fizikai elemekkel −12 km/h (Japán Zone 30 Plus, London 20 mph). A panaszszám-görbe az ismert „újdonság-hatást” modellezi.</footer>
+<script>
+/* =====================================================================
+   LASSÍT ÉS MÉR — beavatkozás + mérés döntés, 12 hetes szimuláció, második döntés
+   ===================================================================== */
+document.getElementById('homelink').href=GV.hubUrl();
+const townTxt=GV.TOWN.name?GV.esc(GV.TOWN.name):'a település';
+const BASE=48;
+const I=[
+ {k:'tabla',n:'„Vigyázz, gyerekek!” tábla',s:'A legolcsóbb, a legnépszerűbb',cost:0.5,eff:w=>w<=1?-3:w===2?-1.5:-0.3,pts:5},
+ {k:'kijelzo',n:'Sebességkijelző (smiley) tábla',s:'Mutatja a sebességet, villog',cost:3,eff:w=>Math.max(-6+w*0.7,-2),pts:25},
+ {k:'kuszob',n:'Fekvőrendőr / forgalomcsillapító küszöb',s:'Fizikai elem a kritikus szakaszon',cost:2.5,eff:w=>-10+(w>8?0.5:0),pts:80},
+ {k:'zona',n:'30-as zóna fizikai elemekkel',s:'Szűkítés, kiemelt zebra, küszöbök',cost:6,eff:w=>-12,pts:100}
+];
+const MEAS_COST=1;
+let S={st:'intro',d1:null,m1:null,series:[],comp:[],d2:null,sim:null,week:0};
+const main=document.getElementById('main');
+const rnd=GV.rng('lassit-'+(GV.TOWN.key||'x'));
+const noise=()=>(rnd()*2-1)*1.2;
+const fmtD=v=>(v<0?'−':'+')+Math.abs(v).toFixed(1).replace('.',',');
+
+function simulate(k){const it=I.find(x=>x.k===k);const sp=[],cp=[];
+  for(let w=0;w<=12;w++){const e=w===0?0:it.eff(w);sp.push(+(BASE+e+(w?noise():0)).toFixed(1));
+    /* panaszok: újdonság-hatás — az első hetekben mindenre csökken, aztán visszatér, hacsak nem valós a hatás */
+    const real=-e>=8;const base=w===0?6:real?2+rnd()*1.2:(w<=3?2+rnd()*1.5:4.5+rnd()*2);cp.push(Math.round(base));}
+  return{sp,cp};}
+
+function drawChart(cv,sp,cp,upto,measured){
+  const dpr=window.devicePixelRatio||1;const W=cv.clientWidth||320,H=200;cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext('2d');c.scale(dpr,dpr);
+  c.clearRect(0,0,W,H);const L=36,R=14,T=14,B=28;const x=w=>L+(W-L-R)*w/12;const y=v=>T+(H-T-B)*(1-(v-25)/(55-25));
+  c.strokeStyle='rgba(255,255,255,.08)';c.lineWidth=1;c.font='10px Roboto Mono';c.fillStyle='#8aa0ae';
+  [30,40,50].forEach(v=>{c.beginPath();c.moveTo(L,y(v));c.lineTo(W-R,y(v));c.stroke();c.fillText(v+' km/h',2,y(v)+3);});
+  for(let w=0;w<=12;w+=2){c.fillText(w+'. hét',x(w)-12,H-10);}
+  /* 30-as limit */
+  c.strokeStyle='rgba(255,107,107,.5)';c.setLineDash([4,4]);c.beginPath();c.moveTo(L,y(30));c.lineTo(W-R,y(30));c.stroke();c.setLineDash([]);
+  /* panaszok oszlop */
+  for(let w=1;w<=upto;w++){const h=cp[w]*8;c.fillStyle='rgba(255,159,69,.35)';c.fillRect(x(w)-6,H-B-h,12,h);}
+  if(measured){c.strokeStyle='#3DDC97';c.lineWidth=2.5;c.beginPath();for(let w=0;w<=upto;w++){const px=x(w),py=y(sp[w]);w?c.lineTo(px,py):c.moveTo(px,py);}c.stroke();
+    for(let w=0;w<=upto;w++){c.fillStyle='#3DDC97';c.beginPath();c.arc(x(w),y(sp[w]),3,0,7);c.fill();}}
+  else{c.strokeStyle='rgba(138,160,174,.6)';c.lineWidth=2;c.setLineDash([6,5]);c.beginPath();c.moveTo(x(0),y(BASE));c.lineTo(x(1),y(BASE-8));c.lineTo(x(upto),y(BASE-8));c.stroke();c.setLineDash([]);}
+}
+function render(){
+  if(S.st==='intro'){main.innerHTML=`<div class="card"><span class="eyebrow">Lakossági döntésjáték · 3 perc</span>
+   <h1>Lassít és mér</h1>
+   <p>Egy lakóutca az iskola mellett, ${townTxt==='a település'?'bárhol':townTxt}. A lakók szerint száguldanak. A 30-as tábla ellenére a mért sebesség 48 km/h.</p>
+   <p>Döntesz egy beavatkozásról — és arról, hogy mérsz-e. Aztán jön tizenkét hét. Aztán jön a következő utca kérése.</p>
+   <div class="row"><button class="btn" onclick="go('d1')">Indítás</button></div></div>`;return;}
+  if(S.st==='d1'){main.innerHTML=`<div class="card"><span class="eyebrow">1. döntés · beavatkozás</span><h2>Mit teszel az utcába?</h2>
+   <div class="opts">${I.map(i=>`<button class="opt ${S.d1===i.k?'pick':''}" onclick="S.d1='${i.k}';render()"><span><b>${i.n}</b><small>${i.s}</small></span><span class="pr">${i.cost} M</span></button>`).join('')}</div>
+   <h2 style="margin-top:16px">Mérsz is?</h2><p>Forgalomszámláló + radar 12 hétre: ${MEAS_COST} M Ft. Nélküle csak a panaszok számát látod.</p>
+   <div class="tog"><button class="${S.m1===true?'on':''}" onclick="S.m1=true;render()">IGEN, MÉREK (+1 M)</button><button class="${S.m1===false?'on':''}" onclick="S.m1=false;render()">NEM, MINEK</button></div>
+   <div class="row"><button class="btn" onclick="run()" ${S.d1&&S.m1!=null?'':'disabled'}>Indul a 12 hét ▶</button></div></div>`;return;}
+  if(S.st==='sim'){const it=I.find(x=>x.k===S.d1);const w=S.week;const sp=S.sim.sp,cp=S.sim.cp;
+   main.innerHTML=`<div class="card"><span class="eyebrow">${w}. hét / 12 · ${it.n}${S.m1?' · mérés fut':' · mérés nincs'}</span>
+   <div class="hud"><div class="k ${S.m1?'g':'na'}"><span>85% sebesség</span><b>${S.m1?sp[w]+' km/h':'nincs adat'}</b></div><div class="k a"><span>Panasz / hét</span><b>${cp[w]}</b></div><div class="k"><span>Költés</span><b>${(it.cost+(S.m1?MEAS_COST:0)).toFixed(1)} M</b></div></div>
+   <div class="chart"><canvas id="cv" height="200"></canvas>${S.m1?'':'<div class="nodata"><div><b>NINCS MÉRÉS</b>amit látsz: a panaszok száma — és amit hiszel</div></div>'}</div>
+   <div class="leg"><span><i style="background:rgba(255,159,69,.6)"></i>panaszok/hét</span>${S.m1?'<span><i style="background:#3DDC97"></i>mért 85. percentilis</span>':'<span><i style="background:#8aa0ae"></i>amit a hivatal feltételez</span>'}<span><i style="background:rgba(255,107,107,.6)"></i>30 km/h</span></div>
+   ${w>=12?`<div class="msg ${S.m1?'g':''}"><b>${S.m1?'12 hét adat.':'12 hét, nulla adat.'}</b>${S.m1?`A 85. percentilis 48 km/h-ról indult, most ${sp[12]} km/h. ${-(sp[12]-BASE)>=8?'Tartós hatás: ez működik.':-(sp[12]-BASE)>=1.5?'Kevés: a hatás elkopott vagy sosem volt elég.':'Semmi: a tábla két hét alatt elkopott.'}`:'A panaszok az első hetekben csökkentek — mint mindig, bármire. Aztán '+(cp[12]<=3?'alacsonyan maradtak':'visszajöttek')+'. Hogy a sebesség változott-e, azt senki nem tudja.'}</div>
+   <div class="row"><button class="btn" onclick="go('d2')">Jön a következő utca ▶</button></div>`:''}</div>`;
+   setTimeout(()=>{const cv=document.getElementById('cv');if(cv)drawChart(cv,sp,cp,w,S.m1);},0);return;}
+  if(S.st==='d2'){main.innerHTML=`<div class="card"><span class="eyebrow">2. döntés · a következő utca</span><h2>Jön a szomszéd utca kérése. Mit tanácsolsz?</h2>
+   <p>${S.m1?'Van tizenkét hét mért adatod az első utcáról. Használd.':'Nincs mért adatod — csak az érzés, hogy a panaszok csökkentek az elején.'}</p>
+   <div class="opts">${I.map(i=>`<button class="opt ${S.d2===i.k?'pick':''}" onclick="S.d2='${i.k}';render()"><span><b>${i.n}</b><small>${i.s}</small></span><span class="pr">${i.cost} M</span></button>`).join('')}</div>
+   <div class="row"><button class="btn" onclick="finish()" ${S.d2?'':'disabled'}>Döntök</button></div></div>`;return;}
+  if(S.st==='final'){const i1=I.find(x=>x.k===S.d1),i2=I.find(x=>x.k===S.d2);const sc=S.score;
+   main.innerHTML=`<div class="card"><span class="eyebrow">A hét lenyomata</span>
+   <div class="score">${sc} <small>/ 100</small></div>
+   <h2>${S.m1?(i2.pts>=80?'Mértél, és a második döntés már látott.':'Mértél — és mégis a reflex döntött.'):(i2.pts>=80?'Jó döntés — vakon. Szerencse, nem rendszer.':'Ami nem mér, az a következő döntést ugyanolyan vakon hagyja, mint az elsőt.')}</h2>
+   <p>1. utca: ${i1.n} (${i1.cost} M)${S.m1?' + mérés':''} → valós hatás 12 hét után: <b style="color:var(--green)">${fmtD(S.sim.sp[12]-BASE)} km/h</b>. 2. utca: ${i2.n}.</p>
+   <div class="truth">${I.map(i=>`<div><span>${i.n}</span><span style="color:${i.pts>=80?'var(--green)':'var(--amber)'}">${i.k==='tabla'?'~0 km/h két hét után':i.k==='kijelzo'?'−2…−6, kopik':i.k==='kuszob'?'−10, tartós':'−12, tartós'}</span></div>`).join('')}</div>
+   <div class="msg g"><b>Lassít. És mér.</b>Minden értékelés, ami hatást mutatott, a sebességet csökkentette — és mérte. A beavatkozás adatot termel. Az adat visszamegy a térképre. A következő döntés jobb. Ami nem mér, az a következő döntést ugyanolyan vakon hagyja, mint az elsőt.</div>
+   ${GV.endPanel({game:'lassit',share:'Lassít és mér: '+sc+'/100 — mértem-e, mielőtt újra döntöttem?'})}</div>`;return;}
+}
+function go(st){S.st=st;render();window.scrollTo({top:0,behavior:'smooth'});}
+function run(){S.sim=simulate(S.d1);S.week=0;S.st='sim';render();window.scrollTo({top:0});
+  const tick=()=>{if(S.week>=12)return;S.week++;render();setTimeout(tick,S.week<12?260:0);};setTimeout(tick,500);}
+function finish(){const i1=I.find(x=>x.k===S.d1),i2=I.find(x=>x.k===S.d2);
+  const raw=i1.pts*0.35+(S.m1?25:0)+i2.pts*0.4;S.score=Math.min(100,Math.round(raw));
+  GV.record('lassit',{first:S.d1,measured:S.m1,effect12:+(S.sim.sp[12]-BASE).toFixed(1),second:S.d2,score:S.score});go('final');}
+render();
+</script>
+</body>
+</html>

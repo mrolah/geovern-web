@@ -203,6 +203,7 @@ input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;height:4px}
   <!-- Konferencia menüpont ideiglenesen levéve (az oldal él: konferencia.html)
   <a class="navlink" data-fade href="konferencia.html" data-i18n="nav_conf">Konferencia</a> -->
   <a class="navlink" data-fade href="jatek-swipe.html" data-i18n="nav_sw">Krízisjáték</a>
+  <a class="navlink" data-fade href="jatekok.html" data-i18n="nav_games">Játékok</a>
   <a class="navlink" data-fade href="rendezvenyek.html" data-i18n="nav_ev">Rendezvények</a>
   <a class="navlink" data-fade href="rolunk.html" data-i18n="nav_ab">Rólunk</a>
   <div class="lang" id="lang">
@@ -219,6 +220,7 @@ input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;height:4px}
 <nav id="mnav">
   <a data-fade href="referenciak.html" data-i18n="nav_ref">Referenciák</a>
   <a data-fade href="jatek-swipe.html" data-i18n="nav_sw">Krízisjáték</a>
+  <a data-fade href="jatekok.html" data-i18n="nav_games">Játékok</a>
   <a data-fade href="rendezvenyek.html" data-i18n="nav_ev">Rendezvények</a>
   <a data-fade href="rolunk.html" data-i18n="nav_ab">Rólunk</a>
   <a href="#s-ct" data-i18n="nav_cta" onclick="document.body.classList.remove('mopen')">Konzultáció</a>
@@ -385,7 +387,7 @@ const PROC={
  de:['Analyse · 2–4 Wo.','Diagnose · 1–2 Wo.','Roadmap · 3–5 Wo.','Umsetzung · nach Bedarf']
 };
 const I18N={
-hu:{title:'GEOVERN — GIS stratégiai tanácsadás',nav_cta:'Konzultáció',nav_conf:'Konferencia',nav_ref:'Referenciák',nav_sw:'Krízisjáték',nav_ev:'Rendezvények',nav_ab:'Rólunk',hero_eb:'FÜGGETLEN GIS STRATÉGIAI TANÁCSADÁS',
+hu:{title:'GEOVERN — GIS stratégiai tanácsadás',nav_cta:'Konzultáció',nav_conf:'Konferencia',nav_ref:'Referenciák',nav_sw:'Krízisjáték',nav_games:'Játékok',nav_ev:'Rendezvények',nav_ab:'Rólunk',hero_eb:'FÜGGETLEN GIS STRATÉGIAI TANÁCSADÁS',
  hero_h1:'A téradat nem költség.<br><em>Versenyelőny.</em>',
  hero_sub:'Stratégia, audit, licenc- és felhőoptimalizálás, AI — kormányzatnak, önkormányzatoknak, vállalatoknak, kutatóhelyeknek.',
  hero_c1:'Díjmentes konzultáció',hero_c2:'ROI-kalkulátor →',scroll:'görgessen',
@@ -403,7 +405,7 @@ hu:{title:'GEOVERN — GIS stratégiai tanácsadás',nav_cta:'Konzultáció',nav
  ct_h2:'Kezdjük egy 30 perces beszélgetéssel',ct_c1:'E-mail írása',ct_c2:'Időpontfoglalás',
  ft1:'Impresszum',ft2:'Adatkezelés',
  dots:['Kezdőlap','Miért mi?','Use case-ek','Szolgáltatások','ROI','Kapcsolat']},
-en:{title:'GEOVERN — GIS strategy consulting',nav_cta:'Book a call',nav_conf:'Conference',nav_ref:'References',nav_sw:'Crisis game',nav_ev:'Events',nav_ab:'About',hero_eb:'INDEPENDENT GIS STRATEGY CONSULTING',
+en:{title:'GEOVERN — GIS strategy consulting',nav_cta:'Book a call',nav_conf:'Conference',nav_ref:'References',nav_sw:'Crisis game',nav_games:'Games',nav_ev:'Events',nav_ab:'About',hero_eb:'INDEPENDENT GIS STRATEGY CONSULTING',
  hero_h1:'Spatial data is not a cost.<br><em>It’s an edge.</em>',
  hero_sub:'Strategy, audit, licence & cloud optimisation, AI — for government, municipalities, enterprises and research.',
  hero_c1:'Free consultation',hero_c2:'ROI calculator →',scroll:'scroll',
@@ -421,7 +423,7 @@ en:{title:'GEOVERN — GIS strategy consulting',nav_cta:'Book a call',nav_conf:'
  ct_h2:'Let’s start with a 30-minute conversation',ct_c1:'Write an email',ct_c2:'Book a slot',
  ft1:'Imprint',ft2:'Privacy',
  dots:['Home','Why us','Use cases','Services','ROI','Contact']},
-de:{title:'GEOVERN — GIS-Strategieberatung',nav_cta:'Gespräch buchen',nav_conf:'Konferenz',nav_ref:'Referenzen',nav_sw:'Krisenspiel',nav_ev:'Veranstaltungen',nav_ab:'Über uns',hero_eb:'UNABHÄNGIGE GIS-STRATEGIEBERATUNG',
+de:{title:'GEOVERN — GIS-Strategieberatung',nav_cta:'Gespräch buchen',nav_conf:'Konferenz',nav_ref:'Referenzen',nav_sw:'Krisenspiel',nav_games:'Spiele',nav_ev:'Veranstaltungen',nav_ab:'Über uns',hero_eb:'UNABHÄNGIGE GIS-STRATEGIEBERATUNG',
  hero_h1:'Geodaten sind keine Kosten.<br><em>Sie sind ein Vorteil.</em>',
  hero_sub:'Strategie, Audit, Lizenz- & Cloud-Optimierung, KI — für Verwaltung, Kommunen, Unternehmen und Forschung.',
  hero_c1:'Kostenloses Erstgespräch',hero_c2:'ROI-Rechner →',scroll:'scrollen',

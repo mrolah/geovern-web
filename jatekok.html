@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GEOVERN — Játékok: döntésjátékok a lakosságnak</title>
+<meta name="description" content="Hét rövid döntésjáték önkormányzatoknak, a lakosság szemléletformálására: hőhullám, esőkert, iskolautca, fák, költségvetés — és egy 12 hónapos városrész-szimuláció. Előbb az adat, aztán a beruházás.">
+<meta name="theme-color" content="#0F4A57">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="jatekok/config.js"></script>
+<script src="jatekok/gv.js"></script>
+<style>
+:root{--bg:#050f14;--petrol:#0F4A57;--teal:#2AD1B5;--amber:#FF9F45;--text:#EAF4F4;--muted:#8FB0B5;--faint:#5E7A80;
+  --card:rgba(5,15,20,.68);--cardline:rgba(42,209,181,.22);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.55;overflow-x:hidden;opacity:0;transition:opacity .5s ease}
+body.in{opacity:1}
+body::before{content:'';position:fixed;inset:0;z-index:-1;background:radial-gradient(900px 600px at 70% 10%,rgba(15,74,87,.5),transparent 60%),radial-gradient(700px 500px at 10% 90%,rgba(42,209,181,.1),transparent 60%),var(--bg)}
+a{color:var(--teal);text-decoration:none}
+header{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;gap:16px;padding:14px 26px;background:linear-gradient(180deg,rgba(5,15,20,.92),rgba(5,15,20,.55) 70%,transparent)}
+.logo img{height:32px;width:auto;display:block}
+.spacer{flex:1}
+.navlink{font-size:13.5px;font-weight:500;color:var(--muted)}.navlink:hover{color:var(--teal)}
+@media(max-width:560px){header{padding:12px 14px;gap:10px}.logo img{height:26px}}
+.wrap{max-width:1040px;margin:0 auto;padding:104px 20px 70px}
+.eyebrow{font:500 12px var(--mono);letter-spacing:.18em;color:var(--teal);display:block;margin-bottom:12px}
+h1{font-size:clamp(32px,5vw,54px);font-weight:900;line-height:1.06;margin-bottom:16px;max-width:760px}
+h1 em{font-style:normal;color:var(--teal)}
+.sub{color:var(--muted);font-size:17px;max-width:640px}
+.town{display:inline-flex;align-items:center;gap:8px;margin-top:16px;border:1px solid rgba(255,159,69,.5);background:rgba(255,159,69,.08);color:var(--amber);padding:8px 14px;border-radius:100px;font:500 13px var(--mono)}
+.ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:10px;font-weight:700;font-size:14.5px;cursor:pointer;border:1px solid transparent;transition:.2s;font-family:var(--font)}
+.btn-primary{background:var(--teal);color:#04211d}.btn-primary:hover{background:#63e6cf;transform:translateY(-1px)}
+.btn-ghost{border-color:rgba(42,209,181,.4);color:var(--text)}.btn-ghost:hover{border-color:var(--teal);color:var(--teal)}
+h2{font-size:clamp(22px,3vw,30px);font-weight:900;line-height:1.12;margin:54px 0 6px}
+.lead{color:var(--muted);font-size:15px;margin-bottom:18px;max-width:640px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.g{background:var(--card);border:1px solid var(--cardline);border-radius:18px;overflow:hidden;backdrop-filter:blur(14px);display:flex;flex-direction:column;transition:.2s;position:relative}
+.g:hover{border-color:rgba(42,209,181,.55);transform:translateY(-2px)}
+.g .im{aspect-ratio:16/9;background:#0b1c22;position:relative;overflow:hidden}
+.g .im img{width:100%;height:100%;object-fit:cover;object-position:right center;display:block;opacity:.92}
+.g .no{position:absolute;left:12px;top:12px;font:500 12px var(--mono);background:rgba(5,15,20,.8);border:1px solid var(--cardline);padding:4px 9px;border-radius:100px;color:var(--teal)}
+.g .tm{position:absolute;right:12px;top:12px;font:500 12px var(--mono);background:rgba(5,15,20,.8);padding:4px 9px;border-radius:100px;color:var(--muted)}
+.g .bd{padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px;flex:1}
+.g h3{font-size:19px;font-weight:900;line-height:1.2}
+.g .hook{color:var(--muted);font-size:14.5px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font:500 11px var(--mono);color:var(--muted);border:1px solid rgba(143,176,181,.25);padding:4px 8px;border-radius:6px;background:rgba(5,15,20,.5)}
+.tag b{color:var(--text);font-weight:500}
+.coll{font-size:12.5px;color:var(--faint);border-left:2px solid rgba(255,159,69,.5);padding-left:10px}
+.coll b{color:var(--amber);font-weight:500}
+.g .go{margin-top:auto;display:flex;justify-content:space-between;align-items:center;padding-top:6px}
+.g .go a{display:inline-flex;align-items:center;gap:8px;background:var(--teal);color:#04211d;font-weight:700;font-size:14px;padding:10px 16px;border-radius:9px}
+.g.big{grid-column:1/-1}
+@media(min-width:760px){.g.big{flex-direction:row}.g.big .im{width:46%;aspect-ratio:auto}.g.big .bd{width:54%}}
+.g.big .im img{object-position:center}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.box{background:var(--card);border:1px solid var(--cardline);border-radius:18px;padding:22px;backdrop-filter:blur(14px)}
+.box h3{font-size:16px;font-weight:700;color:var(--teal);margin-bottom:8px}
+.box p{color:var(--muted);font-size:14.5px}.box p+p{margin-top:8px}
+.box code{font:500 12.5px var(--mono);color:var(--amber);background:rgba(255,159,69,.08);padding:2px 6px;border-radius:5px}
+.try{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.try input{flex:1;min-width:160px;padding:11px 12px;border-radius:9px;border:1px solid rgba(143,176,181,.3);background:rgba(5,15,20,.6);color:var(--text);font:500 15px var(--font)}
+.try button{padding:11px 16px;border-radius:9px;border:none;background:var(--teal);color:#04211d;font:700 14px var(--font);cursor:pointer}
+.res{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.res button{padding:9px 14px;border-radius:9px;border:1px solid rgba(42,209,181,.4);background:transparent;color:var(--text);font:700 13px var(--font);cursor:pointer}
+.res button:hover{border-color:var(--teal);color:var(--teal)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid rgba(143,176,181,.15);font-size:13px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="index.html"><img src="logo/geovern-logo-teal.svg" alt="GEOVERN"></a>
+  <div class="spacer"></div>
+  <a class="navlink" href="jatek-swipe.html">Krízisjáték</a>
+  <a class="navlink" href="index.html">← Vissza a főoldalra</a>
+</header>
+
+<div class="wrap">
+  <span class="eyebrow">GEOVERN · JÁTÉKOK ÖNKORMÁNYZATOKNAK</span>
+  <h1>Döntésjátékok <em>a lakosságnak.</em></h1>
+  <p class="sub">Hét rövid döntési helyzet — hőhullám, villámárvíz, iskolautca, fák, költségvetés — a saját település nevével, a lakók telefonján. Mindegyik ugyanazt mutatja meg játszva, amit egy testületi ülésen nehéz elmondani: <b>előbb az adat, aztán a beruházás.</b></p>
+  <div class="town" data-town-hide>📍 Ez a játékcsomag <span data-town></span> lakóinak készült</div>
+  <div class="ctas"><a class="btn btn-primary" id="cta1" href="jatekok/fak.html">Kezdd az elsővel →</a><a class="btn btn-ghost" id="cta2" href="jatekok/zold-varosresz.html">A 12 hónapos játék</a></div>
+
+  <h2>Rövid játékok — 1–3 perc</h2>
+  <p class="lead">Mindegyik más designnal, más játékmóddal és más adatábrázolással készült — térkép, tervrajz, plakát, pixel, nagy számok, műszerfal —, hogy egy kampányban többféle lakót többféleképpen érjen el.</p>
+  <div class="grid" id="grid"></div>
+
+  <h2>A hosszabb — 5–10 perc</h2>
+  <p class="lead">SimCity-szerű folyamatjáték: egy év egy városrész élén, tizenkét hónap, tizenkét esemény. Itt nem egy döntést hozol, hanem egy folyamatot viszel végig — és a végén kiderül, mennyit költöttél vakon.</p>
+  <div class="grid" id="gridbig"></div>
+
+  <h2>Önkormányzatoknak — hogyan használd</h2>
+  <div class="two">
+    <div class="box"><h3>1 · Kiadás a település nevével</h3>
+      <p>Minden játék a cím végére írt paraméterrel a saját településre szól: <code>geovern.com/jatekok.html?telepules=Pápa</code>. A térképes játék a település központjára áll rá, a többi a nevet írja ki. Egy QR-kód a hírlevélbe, a fórum meghívójára, az iskolai szülői levélbe — ennyi a telepítés.</p>
+      <div class="try"><input id="tn" placeholder="A település neve" maxlength="40"><button onclick="tryTown()">Próbáld ki</button></div></div>
+    <div class="box"><h3>2 · Mit tanul a lakos</h3>
+      <p>Nem előadás, hanem tapasztalat: előbb vakon dönt, aztán adattal — és látja a különbséget a saját döntésén. Ezért tudja elfogadni, amikor a testület nem a főtérre, hanem a lakótelepre költ.</p>
+      <p>Névtelen játék, pártpolitika nélkül: a kérdések szakmaiak, a helyszínek illusztratívak.</p></div>
+    <div class="box"><h3>3 · Mit tud meg az önkormányzat</h3>
+      <p>A játékok névtelenül rögzítik a döntéseket: hová tennének fát a lakók, hol félnek a gyerekek miatt, mit tartanak drágának, mennyien változtatták meg a véleményüket adat láttán, és mit mérnének szívesen. Ebből lesz a <b>lakossági problématérkép</b> és a kampány mérhető hatása.</p>
+      <p>Alapból minden eredmény a játékos böngészőjében marad; a központi gyűjtés egy sorral bekapcsolható (<code>jatekok/config.js</code>).</p></div>
+    <div class="box"><h3>4 · Saját kártyák, saját adatok</h3>
+      <p>A kártyák és a rétegek a település saját adataival cserélhetők: a valós hőtérkép, a fakataszter-hiány, a balesettérkép, az elöntési térkép. Ebből lesz a tematikus pakli, a kampány vagy a diák-kiadás.</p>
+      <p><a href="index.html#s-ct">Konzultáció →</a> · <a href="mailto:hello@geovern.com">hello@geovern.com</a></p></div>
+  </div>
+
+  <h2>Eredmények ebben a böngészőben</h2>
+  <p class="lead" id="rescount">Még nincs helyben mentett eredmény.</p>
+  <div class="res"><button onclick="GV.exportCSV()">CSV-export</button><button onclick="if(confirm('Törlöd a helyben mentett eredményeket?')){GV.clearResults();cnt();}">Törlés</button></div>
+
+  <div class="foot"><span>© GEOVERN · <a href="adatkezeles.html">Adatkezelés</a> · <a href="impresszum.html">Impresszum</a></span><span>Névtelen játékok, lakossági szemléletformálásra.</span></div>
+</div>
+
+<script>
+const GAMES=[
+ {f:'jatekok/fak.html',img:'jatekok/img/fak.jpg',t:'Hová ültetnél 10 fát?',min:'2–3 perc',hook:'Hőhullám jön, tíz fára van keret. Előbb adat nélkül ültetsz, aztán a hőtérképpel — és látod a különbséget.',
+  design:'GEOVERN sötét térkép',mode:'bejelölés a térképen, két kör',data:'élő térkép + illusztratív rétegek',coll:'hová tennének fát a lakók (koordináták), vak vs. adatos pontszám'},
+ {f:'jatekok/esokert.html',img:'jatekok/img/esokert.jpg',t:'Esőkert vagy csatorna?',min:'2–3 perc',hook:'Villámárvíz után 120 millió: nagy cső, esőkertek, vízáteresztő burkolat vagy zöldtető? Oszd el, aztán jön a vihar.',
+  design:'tervrajz (blueprint)',mode:'csúszkás keretosztás + vihar-szimuláció',data:'sematikus utcametszet',coll:'keretosztási arányok, mérés-hajlandóság'},
+ {f:'jatekok/iskolautca.html',img:'jatekok/img/iskolautca.jpg',t:'Iskolautca',min:'2–3 perc',hook:'Hol a veszély: ott, ahol félünk, vagy ott, ahol a balesetek vannak? Öt döntés, mért válaszokkal Bécstől New Yorkig.',
+  design:'plakát (civic poster)',mode:'A/B/C döntések + veszélypont-bejelölés',data:'vázlat-térkép + mért bizonyítékok',coll:'észlelt veszélypont, támogatás, mit mérnének'},
+ {f:'jatekok/ugyanaz-az-utca.html',img:'jatekok/img/ugyanaz.jpg',t:'Ugyanaz az utca',min:'2 perc',hook:'Fák, közlekedés, aztán a 300 milliós csomag. Három szakág, három döntés — és mind ugyanarra a zónára mutat.',
+  design:'pixel · izometrikus',mode:'zónaválasztás három körben',data:'sematikus kisváros, három réteg',coll:'zónaválasztások vakon és adattal'},
+ {f:'jatekok/karcsu.html',img:'jatekok/img/karcsu.jpg',t:'Karcsú vagy túlméretezett?',min:'2 perc',hook:'Nyolc gyors pár: melyik ad többet egy forintért? Tározó vagy esőkertek, új szoftver vagy egy jó kérdés.',
+  design:'nagy számok, fehér',mode:'gyors párválasztás, 10 mp',data:'nagyságrendi költségek',coll:'árérzékelés: mit hisznek olcsóbbnak'},
+ {f:'jatekok/lassit-es-mer.html',img:'jatekok/img/lassit.jpg',t:'Lassít és mér',min:'3 perc',hook:'Száguldanak az iskola mellett. Tábla, kijelző, küszöb — és mérsz-e? Tizenkét hét, aztán a következő utca kérése.',
+  design:'szenzor-műszerfal',mode:'döntés → 12 hetes szimuláció → újradöntés',data:'idősor-diagram',coll:'mérési hajlandóság, eszközválasztás'}
+];
+const BIG={f:'jatekok/zold-varosresz.html',img:'jatekok/img/zold.jpg',t:'Zöld városrész — 12 hónap',min:'5–10 perc',hook:'150 millió forint, 63 tömb, három kockázat — és egy térkép, amin eleinte semmi nem látszik. Fát ültetsz, esőkertet ásol, csillapítasz; vagy előbb szenzort teszel ki. A tavasz, a nyár és az ősz megmutatja, mit ért a döntés.',
+  design:'modern sim, HUD',mode:'építés + havi események + rejtett rétegek',data:'rácsos városrész, mérés fedi fel',coll:'adattal vs. vakon költött arány, elhelyezések, eseménykárok'};
+const esc=GV.esc;
+function card(g,i,big){return `<article class="g ${big?'big':''}"><div class="im"><img src="${g.img}" alt="" loading="lazy"><span class="no">${big?'★':'0'+(i+1)}</span><span class="tm">⏱ ${g.min}</span></div>
+  <div class="bd"><h3>${esc(g.t)}</h3><p class="hook">${esc(g.hook)}</p>
+  <div class="tags"><span class="tag">🎨 <b>${esc(g.design)}</b></span><span class="tag">🎮 <b>${esc(g.mode)}</b></span><span class="tag">🗺️ <b>${esc(g.data)}</b></span></div>
+  <div class="coll"><b>Mit gyűjt:</b> ${esc(g.coll)}</div>
+  <div class="go"><a href="${GV.urlFor(g.f)}">Indítás →</a></div></div></article>`;}
+document.getElementById('grid').innerHTML=GAMES.map((g,i)=>card(g,i,false)).join('');
+document.getElementById('gridbig').innerHTML=card(BIG,0,true);
+document.getElementById('cta1').href=GV.urlFor('jatekok/fak.html');document.getElementById('cta2').href=GV.urlFor('jatekok/zold-varosresz.html');
+function tryTown(){const v=document.getElementById('tn').value.trim();if(!v)return;location.href='jatekok.html?telepules='+encodeURIComponent(v);}
+document.getElementById('tn').addEventListener('keydown',e=>{if(e.key==='Enter')tryTown();});
+function cnt(){const r=GV.results();const games=r.filter(x=>x.game!=='velemeny').length,op=r.filter(x=>x.game==='velemeny');const ch=op.filter(x=>x.changed==='igen').length;
+  document.getElementById('rescount').textContent=r.length?`${games} lejátszott játék, ${op.length} válasz a „változott a véleményed?” kérdésre (${ch} igen). Az adatok csak ebben a böngészőben vannak — CSV-ként kiexportálhatod.`:'Még nincs helyben mentett eredmény. Játssz egyet, és itt megjelenik — névtelenül, csak ebben a böngészőben.';}
+cnt();
+requestAnimationFrame(()=>document.body.classList.add('in'));
+</script>
+</body>
+</html>
