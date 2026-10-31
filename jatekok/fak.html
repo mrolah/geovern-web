@@ -12,9 +12,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="config.js"></script>
-<script src="gv.js"></script>
-<script src="gvmap.js"></script>
+<script src="config.js?v=3"></script>
+<script src="gv.js?v=3"></script>
+<script src="gvmap.js?v=3"></script>
 <style>
 :root{--bg:#050f14;--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b4a;--text:#EAF4F4;--muted:#9BB7BC;--faint:#5E7A80;
   --card:rgba(6,17,22,.9);--line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
@@ -106,21 +106,20 @@ function procedural(){const g=(blobs,x,y)=>{let s=0;blobs.forEach(b=>{const d2=(
 function blobPoly(cx,cy,r,seed){const rr=GV.rng('b'+seed),n=18,rad=[];for(let i=0;i<n;i++)rad.push(r*(1+(rr()*2-1)*.3));for(let i=0;i<n;i++)rad[i]=(rad[i]+rad[(i+1)%n]+rad[(i+n-1)%n])/3;
   const ring=[];for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,q=rad[i%n];ring.push([cx+Math.cos(a)*q,cy+Math.sin(a)*q*0.8]);}return ring;}
 
-/* ---- indulás: középpont → térkép + OSM párhuzamosan ---- */
+/* ---- indulás: középpont → térkép → adat a betöltött csempékből (tartalék: Overpass) ---- */
 render();
-GVMAP.resolveCenter(T).then(c=>{center=c;GVMAP.setCenter(c);initMap();
-  return GVMAP.loadOSM(T,c,800);}).then(json=>{D=GVMAP.parse(json);
-  if(D.ok&&!D.water.some(p=>GVMAP.pointInPoly(0,0,p))){E=GVMAP.evaluators(D);MODE='osm';}
-  else{const pr=procedural();E=pr.E;S.PL=pr.L;MODE='proc';}
-  S.st='intro';render();if(mapReady)addLayers();});
-
+GVMAP.resolveCenter(T).then(c=>{center=c;GVMAP.setCenter(c);initMap();});
 function initMap(){
   map=GVMAP.createMap({container:'map',center,zoom:15,pitch:0,bearing:0,dragRotate:false,pitchWithRotate:false,touchPitch:false},
     m=>{mapReady=true;try{m.touchZoomRotate.disableRotation();}catch(e){}
       const ring=[[-AX,-AY],[AX,-AY],[AX,AY],[-AX,AY],[-AX,-AY]].map(p=>GVMAP.toLL(p[0],p[1]));
       m.addSource('area',{type:'geojson',data:{type:'Feature',geometry:{type:'Polygon',coordinates:[ring]}}});
       m.addLayer({id:'area',type:'line',source:'area',paint:{'line-color':'#2AD1B5','line-width':1.5,'line-dasharray':[3,3],'line-opacity':.55}});
-      fitArea();m.on('click',onTap);if(E)addLayers();},
+      fitArea();m.on('click',onTap);
+      GVMAP.whenIdle(m,7000).then(()=>GVMAP.loadData(m,T,center,800)).then(d=>{D=d;
+        if(D.ok&&!D.water.some(p=>GVMAP.pointInPoly(0,0,p))){E=GVMAP.evaluators(D);MODE='osm';}
+        else{const pr=procedural();E=pr.E;S.PL=pr.L;MODE='proc';}
+        if(S.st==='loading')S.st='intro';render();addLayers();fitArea(true);});},
     ()=>document.body.classList.add('maperr'));
 }
 function fitArea(anim){if(!mapReady)return;const sheet=document.querySelector('.panel');const bottom=Math.min(window.innerHeight*0.5,(sheet?sheet.offsetHeight:260)+30);
@@ -158,7 +157,9 @@ function onTap(e){
   let [x,y]=GVMAP.toXY(e.lngLat.lng,e.lngLat.lat);
   if(Math.abs(x)>AX||Math.abs(y)>AY){flash('A szaggatott kereten belül ültess.');return;}
   if(E.inWater(x,y)){flash('Vízre nem lehet fát ültetni.');return;}
-  if(MODE==='osm'){const s=GVMAP.snapToRoad(D,x,y,60);if(!s){flash('Koppints egy utca mellé — a fa a járda mellé kerül.');return;}x=s.x;y=s.y;if(E.inWater(x,y)){flash('Itt víz van — válassz másik utcát.');return;}}
+  if(MODE==='osm'){if(E.nearRail(x,y)){flash('Vasútra nem — koppints egy utca mellé.');return;}
+    const s=GVMAP.snapToRoad(D,x,y,60);if(!s){flash('Koppints egy utca mellé — a fa a járda mellé kerül.');return;}x=s.x;y=s.y;
+    if(E.inWater(x,y)||E.nearRail(x,y)){flash('Itt víz vagy vasút van — válassz másik utcát.');return;}}
   const ll=GVMAP.toLL(x,y);
   const el=document.createElement('div');el.className='mk';el.innerHTML='<div class="tree">🌳<span class="pt"></span></div>';
   const t={x:+x.toFixed(1),y:+y.toFixed(1),el};
@@ -173,10 +174,10 @@ function evaluate(){let total=0;S.trees.forEach(t=>{const p=Math.round(GVMAP.tre
 let flashT=null;function flash(m){const h=P.querySelector('.hint');if(!h)return;const o=h.dataset.base||h.textContent;h.dataset.base=o;h.textContent=m;clearTimeout(flashT);flashT=setTimeout(()=>{h.textContent=o;},2200);}
 
 /* ---- képernyők ---- */
-const srcTxt=()=>MODE==='osm'?'Utcák, parkok, bölcsődék, rendelők: OpenStreetMap. A hőtérkép a burkolt felületből és a zöld hiányából számolt becslés.':'Illusztratív minta-rétegek (az OSM-adat most nem volt elérhető).';
+const srcTxt=()=>(T.demo?'Minta-település: '+T.demo+' (saját településhez: ?telepules=…). ':'')+(MODE==='osm'?'Utcák, parkok, bölcsődék, rendelők: OpenStreetMap ('+(D&&D.src==='tiles'?'térképcsempék':'Overpass')+'). A hőtérkép a burkolt felületből és a zöld hiányából számolt becslés.':'Illusztratív minta-rétegek — az OSM-adat most nem volt elérhető'+(GVMAP.lastError?' ('+GVMAP.lastError+')':'')+'.');
 function render(){const n=S.trees.length;
   if(S.st==='loading'){TB.innerHTML='Hőhullám · <b>'+townTxt+'</b>';P.innerHTML=`<span class="eyebrow">Lakossági döntésjáték · 2–3 perc</span><h1>Hová ültetnél <em>10 fát</em>?</h1>
-    <p><span class="spin"></span>${townTxt==='a település'?'A település':townTxt} utcáinak betöltése…</p><div class="hint">OpenStreetMap-adat, pár másodperc.</div>`;return;}
+    <p><span class="spin"></span>${T.name?townTxt:(T.demo||'A település')} utcáinak betöltése…</p><div class="hint">OpenStreetMap-adat a térképcsempékből, pár másodperc.</div>`;return;}
   if(S.st==='intro'){TB.innerHTML='Hőhullám · <b>'+townTxt+'</b>';P.innerHTML=`<span class="eyebrow">Lakossági döntésjáték · 2–3 perc</span>
     <h1>Hová ültetnél <em>10 fát</em>?</h1>
     <p>Hőhullám jön. ${townTxt==='a település'?'A település':townTxt} tíz fára kapott keretet — ugyanannyiba kerül mind, de nem ugyanannyit ér.</p>
@@ -206,7 +207,7 @@ function render(){const n=S.trees.length;
 }
 function start(){S.st='place';S.round=1;render();fitArea();}
 function finishRound(){const sc=evaluate();if(S.round===1){S.r1=sc;S.st='reveal1';}else{S.r2=sc;S.st='final';
-  GV.record('fak',{mode:MODE,center:[+center[0].toFixed(5),+center[1].toFixed(5)],blind:{score:S.r1,pts:S.blindPts},informed:{score:S.r2,pts:S.trees.map(t=>[t.x,t.y])},known:T.known});}render();}
+  GV.record('fak',{mode:MODE,src:(D&&D.src)||'',center:[+center[0].toFixed(5),+center[1].toFixed(5)],blind:{score:S.r1,pts:S.blindPts},informed:{score:S.r2,pts:S.trees.map(t=>[t.x,t.y])},known:T.known});}render();}
 function showLayers(){setLayers(true);S.blindPts=S.trees.map(t=>[t.x,t.y]);S.trees.forEach(t=>t.el.classList.add('dim'));S.st='layers';render();}
 function round2(){clearTrees();S.round=2;S.st='place';render();}
 </script>

@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OSM-adat előkészítése — GEOVERN játékok</title>
 <meta name="robots" content="noindex">
-<script src="config.js"></script>
-<script src="gv.js"></script>
-<script src="gvmap.js"></script>
+<script src="config.js?v=3"></script>
+<script src="gv.js?v=3"></script>
+<script src="gvmap.js?v=3"></script>
 <style>
 body{background:#050f14;color:#EAF4F4;font-family:Roboto,system-ui,sans-serif;max-width:640px;margin:0 auto;padding:24px 16px;line-height:1.5}
 h1{font-size:22px;margin-bottom:8px}p{color:#9BB7BC;font-size:14.5px}code{color:#FF9F45;font-family:'Roboto Mono',monospace;font-size:13px}
@@ -19,7 +19,7 @@ pre{background:#0b1a21;border:1px solid rgba(42,209,181,.25);border-radius:10px;
 </head>
 <body>
 <h1>OSM-adat előkészítése egy településhez</h1>
-<p>Ez a kis eszköz lefuttatja ugyanazt az Overpass-lekérdezést, amit a térképes játékok élőben, és letölthető JSON-t ad. Ha a fájlt <code>jatekok/data/&lt;település&gt;.json</code> néven felteszed a repóba, a játékok ezt töltik be először — így egy kampányban nulla élő Overpass-hívás megy, gyorsabb és biztonságosabb.</p>
+<p><b>Opcionális.</b> A térképes játékok alapból a betöltött térkép csempéiből (OpenStreetMap-adat) számolják az utcákat, vizeket, intézményeket — ehhez nem kell külön lekérdezés. Ez az eszköz az Overpass-lekérdezéses tartalékhoz készít letölthető JSON-t: ha a fájlt <code>jatekok/data/&lt;település&gt;.json</code> néven felteszed a repóba, a játékok azt töltik be, amikor a csempékből kevés adat jön (pl. nagyon kis település, vagy a térképszolgáltató kiesik).</p>
 <div class="row"><input id="t" placeholder="Település neve (pl. Pápa)"><button onclick="run()">Lekérdezés</button></div>
 <p id="st"></p>
 <div class="row"><button id="dl" style="display:none" onclick="download()">Letöltés JSON-ként</button></div>

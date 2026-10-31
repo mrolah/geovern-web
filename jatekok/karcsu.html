@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
-<script src="config.js"></script>
-<script src="gv.js"></script>
+<script src="config.js?v=3"></script>
+<script src="gv.js?v=3"></script>
 <style>
 :root{--bg:#050f14;--ink:#EAF4F4;--muted:#9BB7BC;--red:#FF9F45;--green:#2AD1B5;--line:rgba(42,209,181,.28);--card:#0b1a21;
   --font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;--gv-accent:var(--green);--gv-accent-ink:#04211d;--gv-line:var(--line)}
@@ -93,7 +93,9 @@ const P=[
  {q:'Térinformatika a hivatalba',a:{t:'Rendszerbevezetés, aztán majd lesznek kérdések',s:'Szerver, licenc, 3 modul, oktatás',n:'120 M Ft',sub:'szép adat, kérdés nélkül'},b:{t:'Előbb a vezetői kérdés, aztán egy pilot-térkép',s:'Egy utca, egy délelőtt, meglévő adat',n:'6 M Ft',sub:'egy döntés, ami megváltozott'},best:'b',ratio:'20×',
   l:'A rosszul feltett kérdés: ugyanarra a feladatra 10–20-szoros költségkülönbség.',e:'Nem a szoftver a drága. Az, hogy ki és mit kérdezett az elején. Minden településen máshol szakad el a lánc — ezért kezdődik egy jó projekt egy utcával, nem egy beszerzéssel.'}
 ];
-let S={st:'intro',i:0,picked:null,log:[],t0:0,timer:null};
+let S={st:'intro',i:0,picked:null,log:[],t0:0,timer:null,order:[]};
+/* a két kártya helye páronként véletlen — a jó válasz hol balra/fent, hol jobbra/lent kerül */
+const shuffleOrder=()=>P.map(()=>Math.random()<0.5?['a','b']:['b','a']);
 const main=document.getElementById('main');
 const ctr=document.getElementById('ctr');
 const money=s=>s;
@@ -106,7 +108,7 @@ function render(){
   if(S.st==='q'){const p=P[S.i];const rv=S.picked!=null;ctr.innerHTML=`<b>${S.i+1}</b> / ${P.length}`;
    main.innerHTML=`<span class="eyebrow">${p.q}</span><h2>Melyik ad többet egy forintért?</h2>
    <div class="timer ${rv?'stop':''}" id="timer"><i></i></div>
-   <div class="pair">${['a','b'].map(k=>{const o=p[k];const cls=rv?(k===p.best?'win':'lose'):'';return `<button class="c ${rv?'rev':''} ${cls}" ${rv?'disabled':''} onclick="pick('${k}')"><span><span class="t">${o.t}</span><br><span class="s">${o.s}</span></span><span class="n">${o.n}<small>${o.sub}</small></span></button>`;}).join('')}</div>
+   <div class="pair">${(S.order[S.i]||['a','b']).map(k=>{const o=p[k];const cls=rv?(k===p.best?'win':'lose'):'';return `<button class="c ${rv?'rev':''} ${cls}" ${rv?'disabled':''} onclick="pick('${k}')"><span><span class="t">${o.t}</span><br><span class="s">${o.s}</span></span><span class="n">${o.n}<small>${o.sub}</small></span></button>`;}).join('')}</div>
    ${rv?`<div class="lesson"><b>${S.picked===p.best?'Igen.':S.picked==='x'?'Lejárt az idő.':'Nem — pedig így dönt a legtöbb testület.'} <span class="ratio">${p.ratio}</span></b><p><b>${p.l}</b> ${p.e}</p></div>
    <div class="row"><button class="btn" onclick="next()">${S.i<P.length-1?'Következő pár':'Eredmény'}</button></div>`:''}`;
    if(!rv){clearTimeout(S.timer);S.timer=setTimeout(()=>{if(S.st==='q'&&S.picked==null)pick('x');},10000);S.t0=Date.now();}
@@ -120,8 +122,8 @@ function render(){
    <div class="list">${S.log.map((l,i)=>`<div><span>${P[i].q}</span><i class="${l.ok?'ok':'no'}">${l.ok?'✓':l.pick==='x'?'⏱':'✗'} ${P[i].ratio}</i></div>`).join('')}</div>
    ${GV.endPanel({game:'karcsu',share:'Karcsú vagy túlméretezett? '+ok+'/'+P.length+' jó válasz.'})}`;return;}
 }
-function start(){S.st='q';S.i=0;S.picked=null;S.log=[];render();window.scrollTo({top:0});}
-function pick(k){if(S.picked!=null)return;clearTimeout(S.timer);S.picked=k;S.log.push({q:P[S.i].q,pick:k,ok:k===P[S.i].best,ms:Date.now()-S.t0});render();}
+function start(){S.st='q';S.i=0;S.picked=null;S.log=[];S.order=shuffleOrder();render();window.scrollTo({top:0});}
+function pick(k){if(S.picked!=null)return;clearTimeout(S.timer);S.picked=k;S.log.push({q:P[S.i].q,pick:k,side:k==='x'?'-':(S.order[S.i]||['a','b']).indexOf(k)===0?'first':'second',ok:k===P[S.i].best,ms:Date.now()-S.t0});render();}
 function next(){if(S.i<P.length-1){S.i++;S.picked=null;S.st='q';render();window.scrollTo({top:0});}
   else{S.st='final';GV.record('karcsu',{answers:S.log,correct:S.log.filter(l=>l.ok).length});render();window.scrollTo({top:0});}}
 render();

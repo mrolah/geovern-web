@@ -43,7 +43,8 @@
     'balatonalmadi':[18.020,47.030],'fonyod':[17.560,46.730],'graz':[15.440,47.070],'wien':[16.370,48.210],'becs':[16.370,48.210],
     'innsbruck':[11.390,47.270]
   };
-  const DEFAULT_CENTER=[19.04,47.50];
+  const DEFAULT_CENTER=[17.468,47.330]; /* minta-település a térképes játékokhoz, ha nincs ?telepules=: Pápa */
+  const DEFAULT_NAME='Pápa';
 
   function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
     .replace(/ő|ö/g,'o').replace(/ű|ü/g,'u').replace(/[^a-z0-9. ]+/g,' ').replace(/\s+/g,' ').trim();}
@@ -58,7 +59,7 @@
     if(!t)t=CFG.TOWN_DEFAULT||'';
     const key=norm(t);
     const c=TOWNS[key]||null;
-    return {name:t?cap(t):'', key, center:c||DEFAULT_CENTER, known:!!c, generic:!t};
+    return {name:t?cap(t):'', key, center:c||DEFAULT_CENTER, known:!!c, generic:!t, demo:t?'':DEFAULT_NAME};
   }
   const TOWN=readTown();
 

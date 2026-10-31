@@ -12,9 +12,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="config.js"></script>
-<script src="gv.js"></script>
-<script src="gvmap.js"></script>
+<script src="config.js?v=3"></script>
+<script src="gv.js?v=3"></script>
+<script src="gvmap.js?v=3"></script>
 <style>
 :root{--bg:#050f14;--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b4a;--blue:#4aa8ff;--text:#EAF4F4;--muted:#9BB7BC;--faint:#5E7A80;
   --card:rgba(6,17,22,.9);--line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
@@ -98,28 +98,29 @@ function OPT3(){const m=Z[S.meet];return[
  {l:'C',t:'Metszet-csomag: '+m.n,s:'Fák + csillapítás + esőkertek egy zónában',pts:100,r:'Ott költ, ahol a három réteg metszi egymást. Ugyanannyi pénz — más utca.'},
  {l:'D',t:'Központ-megújítás',s:'Látványos, a választók szeretik',pts:10,r:'Szép lesz — és a kockázat ott marad, ahol volt.'}];}
 
-/* ---- zónák építése ---- */
+/* ---- zónák építése: utcapont-klaszterek a település adottságai szerint; tartalék: 3×3 minta ---- */
 function buildZones(){
-  Z=CENTERS.map((c,i)=>({id:i,cx:c[0],cy:c[1],poly:blobPoly(c[0],c[1],185,i),n:'',ic:'',heat:0,vuln:0,acc:0,flood:0,lvl:{}}));
-  Z.forEach(z=>{ /* mintapontok a zónában */
-    const pts=[];for(let gx=-150;gx<=150;gx+=50)for(let gy=-130;gy<=130;gy+=50){const x=z.cx+gx,y=z.cy+gy;if(GVMAP.pointInPoly(x,y,z.poly))pts.push([x,y]);}
-    z.pts=pts;
-    if(MODE==='osm'){let h=0,v=0,p=0,g=0,w=0,s=0,rd=0,mj=0;pts.forEach(q=>{h+=E.heat(q[0],q[1]);v+=E.vuln(q[0],q[1]);p+=E.ped(q[0],q[1]);g+=E.canopy(q[0],q[1])>0.6?1:0;w+=E.inWater(q[0],q[1])?1:0;s+=E.sealed(q[0],q[1])>0.6?1:0;rd+=E.roadDens(q[0],q[1]);mj+=E.nearMajor(q[0],q[1])>0.3?1:0;});
-      const n=pts.length||1;z.heat=h/n;z.vuln=Math.min(1,v/n*1.6);z.ped=p/n;z.green=g/n;z.water=w/n;z.sealed=s/n;z.rd=rd/n;z.major=mj/n;
+  let zs=null;if(MODE==='osm')zs=GVMAP.clusterZones(D,E,9,560,rnd);
+  if(zs){Z=zs.map((z,i)=>Object.assign({id:i,n:'',ic:'',lvl:{}},z));}
+  else{Z=CENTERS.map((c,i)=>({id:i,cx:c[0],cy:c[1],poly:blobPoly(c[0],c[1],185,i),n:'',ic:'',lvl:{}}));
+    Z.forEach(z=>{const pts=[];for(let gx=-150;gx<=150;gx+=50)for(let gy=-130;gy<=130;gy+=50){const x=z.cx+gx,y=z.cy+gy;if(GVMAP.pointInPoly(x,y,z.poly))pts.push([x,y]);}z.pts=pts;});}
+  Z.forEach(z=>{const pts=z.pts;
+    if(MODE==='osm'){let h=0,v=0,p=0,g=0,w=0,sl=0,rd=0,mj=0;pts.forEach(q=>{h+=E.heat(q[0],q[1]);v+=E.vuln(q[0],q[1]);p+=E.ped(q[0],q[1]);g+=E.canopy(q[0],q[1])>0.6?1:0;w+=E.inWater(q[0],q[1])?1:0;sl+=E.sealed(q[0],q[1])>0.6?1:0;rd+=E.roadDens(q[0],q[1]);mj+=E.nearMajor(q[0],q[1])>0.3?1:0;});
+      const n=pts.length||1;z.heat=h/n;z.vuln=Math.min(1,v/n*1.6);z.ped=p/n;z.green=g/n;z.water=w/n;z.sealed=sl/n;z.rd=rd/n;z.major=mj/n;
       z.pois=D.pois.filter(q=>GVMAP.pointInPoly(q.x,q.y,z.poly));z.shops=D.shops.filter(q=>GVMAP.pointInPoly(q.x,q.y,z.poly)).length;
+      let wn=0;pts.forEach(q=>{for(const wp of D.water){if(GVMAP.distToPoly(q[0],q[1],wp)<60){wn++;break;}}});z.waterfront=wn/n;
       const kinds=z.pois.map(q=>q.k);
-      if(z.water>0.25){z.n='Vízpart';z.ic='🌊';}else if(kinds.some(k=>/kindergarten|nursing_home|clinic|doctors|hospital|childcare|social/.test(k))){z.n='Bölcsőde–rendelő';z.ic='🏥';}
+      if(z.waterfront>0.3){z.n='Vízpart';z.ic='🌊';}else if(kinds.some(k=>/kindergarten|nursing_home|clinic|doctors|hospital|childcare|social/.test(k))){z.n='Bölcsőde–rendelő';z.ic='🏥';}
       else if(kinds.includes('school')){z.n='Iskola környéke';z.ic='🏫';}else if(z.green>0.35){z.n='Park';z.ic='🌳';}else if(z.sealed>0.3){z.n='Ipari terület';z.ic='🏭';}
-      else if(z.shops>=5||(z.id===4&&z.shops>=2)){z.n='Belváros–piac';z.ic='🍎';}else if(z.rd>0.6){z.n='Lakótelep';z.ic='🏢';}else{z.n='Kertváros';z.ic='🏡';}
+      else if(z.shops>=5){z.n='Belváros–piac';z.ic='🍎';}else if(z.rd>0.6){z.n='Lakótelep';z.ic='🏢';}else{z.n='Kertváros';z.ic='🏡';}
       z.acc=Math.min(1,0.45*z.major+0.3*z.rd+0.4*(kinds.includes('school')?1:0)+0.15*z.ped);
-      z.flood=Math.min(1,0.7*z.water+0.35*Math.max(0,1-Math.hypot(z.cx,z.cy)/900)*(z.id%2?0.6:1)+0.2*rnd());
+      z.flood=Math.min(1,0.7*z.waterfront+0.35*Math.max(0,1-Math.hypot(z.cx,z.cy)/900)*(z.id%2?0.6:1)+0.2*rnd());
     }else{const F=[['Kertváros','🏡',0,0,1],['Iskola környéke','🏫',1,2,0],['Belváros–piac','🍎',3,1,1],['Ipari terület','🏭',2,1,1],['Főtér','⛲',1,1,0],['Lakótelep','🏢',3,3,3],['Park','🌳',0,0,1],['Vízpart','🌊',1,0,2],['Sportpálya','⚽',1,0,0]][z.id];
       z.n=F[0];z.ic=F[1];z.heat=F[2]/3;z.vuln=F[2]/3;z.acc=F[3]/3;z.flood=F[4]/3;}
   });
-  /* azonos nevek megkülönböztetése égtájjal */
-  const cnt={};Z.forEach(z=>{cnt[z.n]=(cnt[z.n]||0)+1;});Z.forEach(z=>{if(cnt[z.n]>1)z.n+=' ('+DIRS[z.id]+')';});
-  /* dramaturgia: a hőgóc × sérülékeny zóna a metszet — a baleset és az elöntés is oda erősödik */
-  let best=0,bi=4;Z.forEach(z=>{const v=0.6*z.heat+0.4*z.vuln;if(v>best){best=v;bi=z.id;}});S.meet=bi;
+  const cnt={};Z.forEach(z=>{cnt[z.n]=(cnt[z.n]||0)+1;});const seen={};
+  Z.forEach(z=>{if(cnt[z.n]>1){seen[z.n]=(seen[z.n]||0)+1;const ang=Math.atan2(z.cy,z.cx);const dir=Math.hypot(z.cx,z.cy)<120?'Közép':['K','ÉK','É','ÉNy','Ny','DNy','D','DK'][Math.round(((ang<0?ang+Math.PI*2:ang)/(Math.PI/4)))%8];z.n+=' ('+dir+(seen[z.n]>1&&dir==='Közép'?' '+seen[z.n]:'')+')';}});
+  let best=0,bi=0;Z.forEach(z=>{const v=0.6*z.heat+0.4*z.vuln;if(v>best){best=v;bi=z.id;}});S.meet=bi;
   if(MODE==='osm'){Z[bi].acc=Math.max(Z[bi].acc,0.9);Z[bi].flood=Math.max(Z[bi].flood,0.85);Z[bi].heat=Math.max(Z[bi].heat,0.85);}
   Z.forEach(z=>{const hv=Math.min(1,0.65*z.heat+0.35*z.vuln);z.lvl={heat:Math.round(hv*3),acc:Math.round(z.acc*3),flood:Math.round(z.flood*3)};});
 }
@@ -133,15 +134,18 @@ function paint(layer,winners){ /* layer: null | heat|acc|flood|sum ; winners: id
   map.setPaintProperty('z-line','line-width',['case',['in',['get','id'],['literal',winners||[]]],3.5,['==',['get','id'],S.pick==null?-1:S.pick],3,1.2]);
   labels.forEach((l,i)=>{l.el.classList.toggle('win',!!(winners&&winners.includes(i)));l.el.classList.toggle('pick',!(winners&&winners.includes(i))&&S.pick===i);});
 }
-/* ---- indulás ---- */
+/* ---- indulás: középpont → 3D térkép → adat a csempékből → zónák ---- */
 render();
-GVMAP.resolveCenter(T).then(c=>{center=c;GVMAP.setCenter(c);initMap();return GVMAP.loadOSM(T,c,850);}).then(json=>{D=GVMAP.parse(json);
-  if(D.ok&&!D.water.some(p=>GVMAP.pointInPoly(0,0,p))){E=GVMAP.evaluators(D);MODE='osm';}else MODE='proc';
-  buildZones();S.st='intro';render();if(mapReady)addZones();});
-function initMap(){map=GVMAP.createMap({container:'map',center,zoom:14.5,pitch:0,bearing:0,dragRotate:false,pitchWithRotate:false,touchPitch:false},
-  m=>{mapReady=true;try{m.touchZoomRotate.disableRotation();}catch(e){}fitAll();if(Z.length)addZones();},()=>document.body.classList.add('maperr'));}
+GVMAP.resolveCenter(T).then(c=>{center=c;GVMAP.setCenter(c);initMap();});
+function initMap(){map=GVMAP.createMap({container:'map',center,zoom:14.8,pitch:50,bearing:-15,dragRotate:false,pitchWithRotate:false,touchPitch:false},
+  m=>{mapReady=true;try{m.touchZoomRotate.disableRotation();}catch(e){}GVMAP.add3D(m);fitAll();
+    GVMAP.whenIdle(m,7000).then(()=>GVMAP.loadData(m,T,center,850)).then(d=>{D=d;
+      if(D.ok&&!D.water.some(p=>GVMAP.pointInPoly(0,0,p))){E=GVMAP.evaluators(D);MODE='osm';}else MODE='proc';
+      buildZones();if(S.st==='loading')S.st='intro';render();addZones();fitAll(true);});},()=>document.body.classList.add('maperr'));}
 function fitAll(anim){if(!mapReady)return;const sheet=document.querySelector('.panel');const bottom=Math.min(window.innerHeight*0.5,(sheet?sheet.offsetHeight:260)+30);
-  map.fitBounds([GVMAP.toLL(-560,-540),GVMAP.toLL(560,540)],{padding:{top:70,bottom,left:14,right:14},duration:anim?600:0,maxZoom:16.5});}
+  map.setPadding({top:60,bottom,left:0,right:0});map.jumpTo({pitch:0,bearing:0});
+  map.fitBounds([GVMAP.toLL(-560,-540),GVMAP.toLL(560,540)],{padding:{top:10,bottom:10,left:14,right:14},duration:0,maxZoom:16.5});
+  map.easeTo({pitch:48,bearing:-15,zoom:map.getZoom()+0.45,center:GVMAP.toLL(0,60),duration:anim?600:0});}
 window.addEventListener('resize',()=>fitAll(true));
 let zonesAdded=false;
 function addZones(){if(zonesAdded||!mapReady||!Z.length)return;zonesAdded=true;
@@ -155,12 +159,12 @@ const layerName={heat:'Hő × sérülékeny',acc:'Balesetek',flood:'Elöntés'};
 function legend(keys){return `<div class="legend">${keys.map(k=>`<span><i style="background:${COLORS[k]}"></i>${layerName[k]}</span>`).join('')}</div>`;}
 /* ---- képernyők ---- */
 function render(){
-  if(S.st==='loading'){TB.innerHTML='<b>'+townTxt+'</b>';P.innerHTML=`<span class="eyebrow">Lakossági döntésjáték · 2 perc</span><h1>Ugyanaz az utca</h1><p><span class="spin"></span>${townTxt==='a település'?'A település':townTxt} térképének betöltése…</p>`;return;}
+  if(S.st==='loading'){TB.innerHTML='<b>'+townTxt+'</b>';P.innerHTML=`<span class="eyebrow">Lakossági döntésjáték · 2 perc</span><h1>Ugyanaz az utca</h1><p><span class="spin"></span>${T.name?townTxt:(T.demo||'A település')} térképének betöltése…</p>`;return;}
   if(S.st==='intro'){TB.innerHTML='<b>'+townTxt+'</b> · 9 zóna';P.innerHTML=`<span class="eyebrow">Lakossági döntésjáték · 2 perc</span><h1>Ugyanaz az utca</h1>
     <p>Három kör. Előbb a fák, aztán a közlekedés, végül egy 300 milliós csomag — ${townTxt} képviselő-testületében te vagy a döntő szavazat.</p>
     <p>Minden körben előbb döntesz, aztán jön a réteg. A rétegek bent maradnak a térképen. Figyelj, hová mutatnak.</p>
-    <div class="row"><button class="btn" onclick="S.st='round';render();paint(null,null)">Indítás</button></div>
-    <div class="src">${MODE==='osm'?'A zónák neve és a hő-réteg OpenStreetMap-adatból; a baleset- és elöntési réteg illusztratív.':'Illusztratív minta-zónák (az OSM-adat most nem volt elérhető).'}</div>`;return;}
+    <div class="row"><button class="btn" onclick="S.st='round';render();paint(null,null);fitAll(true)">Indítás</button></div>
+    <div class="src">${T.demo?'Minta-település: '+T.demo+' (saját településhez: ?telepules=…). ':''}${MODE==='osm'?'A zónák az utcahálózatból, nevük és a hő-réteg OpenStreetMap-adatból ('+(D&&D.src==='tiles'?'térképcsempék':'Overpass')+'); a baleset- és elöntési réteg illusztratív.':'Illusztratív minta-zónák — az OSM-adat most nem volt elérhető'+(GVMAP.lastError?' ('+GVMAP.lastError+')':'')+'.'}</div>`;return;}
   const r=R[S.i];
   if(S.st==='round'){TB.innerHTML='<b>'+r.t+'</b>';
     if(S.i<2){P.innerHTML=`<span class="eyebrow">${r.t}</span><h1>${r.q}</h1><p>Koppints egy zónára a térképen.</p><div class="chips">${r.chips.map(c=>`<div class="chip">${c}</div>`).join('')}</div>
