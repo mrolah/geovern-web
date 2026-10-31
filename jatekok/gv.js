@@ -14,7 +14,7 @@
   /* ---- települések (név → [lon, lat]); az ismeretlen név is működik, csak a térkép középpontja alapértelmezett ---- */
   const TOWNS={
     'budaors':[18.959,47.461],'torokbalint':[18.912,47.429],'godollo':[19.360,47.596],'vac':[19.134,47.776],
-    'budapest':[19.040,47.498],'ujpest':[19.090,47.560],'rakospalota':[19.120,47.560],'kispest':[19.140,47.450],
+    'budapest':[19.0546,47.4979],'ujpest':[19.090,47.560],'rakospalota':[19.120,47.560],'kispest':[19.140,47.450],
     'iv. kerulet':[19.090,47.560],'xv. kerulet':[19.120,47.560],'xix. kerulet':[19.140,47.450],
     'dunaujvaros':[18.940,46.960],'papa':[17.470,47.330],'cegled':[19.800,47.170],
     'balatonfured':[17.889,46.958],'koszeg':[16.541,47.389],'tata':[18.323,47.653],
@@ -99,7 +99,8 @@
     {id:'ugyanaz',file:'jatekok/ugyanaz-az-utca.html',n:'Ugyanaz az utca',min:'2 perc'},
     {id:'karcsu',file:'jatekok/karcsu.html',n:'Karcsú vagy túlméretezett?',min:'2 perc'},
     {id:'lassit',file:'jatekok/lassit-es-mer.html',n:'Lassít és mér',min:'3 perc'},
-    {id:'zold',file:'jatekok/zold-varosresz.html',n:'Zöld városrész — 12 hónap',min:'5–10 perc'}
+    {id:'zold',file:'jatekok/zold-varosresz.html',n:'Zöld városrész — 12 hónap',min:'5–8 perc'},
+    {id:'ugymenet',file:'jatekok/ugymenet.html',n:'Ügymenet',min:'3–4 perc'}
   ];
   const inSub=/\/jatekok\//.test(location.pathname);
   function qs(){return TOWN.name?('?telepules='+encodeURIComponent(TOWN.name)):'';}

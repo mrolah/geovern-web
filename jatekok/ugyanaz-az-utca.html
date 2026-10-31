@@ -4,158 +4,193 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ugyanaz az utca — GEOVERN játékok</title>
-<meta name="description" content="Három szakág, egy költségvetés: fák, közlekedés, aztán a 300 milliós csomag. Izometrikus kisváros, három döntés — és kiderül, hogy mind ugyanarra az utcára mutat.">
-<meta name="theme-color" content="#0b0f1a">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='4' width='24' height='24' fill='%23FF9F45'/%3E%3Crect x='11' y='11' width='10' height='10' fill='%230b0f1a'/%3E%3C/svg%3E">
+<meta name="description" content="Három szakág, egy költségvetés: fák, közlekedés, aztán a 300 milliós csomag. A település valódi térképén, kilenc zónával — és kiderül, hogy a rétegek ugyanarra a zónára mutatnak.">
+<meta name="theme-color" content="#050f14">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="config.js"></script>
 <script src="gv.js"></script>
+<script src="gvmap.js"></script>
 <style>
-:root{--bg:#0b0f1a;--panel:#141a2b;--amber:#FF9F45;--teal:#2AD1B5;--red:#ff5c5c;--blue:#4aa8ff;--text:#EAF0FF;--muted:#9aa6c8;--line:rgba(255,159,69,.35);
-  --font:'Roboto',system-ui,sans-serif;--pix:'Press Start 2P','Roboto Mono',monospace;--gv-accent:var(--amber);--gv-accent-ink:#2b1400;--gv-line:rgba(255,159,69,.3)}
+:root{--bg:#050f14;--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b4a;--blue:#4aa8ff;--text:#EAF4F4;--muted:#9BB7BC;--faint:#5E7A80;
+  --card:rgba(6,17,22,.9);--line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
+  --gv-accent:var(--teal);--gv-accent-ink:#04211d;--gv-line:var(--line);--sab:env(safe-area-inset-bottom,0px);--sat:env(safe-area-inset-top,0px)}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.5;min-height:100vh;position:relative}
-body::after{content:'';position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px);z-index:9}
-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;max-width:640px;margin:0 auto;gap:10px}
-.home{font:400 9px var(--pix);color:var(--amber);text-decoration:none;border:2px solid var(--amber);padding:8px 10px;box-shadow:3px 3px 0 var(--amber)}
-.rnd{font:400 9px var(--pix);color:var(--muted);text-align:right;line-height:1.6}
-.rnd b{color:var(--amber);font-weight:400}
-main{max-width:640px;margin:0 auto;padding:0 16px 40px}
-.box{background:var(--panel);border:2px solid var(--amber);box-shadow:5px 5px 0 rgba(255,159,69,.45);padding:18px 16px;margin-bottom:18px}
-h1{font:400 clamp(14px,4.2vw,20px)/1.6 var(--pix);color:var(--amber);margin-bottom:10px;text-shadow:3px 3px 0 rgba(0,0,0,.6)}
-h2{font:400 clamp(11px,3.4vw,14px)/1.7 var(--pix);margin-bottom:10px}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.45}
+#map{position:fixed;inset:0;z-index:0}
+body.maperr #map{display:none}
+body.maperr::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(900px 600px at 70% 20%,rgba(15,74,87,.55),transparent 60%),var(--bg)}
+.homelink{position:fixed;top:calc(10px + var(--sat));left:10px;z-index:40;font:700 12px var(--mono);letter-spacing:.06em;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:100px;padding:8px 14px;backdrop-filter:blur(10px);text-decoration:none}
+.topbar{position:fixed;top:calc(10px + var(--sat));right:10px;z-index:40;background:var(--card);border:1px solid var(--line);border-radius:100px;padding:8px 14px;backdrop-filter:blur(12px);font:500 13px var(--mono);color:var(--muted);max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar b{color:var(--amber);font-weight:500}
+.sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:30;width:100%;max-width:520px;padding:0 12px calc(12px + var(--sab))}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px 20px 16px;backdrop-filter:blur(16px);box-shadow:0 -10px 50px rgba(0,0,0,.55);max-height:58vh;overflow:auto;position:relative}
+h1{font-size:22px;font-weight:900;line-height:1.15;margin-bottom:6px}
+h1 em{font-style:normal;color:var(--teal)}
+.eyebrow{font:500 11px var(--mono);letter-spacing:.18em;color:var(--teal);text-transform:uppercase;margin-bottom:8px;display:block}
 p{color:var(--muted);font-size:15px}p+p{margin-top:8px}
-.chips{display:flex;flex-direction:column;gap:6px;margin:10px 0}
-.chip{font-size:14px;background:rgba(255,255,255,.05);border-left:3px solid var(--muted);padding:7px 10px;color:var(--text)}
-.btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 18px;font:400 11px var(--pix);cursor:pointer;border:2px solid var(--amber);background:var(--amber);color:#2b1400;
-  box-shadow:4px 4px 0 #7a3f00;touch-action:manipulation;width:100%;transition:.1s}
-.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #7a3f00}.btn[disabled]{opacity:.35;cursor:default}
-.btn-ghost{background:transparent;color:var(--amber);box-shadow:4px 4px 0 rgba(255,159,69,.4)}
-.row{display:flex;gap:12px;margin-top:14px}
-/* város */
-.city{background:#0e1424;border:2px solid #2a3350;margin-top:10px;position:relative}
-.city svg{display:block;width:100%;height:auto;shape-rendering:crispEdges}
-.tile{cursor:pointer}
-.tile .base{fill:#1c2440;stroke:#2f3b63;stroke-width:1.5}
-.tile:hover .base,.tile.pick .base{stroke:var(--amber);stroke-width:3}
-.tile.pick .base{fill:#2a2a30}
-.tile .nm{font:400 7px var(--pix);fill:#c9d2f0;pointer-events:none}
-.tile .ic{font-size:18px;pointer-events:none}
-.tile.win .base{stroke:var(--teal);stroke-width:3}
-.heat{fill:#ff5c5c;pointer-events:none}.acc{fill:var(--amber);pointer-events:none}.flood{fill:var(--blue);pointer-events:none}
-.leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);margin-top:8px}
-.leg i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px}
-.opts{display:grid;gap:10px;margin-top:10px}
-.opt{text-align:left;padding:12px 12px;background:rgba(255,255,255,.04);border:2px solid #2f3b63;color:var(--text);font-family:var(--font);cursor:pointer;display:flex;gap:10px;align-items:flex-start}
-.opt .l{font:400 10px var(--pix);color:var(--amber);flex:none;margin-top:3px}
-.opt b{display:block;font-size:15px}.opt small{display:block;color:var(--muted);font-size:13px}
-.opt.pick{border-color:var(--amber)}.opt.best{border-color:var(--teal);background:rgba(42,209,181,.1)}
-.reveal{margin-top:12px;border:2px dashed var(--line);padding:12px;font-size:15px;background:rgba(255,159,69,.06)}
-.reveal b{display:block;font:400 10px var(--pix);color:var(--amber);line-height:1.7;margin-bottom:6px}
-.score{font:400 22px var(--pix);color:var(--teal);margin:8px 0 2px}
-.score small{font:400 9px var(--pix);color:var(--muted)}
-.stamp{position:absolute;top:8px;right:8px;font:400 8px var(--pix);color:var(--teal);border:2px solid var(--teal);padding:6px 8px;transform:rotate(6deg);background:rgba(11,15,26,.8)}
-footer{max-width:640px;margin:0 auto;padding:0 16px 30px;font-size:12px;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 22px;border-radius:14px;font-weight:700;font-size:16px;cursor:pointer;border:none;transition:.2s;font-family:var(--font);background:var(--teal);color:#04211d;min-height:50px;touch-action:manipulation}
+.btn:active{transform:scale(.97)}.btn[disabled]{opacity:.4;cursor:default}
+.btn-amber{background:var(--amber);color:#2b1400}
+.row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}.row .btn{flex:1}
+.chips{display:flex;flex-direction:column;gap:5px;margin:8px 0}
+.chip{font-size:13.5px;background:rgba(255,255,255,.05);border-left:3px solid var(--faint);padding:6px 10px;color:var(--text)}
+.opts{display:grid;gap:8px;margin-top:8px}
+.opt{text-align:left;padding:11px 12px;background:rgba(255,255,255,.04);border:1.5px solid rgba(143,176,181,.25);border-radius:12px;color:var(--text);font-family:var(--font);cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.opt .l{font:700 12px var(--mono);color:var(--amber);flex:none;margin-top:3px}
+.opt b{display:block;font-size:14.5px}.opt small{display:block;color:var(--muted);font-size:12.5px}
+.opt.pick{border-color:var(--teal)}.opt.best{border-color:var(--teal);background:rgba(42,209,181,.12)}
+.reveal{margin-top:10px;border-left:3px solid var(--amber);background:rgba(255,159,69,.08);padding:9px 12px;border-radius:0 10px 10px 0;font-size:14.5px}
+.reveal b{display:block;color:var(--amber);font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
+.score{font:500 26px var(--mono);color:var(--teal);margin:6px 0 0}.score small{font:500 11px var(--mono);color:var(--faint)}
+.stamp{position:absolute;top:12px;right:14px;font:700 10px var(--mono);letter-spacing:.14em;color:var(--teal);border:2px solid var(--teal);padding:5px 8px;transform:rotate(6deg);border-radius:4px}
+.stamp.miss{color:var(--amber);border-color:var(--amber)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin:8px 0 0;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.src{font:500 11px var(--mono);color:var(--faint);margin-top:8px}
+.zl{font:700 11px var(--font);color:var(--text);background:rgba(6,17,22,.82);border:1px solid rgba(143,176,181,.35);border-radius:100px;padding:4px 9px;white-space:nowrap;pointer-events:none;letter-spacing:.02em}
+.zl.pick{border-color:var(--teal);color:var(--teal)}.zl.win{border-color:var(--amber);color:var(--amber);box-shadow:0 0 12px rgba(255,159,69,.6)}
+.maplibregl-ctrl-attrib{font-size:10px!important}
+.err{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
+body.maperr .err{display:flex}.err div{max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--faint);border-top-color:var(--teal);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<header><a class="home" id="homelink" href="../jatekok.html">◀ JÁTÉKOK</a><div class="rnd" id="rnd"><span data-town>MINTAVÁROS</span></div></header>
-<main id="main"></main>
-<footer>A kisváros kitalált, a rétegek illusztratívak. A dramaturgia valós: a hőszigetek, a balesetek és az elöntés egy magyar középvárosban jellemzően ugyanarra a két-három zónára esnek — ezért érdemes egy térképen nézni őket.</footer>
+<div id="map"></div>
+<a class="homelink" id="homelink" href="../jatekok.html">← JÁTÉKOK</a>
+<div class="topbar" id="tb"><span data-town>a település</span></div>
+<div class="err"><div><h1>A térkép nem töltött be</h1><p>Próbáld újra wifin, vagy válassz egy térkép nélküli játékot.</p><div class="row"><a class="btn" id="err-next" href="../jatekok.html">Másik játék</a></div></div></div>
+<div class="sheet"><div class="panel" id="panel"></div></div>
 <script>
 /* =====================================================================
-   UGYANAZ AZ UTCA — 3 kör, 1 térkép. Fák → Közlekedés → A 300 M csomag.
-   Minden kör: zsigeri döntés → a réteg felfedése → pont. A rétegek bent maradnak.
+   UGYANAZ AZ UTCA — a település valódi térképén, 9 zónával
+   Fák → Közlekedés → A 300 M csomag. Minden kör: zsigeri döntés, aztán a réteg. A rétegek bent maradnak.
+   A zónák neve és a hő/sérülékeny réteg az OSM-ből (parkok, iskolák, bölcsődék, rendelők, boltok, ipar);
+   a baleset- és elöntési réteg illusztratív, a hőgóc zónájára hangolva — ez a játék dramaturgiája.
    ===================================================================== */
-document.getElementById('homelink').href=GV.hubUrl();
-const townTxt=GV.TOWN.name?GV.esc(GV.TOWN.name):'a kisváros';
-/* id, név, ikon, rács (c,r), rétegek: heat/acc/flood 0–3 */
-const Z=[
- {id:'E',n:'KERTVÁROS',ic:'🏡',c:0,r:0,heat:0,acc:0,flood:1},
- {id:'C',n:'ISKOLA',ic:'🏫',c:1,r:0,heat:1,acc:2,flood:0},
- {id:'F',n:'PIAC',ic:'🍎',c:2,r:0,heat:3,acc:1,flood:1},
- {id:'D',n:'IPARI ÚT',ic:'🏭',c:0,r:1,heat:2,acc:1,flood:1},
- {id:'A',n:'FŐTÉR',ic:'⛲',c:1,r:1,heat:1,acc:1,flood:0},
- {id:'B',n:'LAKÓTELEP',ic:'🏢',c:2,r:1,heat:3,acc:3,flood:3},
- {id:'P',n:'PARK',ic:'🌳',c:0,r:2,heat:0,acc:0,flood:1},
- {id:'G',n:'FOLYÓPART',ic:'🌊',c:1,r:2,heat:1,acc:0,flood:2},
- {id:'S',n:'SPORTPÁLYA',ic:'⚽',c:2,r:2,heat:1,acc:0,flood:0}
-];
-const byId=id=>Z.find(z=>z.id===id);
+const T=GV.TOWN;document.getElementById('homelink').href=GV.hubUrl();document.getElementById('err-next').href=GV.urlFor('jatekok/karcsu.html');
+const townTxt=T.name?GV.esc(T.name):'a település';
+const TB=document.getElementById('tb'),P=document.getElementById('panel');
+let map=null,mapReady=false,center=T.center,D=null,E=null,MODE='osm',Z=[],labels=[];
+let S={st:'loading',i:0,pick:null,revealed:[],pts:0,log:[]};
+const rnd=GV.rng('ugy-'+T.key);
+const DIRS=['ÉNy','É','ÉK','Ny','Közép','K','DNy','D','DK'];
+const CENTERS=[[-340,330],[0,360],[340,330],[-360,0],[0,0],[360,0],[-340,-330],[0,-360],[340,-330]];
+function blobPoly(cx,cy,r,seed){const rr=GV.rng('z'+seed),n=20,rad=[];for(let i=0;i<n;i++)rad.push(r*(1+(rr()*2-1)*.32));for(let i=0;i<n;i++)rad[i]=(rad[i]+rad[(i+1)%n]+rad[(i+n-1)%n])/3;
+  const ring=[];for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,q=rad[i%n];ring.push([cx+Math.cos(a)*q,cy+Math.sin(a)*q*0.85]);}return ring;}
 const R=[
- {k:'heat',t:'1. kör · FÁK',q:'Hová kerüljön az idei 40 fa?',chips:['„A főtér árnyékolása régi ígéret.”','„A piac árusai a hőségre panaszkodnak.”','„A lakótelepen úgysem látszik.”'],
-  why:'A hőtérkép a lakótelepet és a piacot mutatja: ott nincs lombkorona, ott laknak az idősek, ott a bölcsőde és a rendelő. A főtéren már van árnyék.',best:['B','F']},
- {k:'acc',t:'2. kör · KÖZLEKEDÉS',q:'Hová kerüljön a forgalomcsillapítás?',chips:['„400 aláírás: zebrát az iskola elé!”','„A rendőrség a lakótelepi kereszteződést jelzi.”','„A sportpályánál is száguldanak.”'],
-  why:'A balesettérkép: a lakótelepi kereszteződésben történik a gyerekbalesetek zöme, az iskola előtt már van lámpa. Oda kell, ahol a kockázat mérhető — nem ahol a hang nagy.',best:['B']},
- {k:'flood',t:'3. kör · EGY KÖLTSÉGVETÉS',q:'300 millió forint klímabiztonsági csomag. Mire?',chips:['„A mérnökök terve: egy nagy tározó a folyóparton.”','„Az egyenlő osztás ellen senki se szólna.”'],
-  why:'Az elöntési réteg is a lakótelepre mutat. Három szakág — ugyanaz a zóna. A csomag ott ér a legtöbbet, ahol a három réteg metszi egymást.',best:['B']}
-];
-const OPT3=[
- {l:'A',t:'Nagy tározó a folyóparton',s:'Egy nagy beruházás, 3 év, a teljes keret',pts:20,r:'A tározó egy kockázatot kezel — a folyót. A lakótelepi elöntés a lejtőről jön, a hőség és a balesetek pedig ott maradnak.'},
- {l:'B',t:'Egyenlő osztás mind a 9 zónára',s:'33 millió mindenkinek, senki se szólhat',pts:30,r:'Igazságosnak látszik, de a kockázat nem egyenletes: a lakótelep háromszoros, a sportpálya nulla. Az egyenlő osztás a problémát hígítja.'},
- {l:'C',t:'Metszet-csomag a lakótelepre',s:'Fák + csillapítás + esőkertek egy zónában',pts:100,r:'Ott költ, ahol a három réteg metszi egymást. Ugyanannyi pénz — más utca. A többi zóna is jobban jár: a lakótelep a város legnagyobb kockázata.'},
- {l:'D',t:'Főtér-megújítás',s:'Látványos, a választók szeretik',pts:10,r:'A főtér az egyetlen hely, ahol mindhárom réteg zöld. Szép lesz — és semmit nem old meg.'}
-];
-let S={st:'intro',i:0,pick:null,revealed:[],pts:0,log:[]};
-const main=document.getElementById('main');
-const ISO=(c,r)=>[210+(c-r)*64,54+(c+r)*32];
-function tilePath(x,y){return `M${x} ${y-30} L${x+62} ${y} L${x} ${y+30} L${x-62} ${y} Z`;}
-function city(sel,layers,winners){
-  return `<div class="city"><svg viewBox="0 0 420 270" aria-label="Izometrikus kisváros">
-   <rect width="420" height="270" fill="#0e1424"/>
-   <path d="M0 236 L420 236 L420 270 L0 270Z" fill="#17304f"/><text x="12" y="258" fill="#4aa8ff" font-family="'Press Start 2P'" font-size="7">FOLYÓ</text>
-   ${Z.map(z=>{const [x,y]=ISO(z.c,z.r);const h=layers.includes('heat')?z.heat:0,a=layers.includes('acc')?z.acc:0,f=layers.includes('flood')?z.flood:0;
-     return `<g class="tile ${sel===z.id?'pick':''} ${winners&&winners.includes(z.id)?'win':''}" onclick="pickZone('${z.id}')">
-      <path class="base" d="${tilePath(x,y)}"/>
-      ${h?`<path class="heat" d="${tilePath(x,y)}" opacity="${0.18*h}"/>`:''}
-      ${f?`<g class="flood">${Array.from({length:f},(_,i)=>`<rect x="${x-40+i*14}" y="${y+12}" width="10" height="4"/>`).join('')}</g>`:''}
-      ${a?`<g class="acc">${Array.from({length:a},(_,i)=>`<rect x="${x+14+i*11}" y="${y-22}" width="7" height="7"/>`).join('')}</g>`:''}
-      <text class="ic" x="${x}" y="${y-2}" text-anchor="middle">${z.ic}</text>
-      <text class="nm" x="${x}" y="${y+22}" text-anchor="middle">${z.n}</text></g>`;}).join('')}
-  </svg></div>`;
-}
-function legend(layers){const L={heat:['#ff5c5c','Hőtérkép'],acc:['#FF9F45','Balesetek'],flood:['#4aa8ff','Elöntés']};
-  return layers.length?`<div class="leg">${layers.map(k=>`<span><i style="background:${L[k][0]}"></i>${L[k][1]}</span>`).join('')}</div>`:'';}
-function hdr(){document.getElementById('rnd').innerHTML=(S.st==='intro'?'':'<b>'+R[Math.min(S.i,2)].t.split('·')[0].trim()+'</b> · ')+townTxt.toUpperCase();}
+ {k:'heat',t:'1. kör · Fák',q:'Hová kerüljön az idei 40 fa?',chips:['„Oda, ahol látszik: a központba.”','„Mindenkinek jusson egy-két fa.”','„A szakmai anyag még nincs kész, döntsünk.”'],
+  why:'A hőtérkép és a sérülékeny lakók (bölcsőde, iskola, rendelő, idősek) rétege ugyanoda mutat: ahol burkolat van és nincs lombkorona. A fa ott ér a legtöbbet.'},
+ {k:'acc',t:'2. kör · Közlekedés',q:'Hová kerüljön a forgalomcsillapítás?',chips:['„400 aláírás: zebrát az iskola elé!”','„A rendőrség máshová mutat.”','„A sportpályánál is száguldanak.”'],
+  why:'A balesettérkép ott mutat gócot, ahol a nagy forgalmú út a gyerekek és idősek útvonalát keresztezi — nem feltétlenül ott, ahol a hang a legnagyobb.'},
+ {k:'flood',t:'3. kör · Egy költségvetés',q:'300 millió forint klímabiztonsági csomag. Mire?',chips:['„A mérnökök terve: egy nagy tározó.”','„Az egyenlő osztás ellen senki se szólna.”'],
+  why:'Az elöntési réteg is ugyanarra a zónára mutat. Három szakág — ugyanaz a hely. A csomag ott ér a legtöbbet, ahol a rétegek metszik egymást.'}];
+function OPT3(){const m=Z[S.meet];return[
+ {l:'A',t:'Nagy tározó a vízparton',s:'Egy nagy beruházás, 3 év, a teljes keret',pts:20,r:'A tározó egy kockázatot kezel. A hőség és a balesetek ott maradnak, ahol voltak.'},
+ {l:'B',t:'Egyenlő osztás mind a 9 zónára',s:'33 millió mindenkinek, senki se szólhat',pts:30,r:'Igazságosnak látszik, de a kockázat nem egyenletes. Az egyenlő osztás a problémát hígítja.'},
+ {l:'C',t:'Metszet-csomag: '+m.n,s:'Fák + csillapítás + esőkertek egy zónában',pts:100,r:'Ott költ, ahol a három réteg metszi egymást. Ugyanannyi pénz — más utca.'},
+ {l:'D',t:'Központ-megújítás',s:'Látványos, a választók szeretik',pts:10,r:'Szép lesz — és a kockázat ott marad, ahol volt.'}];}
 
-function render(){hdr();
-  if(S.st==='intro'){main.innerHTML=`<div class="box"><h1>UGYANAZ AZ UTCA</h1>
-   <p>Három kör. Előbb a fák, aztán a közlekedés, végül egy 300 milliós csomag — ${townTxt} képviselő-testületében te vagy a döntő szavazat.</p>
-   <p>Minden körben előbb döntesz, aztán jön a réteg. A rétegek bent maradnak a térképen. Figyelj, hová mutatnak.</p>
-   ${city(null,[],null)}
-   <div class="row"><button class="btn" onclick="S.st='round';render()">START</button></div></div>`;return;}
-  const r=R[S.i];const layersNow=S.revealed.slice();
-  if(S.st==='round'){
-   if(S.i<2){main.innerHTML=`<div class="box"><h2>${r.t}</h2><p>${r.q} Koppints egy zónára.</p>
-     <div class="chips">${r.chips.map(c=>`<div class="chip">${c}</div>`).join('')}</div>${city(S.pick,layersNow,null)}${legend(layersNow)}
-     <div class="row"><button class="btn" onclick="confirmZone()" ${S.pick?'':'disabled'}>DÖNTÖK: ${S.pick?byId(S.pick).n:'…'}</button></div></div>`;}
-   else{main.innerHTML=`<div class="box"><h2>${r.t}</h2><p>${r.q}</p><div class="chips">${r.chips.map(c=>`<div class="chip">${c}</div>`).join('')}</div>${city(null,layersNow,null)}${legend(layersNow)}
-     <div class="opts">${OPT3.map((o,i)=>`<button class="opt ${S.pick===i?'pick':''}" onclick="S.pick=${i};render()"><span class="l">${o.l}</span><span><b>${o.t}</b><small>${o.s}</small></span></button>`).join('')}</div>
-     <div class="row"><button class="btn" onclick="confirm3()" ${S.pick!=null?'':'disabled'}>DÖNTÖK</button></div></div>`;}
-   return;}
-  if(S.st==='reveal'){const last=S.log[S.log.length-1];const winners=r.best;
-   main.innerHTML=`<div class="box" style="position:relative"><span class="stamp">${last.pts>=100?'TELITALÁLAT':last.pts>=50?'KÖZEL':'MELLÉ'}</span><h2>${r.t} · A RÉTEG</h2>
-   ${city(S.i<2?S.pick:null,layersNow,winners)}${legend(layersNow)}
-   <div class="reveal"><b>${last.label} → +${last.pts}</b>${S.i<2?r.why:OPT3[S.pick].r}</div>
-   <div class="score">${S.pts} <small>/ ${(S.i+1)*100}</small></div>
-   <div class="row"><button class="btn" onclick="next()">${S.i<2?'KÖVETKEZŐ KÖR ▶':'A TANULSÁG ▶'}</button></div></div>`;return;}
-  if(S.st==='final'){const p=Math.round(S.pts/3);
-   main.innerHTML=`<div class="box"><h1>UGYANARRÓL AZ UTCÁRÓL BESZÉLTÜNK.</h1>
-   <p>Fákról beszéltünk. Közlekedésről. Vízről. Három szakág, három előadó, három külön ülés — és mind ugyanarra a zónára mutatott.</p>
-   ${city('B',['heat','acc','flood'],['B'])}${legend(['heat','acc','flood'])}
-   <div class="score">${p} <small>/ 100</small></div>
-   <div class="chips">${S.log.map((l,i)=>`<div class="chip">${R[i].t}: ${l.label} · ${l.pts} pont</div>`).join('')}</div>
-   <div class="reveal"><b>A MONDAT, AMIT HAZAVIHETSZ</b>A hely a szakágak közös koordinátája. Ha a fák, a balesetek és a víz egy térképen van, a testület látja, hol metszik egymást — és ott költ. Ha három nyilvántartásban, három szobában, akkor háromszor fizet, és egyszer sem ott.</div>
-   ${GV.endPanel({game:'ugyanaz',share:'Ugyanaz az utca — 3 szakág, 1 térkép: '+p+'/100 pont.'})}</div>`;return;}
+/* ---- zónák építése ---- */
+function buildZones(){
+  Z=CENTERS.map((c,i)=>({id:i,cx:c[0],cy:c[1],poly:blobPoly(c[0],c[1],185,i),n:'',ic:'',heat:0,vuln:0,acc:0,flood:0,lvl:{}}));
+  Z.forEach(z=>{ /* mintapontok a zónában */
+    const pts=[];for(let gx=-150;gx<=150;gx+=50)for(let gy=-130;gy<=130;gy+=50){const x=z.cx+gx,y=z.cy+gy;if(GVMAP.pointInPoly(x,y,z.poly))pts.push([x,y]);}
+    z.pts=pts;
+    if(MODE==='osm'){let h=0,v=0,p=0,g=0,w=0,s=0,rd=0,mj=0;pts.forEach(q=>{h+=E.heat(q[0],q[1]);v+=E.vuln(q[0],q[1]);p+=E.ped(q[0],q[1]);g+=E.canopy(q[0],q[1])>0.6?1:0;w+=E.inWater(q[0],q[1])?1:0;s+=E.sealed(q[0],q[1])>0.6?1:0;rd+=E.roadDens(q[0],q[1]);mj+=E.nearMajor(q[0],q[1])>0.3?1:0;});
+      const n=pts.length||1;z.heat=h/n;z.vuln=Math.min(1,v/n*1.6);z.ped=p/n;z.green=g/n;z.water=w/n;z.sealed=s/n;z.rd=rd/n;z.major=mj/n;
+      z.pois=D.pois.filter(q=>GVMAP.pointInPoly(q.x,q.y,z.poly));z.shops=D.shops.filter(q=>GVMAP.pointInPoly(q.x,q.y,z.poly)).length;
+      const kinds=z.pois.map(q=>q.k);
+      if(z.water>0.25){z.n='Vízpart';z.ic='🌊';}else if(kinds.some(k=>/kindergarten|nursing_home|clinic|doctors|hospital|childcare|social/.test(k))){z.n='Bölcsőde–rendelő';z.ic='🏥';}
+      else if(kinds.includes('school')){z.n='Iskola környéke';z.ic='🏫';}else if(z.green>0.35){z.n='Park';z.ic='🌳';}else if(z.sealed>0.3){z.n='Ipari terület';z.ic='🏭';}
+      else if(z.shops>=5||(z.id===4&&z.shops>=2)){z.n='Belváros–piac';z.ic='🍎';}else if(z.rd>0.6){z.n='Lakótelep';z.ic='🏢';}else{z.n='Kertváros';z.ic='🏡';}
+      z.acc=Math.min(1,0.45*z.major+0.3*z.rd+0.4*(kinds.includes('school')?1:0)+0.15*z.ped);
+      z.flood=Math.min(1,0.7*z.water+0.35*Math.max(0,1-Math.hypot(z.cx,z.cy)/900)*(z.id%2?0.6:1)+0.2*rnd());
+    }else{const F=[['Kertváros','🏡',0,0,1],['Iskola környéke','🏫',1,2,0],['Belváros–piac','🍎',3,1,1],['Ipari terület','🏭',2,1,1],['Főtér','⛲',1,1,0],['Lakótelep','🏢',3,3,3],['Park','🌳',0,0,1],['Vízpart','🌊',1,0,2],['Sportpálya','⚽',1,0,0]][z.id];
+      z.n=F[0];z.ic=F[1];z.heat=F[2]/3;z.vuln=F[2]/3;z.acc=F[3]/3;z.flood=F[4]/3;}
+  });
+  /* azonos nevek megkülönböztetése égtájjal */
+  const cnt={};Z.forEach(z=>{cnt[z.n]=(cnt[z.n]||0)+1;});Z.forEach(z=>{if(cnt[z.n]>1)z.n+=' ('+DIRS[z.id]+')';});
+  /* dramaturgia: a hőgóc × sérülékeny zóna a metszet — a baleset és az elöntés is oda erősödik */
+  let best=0,bi=4;Z.forEach(z=>{const v=0.6*z.heat+0.4*z.vuln;if(v>best){best=v;bi=z.id;}});S.meet=bi;
+  if(MODE==='osm'){Z[bi].acc=Math.max(Z[bi].acc,0.9);Z[bi].flood=Math.max(Z[bi].flood,0.85);Z[bi].heat=Math.max(Z[bi].heat,0.85);}
+  Z.forEach(z=>{const hv=Math.min(1,0.65*z.heat+0.35*z.vuln);z.lvl={heat:Math.round(hv*3),acc:Math.round(z.acc*3),flood:Math.round(z.flood*3)};});
 }
-function pickZone(id){if(S.st!=='round'||S.i>1)return;S.pick=id;render();}
-function confirmZone(){const z=byId(S.pick);const r=R[S.i];const lvl=z[r.k];const pts=lvl>=3?100:lvl===2?50:lvl===1?15:0;
-  S.pts+=pts;S.log.push({round:r.k,zone:z.id,label:z.n,pts});S.revealed.push(r.k);S.st='reveal';render();window.scrollTo({top:0,behavior:'smooth'});}
-function confirm3(){const o=OPT3[S.pick];S.pts+=o.pts;S.log.push({round:'package',zone:o.l,label:o.t,pts:o.pts});S.revealed.push('flood');S.st='reveal';render();window.scrollTo({top:0,behavior:'smooth'});}
-function next(){if(S.i<2){S.i++;S.pick=null;S.st='round';}else{S.st='final';GV.record('ugyanaz',{rounds:S.log,score:Math.round(S.pts/3)});}render();window.scrollTo({top:0,behavior:'smooth'});}
+function zoneFC(){return{type:'FeatureCollection',features:Z.map(z=>({type:'Feature',id:z.id,properties:{id:z.id,heat:z.lvl.heat,acc:z.lvl.acc,flood:z.lvl.flood,sum:z.lvl.heat+z.lvl.acc+z.lvl.flood},geometry:{type:'Polygon',coordinates:[z.poly.map(p=>GVMAP.toLL(p[0],p[1]))]}}))};}
+const COLORS={heat:'#ff5c5c',acc:'#FF9F45',flood:'#4aa8ff',sum:'#ff9f45'};
+function paint(layer,winners){ /* layer: null | heat|acc|flood|sum ; winners: id[] */
+  if(!mapReady)return;const prop=layer;const maxv=layer==='sum'?9:3;
+  map.setPaintProperty('z-fill','fill-color',prop?COLORS[prop]:'#2AD1B5');
+  map.setPaintProperty('z-fill','fill-opacity',prop?['interpolate',['linear'],['get',prop],0,0.04,maxv,0.55]:0.06);
+  map.setPaintProperty('z-line','line-color',['case',['in',['get','id'],['literal',winners||[]]],'#FF9F45',['==',['get','id'],S.pick==null?-1:S.pick],'#2AD1B5','#8FB0B5']);
+  map.setPaintProperty('z-line','line-width',['case',['in',['get','id'],['literal',winners||[]]],3.5,['==',['get','id'],S.pick==null?-1:S.pick],3,1.2]);
+  labels.forEach((l,i)=>{l.el.classList.toggle('win',!!(winners&&winners.includes(i)));l.el.classList.toggle('pick',!(winners&&winners.includes(i))&&S.pick===i);});
+}
+/* ---- indulás ---- */
 render();
+GVMAP.resolveCenter(T).then(c=>{center=c;GVMAP.setCenter(c);initMap();return GVMAP.loadOSM(T,c,850);}).then(json=>{D=GVMAP.parse(json);
+  if(D.ok&&!D.water.some(p=>GVMAP.pointInPoly(0,0,p))){E=GVMAP.evaluators(D);MODE='osm';}else MODE='proc';
+  buildZones();S.st='intro';render();if(mapReady)addZones();});
+function initMap(){map=GVMAP.createMap({container:'map',center,zoom:14.5,pitch:0,bearing:0,dragRotate:false,pitchWithRotate:false,touchPitch:false},
+  m=>{mapReady=true;try{m.touchZoomRotate.disableRotation();}catch(e){}fitAll();if(Z.length)addZones();},()=>document.body.classList.add('maperr'));}
+function fitAll(anim){if(!mapReady)return;const sheet=document.querySelector('.panel');const bottom=Math.min(window.innerHeight*0.5,(sheet?sheet.offsetHeight:260)+30);
+  map.fitBounds([GVMAP.toLL(-560,-540),GVMAP.toLL(560,540)],{padding:{top:70,bottom,left:14,right:14},duration:anim?600:0,maxZoom:16.5});}
+window.addEventListener('resize',()=>fitAll(true));
+let zonesAdded=false;
+function addZones(){if(zonesAdded||!mapReady||!Z.length)return;zonesAdded=true;
+  map.addSource('zones',{type:'geojson',data:zoneFC()});
+  map.addLayer({id:'z-fill',type:'fill',source:'zones',paint:{'fill-color':'#2AD1B5','fill-opacity':0.06}});
+  map.addLayer({id:'z-line',type:'line',source:'zones',paint:{'line-color':'#8FB0B5','line-width':1.2,'line-dasharray':[2,1.5]}});
+  map.on('click','z-fill',e=>{const id=e.features&&e.features[0]&&e.features[0].properties.id;if(id!=null)pickZone(+id);});
+  Z.forEach(z=>{const el=document.createElement('div');el.className='zl';el.textContent=z.ic+' '+z.n;const mk=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat(GVMAP.toLL(z.cx,z.cy)).addTo(map);labels.push({el,mk});});
+  paint(null,null);}
+const layerName={heat:'Hő × sérülékeny',acc:'Balesetek',flood:'Elöntés'};
+function legend(keys){return `<div class="legend">${keys.map(k=>`<span><i style="background:${COLORS[k]}"></i>${layerName[k]}</span>`).join('')}</div>`;}
+/* ---- képernyők ---- */
+function render(){
+  if(S.st==='loading'){TB.innerHTML='<b>'+townTxt+'</b>';P.innerHTML=`<span class="eyebrow">Lakossági döntésjáték · 2 perc</span><h1>Ugyanaz az utca</h1><p><span class="spin"></span>${townTxt==='a település'?'A település':townTxt} térképének betöltése…</p>`;return;}
+  if(S.st==='intro'){TB.innerHTML='<b>'+townTxt+'</b> · 9 zóna';P.innerHTML=`<span class="eyebrow">Lakossági döntésjáték · 2 perc</span><h1>Ugyanaz az utca</h1>
+    <p>Három kör. Előbb a fák, aztán a közlekedés, végül egy 300 milliós csomag — ${townTxt} képviselő-testületében te vagy a döntő szavazat.</p>
+    <p>Minden körben előbb döntesz, aztán jön a réteg. A rétegek bent maradnak a térképen. Figyelj, hová mutatnak.</p>
+    <div class="row"><button class="btn" onclick="S.st='round';render();paint(null,null)">Indítás</button></div>
+    <div class="src">${MODE==='osm'?'A zónák neve és a hő-réteg OpenStreetMap-adatból; a baleset- és elöntési réteg illusztratív.':'Illusztratív minta-zónák (az OSM-adat most nem volt elérhető).'}</div>`;return;}
+  const r=R[S.i];
+  if(S.st==='round'){TB.innerHTML='<b>'+r.t+'</b>';
+    if(S.i<2){P.innerHTML=`<span class="eyebrow">${r.t}</span><h1>${r.q}</h1><p>Koppints egy zónára a térképen.</p><div class="chips">${r.chips.map(c=>`<div class="chip">${c}</div>`).join('')}</div>
+      ${S.revealed.length?legend(S.revealed):''}
+      <div class="row"><button class="btn" onclick="confirmZone()" ${S.pick!=null?'':'disabled'}>Döntök: ${S.pick!=null?GV.esc(Z[S.pick].n):'…'}</button></div>`;}
+    else{P.innerHTML=`<span class="eyebrow">${r.t}</span><h1>${r.q}</h1><div class="chips">${r.chips.map(c=>`<div class="chip">${c}</div>`).join('')}</div>${legend(S.revealed)}
+      <div class="opts">${OPT3().map((o,i)=>`<button class="opt ${S.pick3===i?'pick':''}" onclick="S.pick3=${i};render()"><span class="l">${o.l}</span><span><b>${GV.esc(o.t)}</b><small>${o.s}</small></span></button>`).join('')}</div>
+      <div class="row"><button class="btn" onclick="confirm3()" ${S.pick3!=null?'':'disabled'}>Döntök</button></div>`;}
+    return;}
+  if(S.st==='reveal'){const last=S.log[S.log.length-1];TB.innerHTML='<b>'+r.t+'</b> · '+S.pts+' pont';
+    P.innerHTML=`<span class="stamp ${last.pts>=100?'':'miss'}">${last.pts>=100?'TELITALÁLAT':last.pts>=50?'KÖZEL':'MELLÉ'}</span><span class="eyebrow">${r.t} · a réteg</span>
+    <h1>${GV.esc(last.label)} → <em>+${last.pts}</em></h1><p>${S.i<2?r.why:OPT3()[S.pick3].r}</p>${legend(S.revealed)}
+    <div class="score">${S.pts} <small>/ ${(S.i+1)*100}</small></div>
+    <div class="row"><button class="btn ${S.i<2?'':'btn-amber'}" onclick="next()">${S.i<2?'Következő kör ▶':'A tanulság ▶'}</button></div>`;return;}
+  if(S.st==='final'){const p=Math.round(S.pts/3);const m=Z[S.meet];TB.innerHTML='<b>'+p+' / 100</b>';
+    P.innerHTML=`<span class="eyebrow">A hét lenyomata</span><h1>Ugyanarról az utcáról beszéltünk.</h1>
+    <p>Fákról beszéltünk. Közlekedésről. Vízről. Három szakág, három ülés — és mind ugyanarra a zónára mutatott: <b style="color:var(--amber)">${m.ic} ${GV.esc(m.n)}</b>.</p>
+    ${legend(['heat','acc','flood'])}<div class="score">${p} <small>/ 100</small></div>
+    <div class="chips">${S.log.map((l,i)=>`<div class="chip">${R[i].t}: ${GV.esc(l.label)} · ${l.pts} pont</div>`).join('')}</div>
+    <div class="reveal"><b>A mondat, amit hazavihetsz</b>A hely a szakágak közös koordinátája. Ha a fák, a balesetek és a víz egy térképen van, a testület látja, hol metszik egymást — és ott költ. Ha három nyilvántartásban, három szobában, akkor háromszor fizet, és egyszer sem ott.</div>
+    ${GV.endPanel({game:'ugyanaz',share:'Ugyanaz az utca — 3 szakág, 1 térkép: '+p+'/100 pont.'})}`;return;}
+}
+function pickZone(id){if(S.st!=='round'||S.i>1)return;S.pick=id;render();paint(S.revealed.length?S.revealed[S.revealed.length-1]:null,null);}
+function confirmZone(){const z=Z[S.pick];const lvl=z.lvl[R[S.i].k];const pts=lvl>=3?100:lvl===2?50:lvl===1?15:0;
+  S.pts+=pts;S.log.push({round:R[S.i].k,zone:z.id,label:z.n,pts});S.revealed.push(R[S.i].k);S.st='reveal';render();
+  const winners=Z.filter(q=>q.lvl[R[S.i].k]>=3).map(q=>q.id);paint(R[S.i].k,winners);}
+function confirm3(){const o=OPT3()[S.pick3];S.pts+=o.pts;S.log.push({round:'package',zone:o.l,label:o.t,pts:o.pts});S.revealed.push('flood');S.st='reveal';render();
+  paint('flood',Z.filter(q=>q.lvl.flood>=3).map(q=>q.id));}
+function next(){if(S.i<2){S.i++;S.pick=null;S.st='round';render();paint(S.revealed[S.revealed.length-1],null);}
+  else{S.st='final';render();paint('sum',[S.meet]);GV.record('ugyanaz',{mode:MODE,rounds:S.log,meet:Z[S.meet].n,score:Math.round(S.pts/3)});}}
 </script>
 </body>
 </html>

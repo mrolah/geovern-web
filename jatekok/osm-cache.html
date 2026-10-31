@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OSM-adat előkészítése — GEOVERN játékok</title>
+<meta name="robots" content="noindex">
+<script src="config.js"></script>
+<script src="gv.js"></script>
+<script src="gvmap.js"></script>
+<style>
+body{background:#050f14;color:#EAF4F4;font-family:Roboto,system-ui,sans-serif;max-width:640px;margin:0 auto;padding:24px 16px;line-height:1.5}
+h1{font-size:22px;margin-bottom:8px}p{color:#9BB7BC;font-size:14.5px}code{color:#FF9F45;font-family:'Roboto Mono',monospace;font-size:13px}
+input,button{font:inherit;padding:10px 12px;border-radius:10px;border:1px solid rgba(42,209,181,.4);background:#0b1a21;color:#EAF4F4}
+button{background:#2AD1B5;color:#04211d;font-weight:700;cursor:pointer;border:none}
+.row{display:flex;gap:8px;margin:14px 0}input{flex:1}
+pre{background:#0b1a21;border:1px solid rgba(42,209,181,.25);border-radius:10px;padding:10px;font-size:12px;overflow:auto;max-height:200px;color:#9BB7BC}
+</style>
+</head>
+<body>
+<h1>OSM-adat előkészítése egy településhez</h1>
+<p>Ez a kis eszköz lefuttatja ugyanazt az Overpass-lekérdezést, amit a térképes játékok élőben, és letölthető JSON-t ad. Ha a fájlt <code>jatekok/data/&lt;település&gt;.json</code> néven felteszed a repóba, a játékok ezt töltik be először — így egy kampányban nulla élő Overpass-hívás megy, gyorsabb és biztonságosabb.</p>
+<div class="row"><input id="t" placeholder="Település neve (pl. Pápa)"><button onclick="run()">Lekérdezés</button></div>
+<p id="st"></p>
+<div class="row"><button id="dl" style="display:none" onclick="download()">Letöltés JSON-ként</button></div>
+<pre id="out"></pre>
+<script>
+let JSONDATA=null,KEY='';
+function run(){const name=document.getElementById('t').value.trim();if(!name)return;const st=document.getElementById('st');st.textContent='Középpont keresése…';
+  const town={name,key:name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/ő|ö/g,'o').replace(/ű|ü/g,'u').replace(/[^a-z0-9. ]+/g,' ').replace(/\s+/g,' ').trim(),known:false,center:[19.04,47.5]};
+  /* a beépített táblát a gv.js kezeli; itt közvetlenül a geokódolót és az Overpasst hívjuk */
+  const T=Object.assign({},GV.TOWN,town);const tbl=GV.TOWN.key===town.key&&GV.TOWN.known;
+  (tbl?Promise.resolve(GV.TOWN.center):GVMAP.resolveCenter(T)).then(c=>{st.textContent='Középpont: '+c[1].toFixed(4)+', '+c[0].toFixed(4)+' · Overpass-lekérdezés…';GVMAP.setCenter(c);
+    try{localStorage.removeItem('gv-osm-'+town.key);}catch(e){}
+    return GVMAP.loadOSM({key:town.key+'-fresh'},c,850);}).then(j=>{if(!j){st.textContent='Nem sikerült a lekérdezés (Overpass nem elérhető). Próbáld újra egy perc múlva.';return;}
+    JSONDATA=j;KEY=town.key.replace(/[^a-z0-9]+/g,'-');const D=GVMAP.parse(j);
+    st.textContent=`Kész: ${j.elements.length} elem · ${D.roads.length} utca, ${D.green.length} zöldfelület, ${D.water.length} vízfelület, ${D.pois.length} intézmény, ${D.shops.length} bolt · fájlnév: data/${KEY}.json`;
+    document.getElementById('dl').style.display='inline-block';document.getElementById('out').textContent=JSON.stringify(j).slice(0,1500)+'…';});}
+function download(){const blob=new Blob([JSON.stringify(JSONDATA)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=KEY+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
+</script>
+</body>
+</html>

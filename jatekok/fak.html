@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hová ültetnél 10 fát? — GEOVERN játékok</title>
-<meta name="description" content="Hőhullám jön, tíz fára van keret. Előbb adat nélkül ültetsz, aztán a hőtérképpel — és látod a különbséget. Lakossági döntésjáték élő térképen.">
+<meta name="description" content="Hőhullám jön, tíz fára van keret. Előbb adat nélkül ültetsz, aztán a hőtérképpel — és látod a különbséget. Lakossági döntésjáték a település valódi utcáin.">
 <meta name="theme-color" content="#050f14">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,6 +14,7 @@
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="config.js"></script>
 <script src="gv.js"></script>
+<script src="gvmap.js"></script>
 <style>
 :root{--bg:#050f14;--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b4a;--text:#EAF4F4;--muted:#9BB7BC;--faint:#5E7A80;
   --card:rgba(6,17,22,.9);--line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
@@ -27,7 +28,7 @@ body.maperr::before{content:'';position:fixed;inset:0;z-index:0;background:radia
 .homelink{position:fixed;top:calc(10px + var(--sat));left:10px;z-index:40;font:700 12px var(--mono);letter-spacing:.06em;color:var(--text);
   background:var(--card);border:1px solid var(--line);border-radius:100px;padding:8px 14px;backdrop-filter:blur(10px);text-decoration:none}
 .topbar{position:fixed;top:calc(10px + var(--sat));right:10px;z-index:40;display:flex;align-items:center;gap:12px;background:var(--card);
-  border:1px solid var(--line);border-radius:100px;padding:8px 14px;backdrop-filter:blur(12px);font:500 13px var(--mono);color:var(--muted)}
+  border:1px solid var(--line);border-radius:100px;padding:8px 14px;backdrop-filter:blur(12px);font:500 13px var(--mono);color:var(--muted);max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topbar b{color:var(--amber);font-weight:500}
 .sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:30;width:100%;max-width:520px;padding:0 12px calc(12px + var(--sab))}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px 20px 18px;backdrop-filter:blur(16px);
@@ -35,18 +36,14 @@ body.maperr::before{content:'';position:fixed;inset:0;z-index:0;background:radia
 h1{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:6px}
 h1 em{font-style:normal;color:var(--teal)}
 .eyebrow{font:500 11px var(--mono);letter-spacing:.18em;color:var(--teal);text-transform:uppercase;margin-bottom:8px;display:block}
-p{color:var(--muted);font-size:15px}
-p+p{margin-top:8px}
+p{color:var(--muted);font-size:15px}p+p{margin-top:8px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 22px;border-radius:14px;font-weight:700;font-size:16px;cursor:pointer;
   border:none;transition:.2s;font-family:var(--font);background:var(--teal);color:#04211d;min-height:50px;touch-action:manipulation}
 .btn:active{transform:scale(.97)}.btn[disabled]{opacity:.4;cursor:default}
 .btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--text)}
-.row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
-.row .btn{flex:1}
-.cnt{display:flex;gap:6px;margin:12px 0 2px}
-.cnt i{flex:1;height:8px;border-radius:4px;background:rgba(143,176,181,.25)}
-.cnt i.on{background:var(--teal)}
-.hint{font:500 12.5px var(--mono);color:var(--faint);margin-top:10px}
+.row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}.row .btn{flex:1}
+.cnt{display:flex;gap:6px;margin:12px 0 2px}.cnt i{flex:1;height:8px;border-radius:4px;background:rgba(143,176,181,.25)}.cnt i.on{background:var(--teal)}
+.hint{font:500 12.5px var(--mono);color:var(--faint);margin-top:10px;min-height:17px}
 .score{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
 .sc{border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(15,74,87,.2)}
 .sc span{display:block;font:500 11px var(--mono);letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
@@ -55,158 +52,151 @@ p+p{margin-top:8px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin:10px 0 2px;font-size:12.5px;color:var(--muted)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .msg{border-left:3px solid var(--amber);padding:8px 12px;margin-top:12px;color:var(--text);font-size:15px;background:rgba(255,159,69,.08);border-radius:0 10px 10px 0}
-/* fa-markerek */
+.src{font:500 11px var(--mono);color:var(--faint);margin-top:8px}
+/* fa-markerek: a külső elemet a MapLibre pozicionálja (transform), ezért azon nincs saját transform/animáció */
+.mk{width:34px;height:34px;cursor:pointer}
 .tree{width:34px;height:34px;border-radius:50%;background:rgba(6,17,22,.85);border:2px solid var(--teal);display:flex;align-items:center;justify-content:center;
-  font-size:19px;box-shadow:0 4px 14px rgba(0,0,0,.6);cursor:default;position:relative;transition:transform .2s}
-.tree.new{animation:pop .35s cubic-bezier(.2,.8,.3,1.3)}
+  font-size:19px;box-shadow:0 4px 14px rgba(0,0,0,.6);position:relative;animation:pop .35s cubic-bezier(.2,.8,.3,1.3)}
 @keyframes pop{0%{transform:scale(.2)}100%{transform:scale(1)}}
 .tree .pt{position:absolute;top:-9px;right:-11px;font:700 11px var(--mono);background:var(--teal);color:#04211d;border-radius:100px;padding:1px 6px;display:none}
 .tree.scored .pt{display:block}
 .tree.lo{border-color:var(--red)}.tree.lo .pt{background:var(--red);color:#fff}
 .tree.mid{border-color:var(--amber)}.tree.mid .pt{background:var(--amber);color:#2b1400}
-.tree.dim{opacity:.35}
+.mk.dim .tree{opacity:.35}
+.poi{width:26px;height:26px;border-radius:50%;background:rgba(199,123,255,.25);border:1.5px solid #c77bff;display:flex;align-items:center;justify-content:center;font-size:14px;pointer-events:none}
 .maplibregl-ctrl-attrib{font-size:10px!important}
 .err{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
 body.maperr .err{display:flex}
 .err div{max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--faint);border-top-color:var(--teal);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <div id="map"></div>
 <a class="homelink" id="homelink" href="../jatekok.html">← JÁTÉKOK</a>
 <div class="topbar" id="topbar"><span id="tb-round">Hőhullám · <span data-town>a település</span></span></div>
-
 <div class="err"><div><h1>A térkép nem töltött be</h1><p>Valószínűleg a mobilnet nem engedi a térképcsempéket. Próbáld újra wifin, vagy válassz egy térkép nélküli játékot.</p>
 <div class="row"><a class="btn" id="err-next" href="../jatekok.html">Másik játék</a></div></div></div>
-
 <div class="sheet"><div class="panel" id="panel"></div></div>
 
 <script>
 /* =====================================================================
-   HOVÁ ÜLTETNÉL 10 FÁT? — térképes bejelölős játék
-   1. kör vakon (csak a város) · rétegek bekapcsolása · 2. kör adattal
-   A rétegek a település középpontja köré generált, illusztratív minták.
+   HOVÁ ÜLTETNÉL 10 FÁT? — a település valódi utcáin (OSM), két kör: vakon → adattal
+   A fa csak utca mellé kerülhet (úthoz igazítva), vízre nem; koppintás a fára = visszavétel.
+   Rétegek az OSM-ből: hőség (burkolt felület, útsűrűség, zöld és víz hiánya), sérülékeny lakók
+   (bölcsőde, óvoda, iskola, idősotthon, rendelő, kórház), gyalogos forgalom (boltok, főutak), lombkorona (parkok, erdők).
+   Ha az OSM nem érhető el: illusztratív minta-rétegek.
    ===================================================================== */
 const T=GV.TOWN;
 document.getElementById('homelink').href=GV.hubUrl();
 document.getElementById('err-next').href=GV.urlFor('jatekok/esokert.html');
-const DU=0.0022,DV=0.00148; /* 1 egység ≈ 165 m */
-const O=T.center;
-const GP=(u,v)=>[O[0]+u*DU,O[1]+v*DV];
-const UV=(lng,lat)=>[(lng-O[0])/DU,(lat-O[1])/DV];
+const AX=520,AY=470; /* a játéktér fél-szélessége / fél-magassága méterben */
+let S={st:'loading',round:1,trees:[],r1:null,r2:null,blindPts:null};
+let map=null,mapReady=false,D=null,E=null,MODE='osm',center=T.center;
+const P=document.getElementById('panel');const TB=document.getElementById('tb-round');
+const townTxt=T.name?GV.esc(T.name):'a település';
 const rnd=GV.rng('fak-'+T.key);
 
-/* ---- rejtett „igazság”-rétegek: gauss-foltok (u,v,sugár,súly) ---- */
-const L={
-  heat:[[2.0,0.6,1.25,1.0],[0.9,1.6,0.8,0.75],[-1.6,-1.2,0.9,0.55],[2.6,-0.6,0.6,0.5]],
-  vuln:[[2.1,0.5,1.0,1.0],[-0.6,0.45,0.6,0.65],[1.6,1.8,0.55,0.5]],
-  ped:[[1.0,0.3,0.7,0.8],[2.0,0.5,0.6,0.9],[0.1,0.05,0.5,0.7],[-0.3,0.35,0.4,0.6]],
-  canopy:[[0.0,0.0,0.6,0.95],[-2.0,1.3,0.95,1.0],[1.0,-1.3,0.55,0.75],[-1.1,-0.2,0.45,0.6]]
-};
-const g=(blobs,u,v)=>{let s=0;blobs.forEach(b=>{const d2=((u-b[0])/b[2])**2+((v-b[1])/(b[2]*0.8))**2;s+=b[3]*Math.exp(-d2*0.9);});return Math.min(1,s);};
-function value(u,v){const h=g(L.heat,u,v),vu=g(L.vuln,u,v),p=g(L.ped,u,v),c=g(L.canopy,u,v);
-  return Math.max(0,Math.min(1,0.5*h+0.35*vu+0.15*p-0.4*c));}
-const treePts=(u,v)=>Math.round(value(u,v)*10);
+/* ---- illusztratív tartalék-rétegek (méterben, gauss-foltok) ---- */
+function procedural(){const g=(blobs,x,y)=>{let s=0;blobs.forEach(b=>{const d2=((x-b[0])/b[2])**2+((y-b[1])/(b[2]*0.8))**2;s+=b[3]*Math.exp(-d2*0.9);});return Math.min(1,s);};
+  const L={heat:[[330,100,205,1],[150,265,130,.75],[-265,-200,150,.55],[430,-100,100,.5]],vuln:[[345,80,165,1],[-100,75,100,.65],[265,300,90,.5]],
+    ped:[[165,50,115,.8],[330,80,100,.9],[15,10,80,.7],[-50,60,65,.6]],canopy:[[0,0,100,.95],[-330,215,155,1],[165,-215,90,.75],[-180,-35,75,.6]]};
+  return{L,E:{heat:(x,y)=>g(L.heat,x,y),vuln:(x,y)=>g(L.vuln,x,y),ped:(x,y)=>g(L.ped,x,y),canopy:(x,y)=>g(L.canopy,x,y),inWater:()=>false}};}
+function blobPoly(cx,cy,r,seed){const rr=GV.rng('b'+seed),n=18,rad=[];for(let i=0;i<n;i++)rad.push(r*(1+(rr()*2-1)*.3));for(let i=0;i<n;i++)rad[i]=(rad[i]+rad[(i+1)%n]+rad[(i+n-1)%n])/3;
+  const ring=[];for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,q=rad[i%n];ring.push([cx+Math.cos(a)*q,cy+Math.sin(a)*q*0.8]);}return ring;}
 
-/* ---- geometria a rétegek rajzolásához ---- */
-function blob(cu,cv,r,seed,irr){irr=irr||0.3;const rr=GV.rng('b'+seed),n=18,rad=[];for(let i=0;i<n;i++)rad.push(r*(1+(rr()*2-1)*irr));
-  for(let i=0;i<n;i++)rad[i]=(rad[i]+rad[(i+1)%n]+rad[(i+n-1)%n])/3;const ring=[];
-  for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,q=rad[i%n];ring.push(GP(cu+Math.cos(a)*q,cv+Math.sin(a)*q*0.8));}return ring;}
-function polyFC(blobs,seed){return{type:'FeatureCollection',features:blobs.map((b,i)=>({type:'Feature',properties:{w:b[3]},
-  geometry:{type:'Polygon',coordinates:[blob(b[0],b[1],b[2],seed+i)]}}))};}
-function heatFC(){const f=[];for(let i=0;i<900;i++){const u=(rnd()*2-1)*3.4,v=(rnd()*2-1)*2.6;const w=g(L.heat,u,v);
-  if(w>0.08&&rnd()<w)f.push({type:'Feature',properties:{w},geometry:{type:'Point',coordinates:GP(u,v)}});}
-  return{type:'FeatureCollection',features:f};}
-function pathFC(){const sets=[[[2.6,0.9],[2.0,0.5],[1.0,0.3],[0.1,0.05],[-0.3,0.35],[-0.6,0.45]],[[2.0,0.5],[1.6,1.7]]];
-  return{type:'FeatureCollection',features:sets.map(w=>({type:'Feature',properties:{},geometry:{type:'LineString',coordinates:w.map(p=>GP(p[0],p[1]))}}))};}
-
-/* ---- állapot ---- */
-let S={st:'intro',round:1,trees:[],r1:null,r2:null};
-let map=null,mapReady=false,layersOn=false;
-const P=document.getElementById('panel');
-const TB=document.getElementById('tb-round');
-const townTxt=T.name?GV.esc(T.name):'a település';
+/* ---- indulás: középpont → térkép + OSM párhuzamosan ---- */
+render();
+GVMAP.resolveCenter(T).then(c=>{center=c;GVMAP.setCenter(c);initMap();
+  return GVMAP.loadOSM(T,c,800);}).then(json=>{D=GVMAP.parse(json);
+  if(D.ok&&!D.water.some(p=>GVMAP.pointInPoly(0,0,p))){E=GVMAP.evaluators(D);MODE='osm';}
+  else{const pr=procedural();E=pr.E;S.PL=pr.L;MODE='proc';}
+  S.st='intro';render();if(mapReady)addLayers();});
 
 function initMap(){
-  try{map=new maplibregl.Map({container:'map',style:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-    center:O,zoom:14.4,pitch:0,bearing:0,attributionControl:{compact:true},dragRotate:false,pitchWithRotate:false,touchPitch:false});
-    map.touchZoomRotate.disableRotation();}
-  catch(e){document.body.classList.add('maperr');return;}
-  map.on('error',e=>{if(!mapReady)document.body.classList.add('maperr');});
-  map.on('load',()=>{mapReady=true;
-    map.addSource('heat',{type:'geojson',data:heatFC()});
-    map.addLayer({id:'heat',type:'heatmap',source:'heat',layout:{visibility:'none'},paint:{'heatmap-weight':['get','w'],'heatmap-intensity':1.2,
-      'heatmap-radius':['interpolate',['linear'],['zoom'],13,18,15,40,17,80],'heatmap-opacity':0.8,
-      'heatmap-color':['interpolate',['linear'],['heatmap-density'],0,'rgba(255,107,74,0)',0.25,'rgba(255,159,69,.35)',0.6,'rgba(255,107,74,.7)',1,'rgba(255,60,40,.95)']}});
-    map.addSource('vuln',{type:'geojson',data:polyFC(L.vuln,'v')});
-    map.addLayer({id:'vuln-f',type:'fill',source:'vuln',layout:{visibility:'none'},paint:{'fill-color':'#c77bff','fill-opacity':['*',0.28,['get','w']]}});
-    map.addLayer({id:'vuln-l',type:'line',source:'vuln',layout:{visibility:'none'},paint:{'line-color':'#c77bff','line-width':1.5,'line-dasharray':[2,2],'line-opacity':.9}});
-    map.addSource('canopy',{type:'geojson',data:polyFC(L.canopy,'c')});
-    map.addLayer({id:'canopy-f',type:'fill',source:'canopy',layout:{visibility:'none'},paint:{'fill-color':'#3ddc97','fill-opacity':['*',0.3,['get','w']]}});
-    map.addSource('ped',{type:'geojson',data:pathFC()});
-    map.addLayer({id:'ped',type:'line',source:'ped',layout:{visibility:'none','line-cap':'round','line-join':'round'},paint:{'line-color':'#ffd166','line-width':4,'line-opacity':.85}});
-    /* játéktér: szaggatott keret, ezen belül lehet ültetni */
-    const ring=[GP(-AU,-AV),GP(AU,-AV),GP(AU,AV),GP(-AU,AV),GP(-AU,-AV)];
-    map.addSource('area',{type:'geojson',data:{type:'Feature',geometry:{type:'Polygon',coordinates:[ring]}}});
-    map.addLayer({id:'area',type:'line',source:'area',paint:{'line-color':'#2AD1B5','line-width':1.5,'line-dasharray':[3,3],'line-opacity':.55}});
-    fitArea();
-    map.on('click',onTap);
-  });
+  map=GVMAP.createMap({container:'map',center,zoom:15,pitch:0,bearing:0,dragRotate:false,pitchWithRotate:false,touchPitch:false},
+    m=>{mapReady=true;try{m.touchZoomRotate.disableRotation();}catch(e){}
+      const ring=[[-AX,-AY],[AX,-AY],[AX,AY],[-AX,AY],[-AX,-AY]].map(p=>GVMAP.toLL(p[0],p[1]));
+      m.addSource('area',{type:'geojson',data:{type:'Feature',geometry:{type:'Polygon',coordinates:[ring]}}});
+      m.addLayer({id:'area',type:'line',source:'area',paint:{'line-color':'#2AD1B5','line-width':1.5,'line-dasharray':[3,3],'line-opacity':.55}});
+      fitArea();m.on('click',onTap);if(E)addLayers();},
+    ()=>document.body.classList.add('maperr'));
 }
-const AU=3.2,AV=3.0; /* a játéktér fél-szélessége / fél-magassága egységben */
 function fitArea(anim){if(!mapReady)return;const sheet=document.querySelector('.panel');const bottom=Math.min(window.innerHeight*0.5,(sheet?sheet.offsetHeight:260)+30);
-  map.fitBounds([GP(-AU,-AV),GP(AU,AV)],{padding:{top:70,bottom:bottom,left:16,right:16},duration:anim?700:0,maxZoom:16.5});}
+  map.fitBounds([GVMAP.toLL(-AX,-AY),GVMAP.toLL(AX,AY)],{padding:{top:70,bottom,left:16,right:16},duration:anim?700:0,maxZoom:17});}
 window.addEventListener('resize',()=>fitArea(true));
-function setLayers(on){layersOn=on;if(!mapReady)return;['heat','vuln-f','vuln-l','canopy-f','ped'].forEach(id=>map.setLayoutProperty(id,'visibility',on?'visible':'none'));}
+let layersAdded=false,poiMarkers=[];
+function addLayers(){if(layersAdded||!mapReady||!E)return;layersAdded=true;const v='none';
+  if(MODE==='osm'){
+    map.addSource('heat',{type:'geojson',data:GVMAP.heatGrid(E,Math.max(AX,AY)+60,26)});
+    map.addSource('canopy',{type:'geojson',data:GVMAP.polysFC(D.green)});
+    map.addSource('vuln',{type:'geojson',data:GVMAP.circleFC(D.pois,150)});
+    map.addSource('ped',{type:'geojson',data:GVMAP.pointsFC(D.shops)});
+    D.pois.forEach(p=>{const el=document.createElement('div');el.className='poi';el.textContent=p.ic||'🏥';el.title=p.n;const mk=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat(GVMAP.toLL(p.x,p.y));poiMarkers.push(mk);});
+  }else{const L=S.PL;const pf=(blobs,seed)=>({type:'FeatureCollection',features:blobs.map((b,i)=>({type:'Feature',properties:{w:b[3]},geometry:{type:'Polygon',coordinates:[blobPoly(b[0],b[1],b[2],seed+i).map(q=>GVMAP.toLL(q[0],q[1]))]}}))});
+    const hf=[];for(let i=0;i<900;i++){const x=(rnd()*2-1)*AX*1.1,y=(rnd()*2-1)*AY*1.1;const w=E.heat(x,y);if(w>0.08&&rnd()<w)hf.push({type:'Feature',properties:{w},geometry:{type:'Point',coordinates:GVMAP.toLL(x,y)}});}
+    map.addSource('heat',{type:'geojson',data:{type:'FeatureCollection',features:hf}});
+    map.addSource('canopy',{type:'geojson',data:pf(L.canopy,'c')});map.addSource('vuln',{type:'geojson',data:pf(L.vuln,'v')});
+    const sf=[];L.ped.forEach(b=>{for(let i=0;i<5;i++)sf.push({type:'Feature',properties:{},geometry:{type:'Point',coordinates:GVMAP.toLL(b[0]+(rnd()*2-1)*b[2]*.7,b[1]+(rnd()*2-1)*b[2]*.6)}});});
+    map.addSource('ped',{type:'geojson',data:{type:'FeatureCollection',features:sf}});}
+  map.addLayer({id:'heat',type:'heatmap',source:'heat',layout:{visibility:v},paint:{'heatmap-weight':['get','w'],'heatmap-intensity':1.1,
+    'heatmap-radius':['interpolate',['linear'],['zoom'],13,14,15,30,17,70],'heatmap-opacity':0.75,
+    'heatmap-color':['interpolate',['linear'],['heatmap-density'],0,'rgba(255,107,74,0)',0.25,'rgba(255,159,69,.35)',0.6,'rgba(255,107,74,.7)',1,'rgba(255,60,40,.95)']}});
+  map.addLayer({id:'canopy-f',type:'fill',source:'canopy',layout:{visibility:v},paint:{'fill-color':'#3ddc97','fill-opacity':0.3}});
+  map.addLayer({id:'vuln-f',type:'fill',source:'vuln',layout:{visibility:v},paint:{'fill-color':'#c77bff','fill-opacity':0.22}});
+  map.addLayer({id:'vuln-l',type:'line',source:'vuln',layout:{visibility:v},paint:{'line-color':'#c77bff','line-width':1.5,'line-dasharray':[2,2],'line-opacity':.9}});
+  map.addLayer({id:'ped',type:'circle',source:'ped',layout:{visibility:v},paint:{'circle-color':'#ffd166','circle-radius':4,'circle-opacity':.85,'circle-stroke-color':'#2b1400','circle-stroke-width':1}});
+}
+let layersOn=false;
+function setLayers(on){layersOn=on;if(!mapReady||!layersAdded)return;['heat','canopy-f','vuln-f','vuln-l','ped'].forEach(id=>map.setLayoutProperty(id,'visibility',on?'visible':'none'));
+  poiMarkers.forEach(m=>on?m.addTo(map):m.remove());}
 
+/* ---- ültetés ---- */
 function onTap(e){
-  if(S.st!=='place')return;
-  if(S.trees.length>=10)return;
-  const [u,v]=UV(e.lngLat.lng,e.lngLat.lat);
-  if(Math.abs(u)>AU||Math.abs(v)>AV){flash('A szaggatott kereten belül ültess.');return;}
-  const el=document.createElement('div');el.className='tree new';el.innerHTML='🌳<span class="pt"></span>';
-  const mk=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat(e.lngLat).addTo(map);
-  S.trees.push({u:+u.toFixed(2),v:+v.toFixed(2),mk,el});
-  render();
+  if(S.st!=='place'||S.trees.length>=10)return;
+  let [x,y]=GVMAP.toXY(e.lngLat.lng,e.lngLat.lat);
+  if(Math.abs(x)>AX||Math.abs(y)>AY){flash('A szaggatott kereten belül ültess.');return;}
+  if(E.inWater(x,y)){flash('Vízre nem lehet fát ültetni.');return;}
+  if(MODE==='osm'){const s=GVMAP.snapToRoad(D,x,y,60);if(!s){flash('Koppints egy utca mellé — a fa a járda mellé kerül.');return;}x=s.x;y=s.y;if(E.inWater(x,y)){flash('Itt víz van — válassz másik utcát.');return;}}
+  const ll=GVMAP.toLL(x,y);
+  const el=document.createElement('div');el.className='mk';el.innerHTML='<div class="tree">🌳<span class="pt"></span></div>';
+  const t={x:+x.toFixed(1),y:+y.toFixed(1),el};
+  el.addEventListener('click',ev=>{ev.stopPropagation();if(S.st!=='place')return;removeTree(t);});
+  t.mk=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat(ll).addTo(map);
+  S.trees.push(t);render();
 }
-function undo(){const t=S.trees.pop();if(t)t.mk.remove();render();}
+function removeTree(t){const i=S.trees.indexOf(t);if(i<0)return;t.mk.remove();S.trees.splice(i,1);render();}
+function undo(){const t=S.trees[S.trees.length-1];if(t)removeTree(t);}
 function clearTrees(){S.trees.forEach(t=>t.mk.remove());S.trees=[];}
-function evaluate(){
-  let total=0;S.trees.forEach(t=>{const p=treePts(t.u,t.v);t.p=p;total+=p;t.el.classList.add('scored',p<=3?'lo':p<=6?'mid':'hi');t.el.querySelector('.pt').textContent=p;});
-  return total;
-}
-let flashT=null;function flash(m){const h=P.querySelector('.hint');if(!h)return;const o=h.textContent;h.textContent=m;clearTimeout(flashT);flashT=setTimeout(()=>h.textContent=o,1800);}
+function evaluate(){let total=0;S.trees.forEach(t=>{const p=Math.round(GVMAP.treeValue(E,t.x,t.y)*10);t.p=p;total+=p;const tr=t.el.querySelector('.tree');tr.classList.add('scored',p<=3?'lo':p<=6?'mid':'hi');tr.querySelector('.pt').textContent=p;});return total;}
+let flashT=null;function flash(m){const h=P.querySelector('.hint');if(!h)return;const o=h.dataset.base||h.textContent;h.dataset.base=o;h.textContent=m;clearTimeout(flashT);flashT=setTimeout(()=>{h.textContent=o;},2200);}
 
 /* ---- képernyők ---- */
-function render(){
-  const n=S.trees.length;
-  if(S.st==='intro'){TB.innerHTML='Hőhullám · <b>'+townTxt+'</b>';
-    P.innerHTML=`<span class="eyebrow">Lakossági döntésjáték · 2–3 perc</span>
+const srcTxt=()=>MODE==='osm'?'Utcák, parkok, bölcsődék, rendelők: OpenStreetMap. A hőtérkép a burkolt felületből és a zöld hiányából számolt becslés.':'Illusztratív minta-rétegek (az OSM-adat most nem volt elérhető).';
+function render(){const n=S.trees.length;
+  if(S.st==='loading'){TB.innerHTML='Hőhullám · <b>'+townTxt+'</b>';P.innerHTML=`<span class="eyebrow">Lakossági döntésjáték · 2–3 perc</span><h1>Hová ültetnél <em>10 fát</em>?</h1>
+    <p><span class="spin"></span>${townTxt==='a település'?'A település':townTxt} utcáinak betöltése…</p><div class="hint">OpenStreetMap-adat, pár másodperc.</div>`;return;}
+  if(S.st==='intro'){TB.innerHTML='Hőhullám · <b>'+townTxt+'</b>';P.innerHTML=`<span class="eyebrow">Lakossági döntésjáték · 2–3 perc</span>
     <h1>Hová ültetnél <em>10 fát</em>?</h1>
     <p>Hőhullám jön. ${townTxt==='a település'?'A település':townTxt} tíz fára kapott keretet — ugyanannyiba kerül mind, de nem ugyanannyit ér.</p>
     <p>Először úgy döntesz, ahogy a legtöbb testület: adat nélkül. Aztán bekapcsoljuk a rétegeket, és újra ültetsz.</p>
-    <div class="row"><button class="btn" onclick="start()">Indítás</button></div>
-    <div class="hint">Illusztratív rétegek a település térképén — a minta, nem a mért valóság.</div>`;return;}
+    <div class="row"><button class="btn" onclick="start()">Indítás</button></div><div class="src">${srcTxt()}</div>`;return;}
   if(S.st==='place'){TB.innerHTML=(S.round===1?'1. kör · vakon':'2. kör · adattal')+' · <b>'+n+'/10</b>';
     P.innerHTML=`<span class="eyebrow">${S.round===1?'1. kör — adat nélkül':'2. kör — a rétegekkel'}</span>
-    <h1>${S.round===1?'Koppints oda, ahová fát ültetnél':'Most ültesd újra — a rétegeket látva'}</h1>
+    <h1>${S.round===1?'Koppints az utcákra, ahová fát ültetnél':'Most ültesd újra — a rétegeket látva'}</h1>
     <div class="cnt">${Array.from({length:10},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</div>
-    ${S.round===2?`<div class="legend"><span><i style="background:#ff6b4a"></i>Hőtérkép</span><span><i style="background:#c77bff"></i>75+ lakók, bölcsőde, rendelő</span><span><i style="background:#3ddc97"></i>Meglévő lombkorona</span><span><i style="background:#ffd166"></i>Gyalogos forgalom</span></div>`:''}
+    ${S.round===2?`<div class="legend"><span><i style="background:#ff6b4a"></i>Hőtérkép</span><span><i style="background:#c77bff"></i>Bölcsőde, iskola, rendelő, idősek</span><span><i style="background:#3ddc97"></i>Meglévő zöld</span><span><i style="background:#ffd166"></i>Boltok, gyalogos forgalom</span></div>`:''}
     <div class="row"><button class="btn btn-ghost" onclick="undo()" ${n?'':'disabled'}>Vissza</button><button class="btn" onclick="finishRound()" ${n===10?'':'disabled'}>Kiértékelés</button></div>
-    <div class="hint">${n<10?'Még '+(10-n)+' fa. Koppints a térképre.':'Mind a tíz fa a helyén — jöhet a kiértékelés.'}</div>`;return;}
-  if(S.st==='reveal1'){TB.innerHTML='1. kör · <b>'+S.r1+' pont</b>';
-    P.innerHTML=`<span class="eyebrow">1. kör — eredmény</span>
+    <div class="hint">${n<10?'Még '+(10-n)+' fa. A fa a járda mellé áll; egy fára koppintva visszaveszed.':'Mind a tíz fa a helyén — jöhet a kiértékelés.'}</div>`;return;}
+  if(S.st==='reveal1'){TB.innerHTML='1. kör · <b>'+S.r1+' pont</b>';P.innerHTML=`<span class="eyebrow">1. kör — eredmény</span>
     <h1>Vakon: <em>${S.r1}</em> / 100</h1>
     <p>Minden fa 0–10 pontot ér: annyit, amennyi hőséget, sérülékeny lakót és gyalogost árnyékol — és annyival kevesebbet, amennyi lombkorona már ott van.</p>
-    <div class="legend"><span><i style="background:#ff6b4a"></i>Hőtérkép</span><span><i style="background:#c77bff"></i>75+ lakók, bölcsőde, rendelő</span><span><i style="background:#3ddc97"></i>Meglévő lombkorona</span><span><i style="background:#ffd166"></i>Gyalogos forgalom</span></div>
-    <div class="row"><button class="btn" onclick="showLayers()">Rétegek bekapcsolása</button></div>
-    <div class="hint">A számok a fákon: hány pontot ér a hely.</div>`;return;}
-  if(S.st==='layers'){
-    P.innerHTML=`<span class="eyebrow">A térkép beszél</span>
-    <h1>Ugyanaz a város. Más utca.</h1>
-    <p>A hőgóc és az idősek ugyanott vannak — a főtéren már van árnyék. A tíz fa ugyanannyiba kerül, csak máshol ér többet.</p>
-    <div class="row"><button class="btn" onclick="round2()">Újra, adattal</button></div>
-    <div class="hint">Nézd meg, hová estek az első fáid, aztán ültess újra.</div>`;return;}
+    <div class="legend"><span><i style="background:#ff6b4a"></i>Hőtérkép</span><span><i style="background:#c77bff"></i>Bölcsőde, iskola, rendelő, idősek</span><span><i style="background:#3ddc97"></i>Meglévő zöld</span><span><i style="background:#ffd166"></i>Boltok, gyalogos forgalom</span></div>
+    <div class="row"><button class="btn" onclick="showLayers()">Rétegek bekapcsolása</button></div><div class="hint">A számok a fákon: hány pontot ér a hely.</div>`;return;}
+  if(S.st==='layers'){P.innerHTML=`<span class="eyebrow">A térkép beszél</span><h1>Ugyanaz a város. Más utca.</h1>
+    <p>Ahol a hőgóc és a bölcsőde, a rendelő, az idősek egybeesnek — ott ér a legtöbbet a fa. Ahol már van lombkorona, ott a legkevesebbet.</p>
+    <div class="row"><button class="btn" onclick="round2()">Újra, adattal</button></div><div class="hint">Nézd meg, hová estek az első fáid, aztán ültess újra.</div><div class="src">${srcTxt()}</div>`;return;}
   if(S.st==='final'){const d=S.r2-S.r1;TB.innerHTML='Vakon <b>'+S.r1+'</b> · adattal <b>'+S.r2+'</b>';
     P.innerHTML=`<span class="eyebrow">A hét lenyomata</span>
     <h1>${d>0?'Ugyanaz a tíz fa. <em>+'+d+' pont</em> árnyék.':d===0?'Ugyanannyi — <em>nálad</em> a megérzés is adat volt.':'Vakon jobb volt — <em>ritka</em>, de előfordul.'}</h1>
@@ -216,11 +206,9 @@ function render(){
 }
 function start(){S.st='place';S.round=1;render();fitArea();}
 function finishRound(){const sc=evaluate();if(S.round===1){S.r1=sc;S.st='reveal1';}else{S.r2=sc;S.st='final';
-  GV.record('fak',{blind:{score:S.r1,pts:S.blindPts},informed:{score:S.r2,pts:S.trees.map(t=>[t.u,t.v])},known:T.known});}
-  render();}
-function showLayers(){setLayers(true);S.blindPts=S.trees.map(t=>[t.u,t.v]);S.trees.forEach(t=>t.el.classList.add('dim'));S.st='layers';render();}
+  GV.record('fak',{mode:MODE,center:[+center[0].toFixed(5),+center[1].toFixed(5)],blind:{score:S.r1,pts:S.blindPts},informed:{score:S.r2,pts:S.trees.map(t=>[t.x,t.y])},known:T.known});}render();}
+function showLayers(){setLayers(true);S.blindPts=S.trees.map(t=>[t.x,t.y]);S.trees.forEach(t=>t.el.classList.add('dim'));S.st='layers';render();}
 function round2(){clearTrees();S.round=2;S.st='place';render();}
-initMap();render();
 </script>
 </body>
 </html>

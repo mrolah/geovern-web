@@ -5,30 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Karcsú vagy túlméretezett? — GEOVERN játékok</title>
 <meta name="description" content="Nyolc gyors párválasztás: melyik ad többet egy forintért? Tározó vagy esőkertek, új szoftver vagy egy jó kérdés. Lakossági döntésjáték nagy számokkal.">
-<meta name="theme-color" content="#FAFAF7">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23E63946' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23E63946'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#050f14">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="config.js"></script>
 <script src="gv.js"></script>
 <style>
-:root{--bg:#FAFAF7;--ink:#111;--muted:#666;--red:#E63946;--green:#2A9D8F;--line:rgba(0,0,0,.14);
-  --font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;--gv-accent:var(--ink);--gv-accent-ink:#fff;--gv-line:var(--line)}
+:root{--bg:#050f14;--ink:#EAF4F4;--muted:#9BB7BC;--red:#FF9F45;--green:#2AD1B5;--line:rgba(42,209,181,.28);--card:#0b1a21;
+  --font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;--gv-accent:var(--green);--gv-accent-ink:#04211d;--gv-line:var(--line)}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.45;min-height:100vh}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.45;min-height:100vh;background-image:radial-gradient(900px 600px at 70% 10%,rgba(15,74,87,.5),transparent 60%)}
 header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;max-width:620px;margin:0 auto}
-.home{font:700 12px var(--mono);letter-spacing:.08em;color:var(--ink);text-decoration:none;border-bottom:2px solid var(--ink)}
+.home{font:700 12px var(--mono);letter-spacing:.08em;color:var(--green);text-decoration:none;border:1px solid var(--line);padding:7px 12px;border-radius:100px}
 .ctr{font:500 13px var(--mono);color:var(--muted)}
 .ctr b{color:var(--red);font-weight:700}
 main{max-width:620px;margin:0 auto;padding:0 16px 40px}
-.rule{height:3px;background:var(--ink);margin:4px 0 18px}
+.rule{height:3px;background:var(--green);margin:4px 0 18px}
 .eyebrow{font:500 11px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--red);display:block;margin-bottom:10px}
 h1{font:900 clamp(34px,10vw,64px)/.98 var(--font);letter-spacing:-.03em;margin-bottom:14px}
 h2{font:900 clamp(22px,6vw,30px)/1.1 var(--font);letter-spacing:-.02em;margin-bottom:14px}
-p{color:#333;font-size:16px}p+p{margin-top:8px}
-.btn{display:inline-flex;align-items:center;justify-content:center;padding:15px 22px;border-radius:0;font:700 16px var(--font);cursor:pointer;border:2px solid var(--ink);background:var(--ink);color:#fff;width:100%;min-height:52px;touch-action:manipulation}
-.btn:active{background:#333}.btn-light{background:transparent;color:var(--ink)}
+p{color:var(--muted);font-size:16px}p+p{margin-top:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:15px 22px;border-radius:12px;font:700 16px var(--font);cursor:pointer;border:2px solid var(--green);background:var(--green);color:#04211d;width:100%;min-height:52px;touch-action:manipulation}
+.btn:active{transform:scale(.985)}.btn-light{background:transparent;color:var(--ink)}
 .row{display:flex;gap:10px;margin-top:16px}
 .timer{height:6px;background:var(--line);margin:10px 0 16px;position:relative;overflow:hidden}
 .timer i{position:absolute;left:0;top:0;bottom:0;background:var(--red);width:100%;transform-origin:left;animation:shrink 10s linear forwards}
@@ -36,31 +36,31 @@ p{color:#333;font-size:16px}p+p{margin-top:8px}
 .timer.stop i{animation-play-state:paused}
 .pair{display:grid;gap:12px;grid-template-columns:1fr}
 @media(min-width:560px){.pair{grid-template-columns:1fr 1fr}}
-.c{border:2px solid var(--ink);padding:18px 16px;text-align:left;background:#fff;cursor:pointer;font-family:var(--font);position:relative;transition:.12s;min-height:118px;display:flex;flex-direction:column;justify-content:space-between;gap:10px;color:var(--ink)}
+.c{border:2px solid var(--line);border-radius:14px;padding:18px 16px;text-align:left;background:var(--card);cursor:pointer;font-family:var(--font);position:relative;transition:.12s;min-height:118px;display:flex;flex-direction:column;justify-content:space-between;gap:10px;color:var(--ink)}
 .c:active{transform:scale(.985)}
 .c .t{font:700 18px/1.25 var(--font)}
 .c .s{font-size:13.5px;color:var(--muted)}
 .c .n{font:700 clamp(28px,8vw,40px)/1 var(--mono);letter-spacing:-.02em;opacity:0;transform:translateY(6px);transition:.4s}
 .c .n small{font:500 12px var(--mono);color:var(--muted);display:block;margin-top:4px;letter-spacing:.06em}
 .c.rev .n{opacity:1;transform:none}
-.c.win{background:var(--ink);color:#fff}.c.win .s,.c.win .n small{color:#bbb}
+.c.win{background:var(--green);color:#04211d;border-color:var(--green)}.c.win .s,.c.win .n small{color:#0b3a33}
 .c.lose{opacity:.55}
-.c.win::after{content:'TÖBBET AD';position:absolute;top:-10px;right:10px;background:var(--green);color:#fff;font:700 10px var(--mono);letter-spacing:.14em;padding:3px 8px}
+.c.win::after{content:'TÖBBET AD';position:absolute;top:-10px;right:10px;background:var(--red);color:#2b1400;font:700 10px var(--mono);letter-spacing:.14em;padding:3px 8px}
 .c[disabled]{cursor:default}
-.lesson{margin-top:16px;border-top:3px solid var(--ink);padding-top:12px}
+.lesson{margin-top:16px;border-top:3px solid var(--green);padding-top:12px}
 .lesson b{font:900 17px var(--font);display:block;margin-bottom:4px}
 .lesson p{font-size:15px}
-.ratio{display:inline-block;font:700 13px var(--mono);background:var(--red);color:#fff;padding:3px 8px;margin-left:6px;vertical-align:2px}
+.ratio{display:inline-block;font:700 13px var(--mono);background:var(--red);color:#2b1400;padding:3px 8px;margin-left:6px;vertical-align:2px}
 .big{font:900 clamp(60px,22vw,120px)/.9 var(--font);letter-spacing:-.05em;margin:8px 0 4px}
 .big small{font:500 14px var(--mono);letter-spacing:.1em;color:var(--muted);display:block;margin-top:8px}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
-.stats div{border-top:2px solid var(--ink);padding-top:8px}
+.stats div{border-top:2px solid var(--green);padding-top:8px}
 .stats span{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:block}
 .stats b{font:700 24px var(--mono)}
 .list{margin-top:10px;font-size:14px}
-.list div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.list div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid rgba(143,176,181,.15)}
 .list i{font-style:normal;font:700 13px var(--mono)}
-.ok{color:var(--green)}.no{color:var(--red)}
+.ok{color:var(--green)}.no{color:#ff6b4a}
 footer{max-width:620px;margin:0 auto;padding:0 16px 30px;font-size:12px;color:var(--muted)}
 </style>
 </head>

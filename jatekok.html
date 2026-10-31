@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GEOVERN — Játékok: döntésjátékok a lakosságnak</title>
-<meta name="description" content="Hét rövid döntésjáték önkormányzatoknak, a lakosság szemléletformálására: hőhullám, esőkert, iskolautca, fák, költségvetés — és egy 12 hónapos városrész-szimuláció. Előbb az adat, aztán a beruházás.">
+<meta name="description" content="Nyolc döntésjáték önkormányzatoknak, a lakosság szemléletformálására: hőhullám, esőkert, iskolautca, fák, költségvetés, 12 hónapos városrész-szimuláció és egy Pipedrive-szerű ügymenet. Előbb az adat, aztán a beruházás.">
 <meta name="theme-color" content="#0F4A57">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -82,22 +82,22 @@ h2{font-size:clamp(22px,3vw,30px);font-weight:900;line-height:1.12;margin:54px 0
 <div class="wrap">
   <span class="eyebrow">GEOVERN · JÁTÉKOK ÖNKORMÁNYZATOKNAK</span>
   <h1>Döntésjátékok <em>a lakosságnak.</em></h1>
-  <p class="sub">Hét rövid döntési helyzet — hőhullám, villámárvíz, iskolautca, fák, költségvetés — a saját település nevével, a lakók telefonján. Mindegyik ugyanazt mutatja meg játszva, amit egy testületi ülésen nehéz elmondani: <b>előbb az adat, aztán a beruházás.</b></p>
+  <p class="sub">Nyolc döntési helyzet — hőhullám, villámárvíz, iskolautca, fák, költségvetés — a saját település nevével, a lakók telefonján. Mindegyik ugyanazt mutatja meg játszva, amit egy testületi ülésen nehéz elmondani: <b>előbb az adat, aztán a beruházás.</b></p>
   <div class="town" data-town-hide>📍 Ez a játékcsomag <span data-town></span> lakóinak készült</div>
   <div class="ctas"><a class="btn btn-primary" id="cta1" href="jatekok/fak.html">Kezdd az elsővel →</a><a class="btn btn-ghost" id="cta2" href="jatekok/zold-varosresz.html">A 12 hónapos játék</a></div>
 
   <h2>Rövid játékok — 1–3 perc</h2>
-  <p class="lead">Mindegyik más designnal, más játékmóddal és más adatábrázolással készült — térkép, tervrajz, plakát, pixel, nagy számok, műszerfal —, hogy egy kampányban többféle lakót többféleképpen érjen el.</p>
+  <p class="lead">Egységes GEOVERN-arculat, de mindegyik más játékmóddal és adatábrázolással — élő térkép a település utcáin, utcametszet, vázlat, nagy számok, műszerfal —, hogy egy kampányban többféle lakót többféleképpen érjen el.</p>
   <div class="grid" id="grid"></div>
 
-  <h2>A hosszabb — 5–10 perc</h2>
-  <p class="lead">SimCity-szerű folyamatjáték: egy év egy városrész élén, tizenkét hónap, tizenkét esemény. Itt nem egy döntést hozol, hanem egy folyamatot viszel végig — és a végén kiderül, mennyit költöttél vakon.</p>
+  <h2>Folyamatjátékok — 3–8 perc</h2>
+  <p class="lead">Itt nem egy döntést hozol, hanem egy folyamatot viszel végig: egy év egy városrész élén, illetve hat hét egy önkormányzati ügymenetben. A végén kiderül, mennyit költöttél vakon — és hány döntés elé került adat.</p>
   <div class="grid" id="gridbig"></div>
 
   <h2>Önkormányzatoknak — hogyan használd</h2>
   <div class="two">
     <div class="box"><h3>1 · Kiadás a település nevével</h3>
-      <p>Minden játék a cím végére írt paraméterrel a saját településre szól: <code>geovern.com/jatekok.html?telepules=Pápa</code>. A térképes játék a település központjára áll rá, a többi a nevet írja ki. Egy QR-kód a hírlevélbe, a fórum meghívójára, az iskolai szülői levélbe — ennyi a telepítés.</p>
+      <p>Minden játék a cím végére írt paraméterrel a saját településre szól: <code>geovern.com/jatekok.html?telepules=Pápa</code>. A térképes játékok a település valódi utcáira állnak rá (OpenStreetMap), a többi a nevet írja ki. Egy QR-kód a hírlevélbe, a fórum meghívójára, az iskolai szülői levélbe — ennyi a telepítés.</p>
       <div class="try"><input id="tn" placeholder="A település neve" maxlength="40"><button onclick="tryTown()">Próbáld ki</button></div></div>
     <div class="box"><h3>2 · Mit tanul a lakos</h3>
       <p>Nem előadás, hanem tapasztalat: előbb vakon dönt, aztán adattal — és látja a különbséget a saját döntésén. Ezért tudja elfogadni, amikor a testület nem a főtérre, hanem a lakótelepre költ.</p>
@@ -119,21 +119,25 @@ h2{font-size:clamp(22px,3vw,30px);font-weight:900;line-height:1.12;margin:54px 0
 
 <script>
 const GAMES=[
- {f:'jatekok/fak.html',img:'jatekok/img/fak.jpg',t:'Hová ültetnél 10 fát?',min:'2–3 perc',hook:'Hőhullám jön, tíz fára van keret. Előbb adat nélkül ültetsz, aztán a hőtérképpel — és látod a különbséget.',
-  design:'GEOVERN sötét térkép',mode:'bejelölés a térképen, két kör',data:'élő térkép + illusztratív rétegek',coll:'hová tennének fát a lakók (koordináták), vak vs. adatos pontszám'},
+ {f:'jatekok/fak.html',img:'jatekok/img/fak.jpg',t:'Hová ültetnél 10 fát?',min:'2–3 perc',hook:'Hőhullám jön, tíz fára van keret. A település valódi utcáin ültetsz — előbb adat nélkül, aztán a hőtérképpel.',
+  design:'GEOVERN sötét térkép',mode:'bejelölés az utcák mellé, két kör',data:'élő térkép + OSM-ből számolt rétegek',coll:'hová tennének fát a lakók (koordináták), vak vs. adatos pontszám'},
  {f:'jatekok/esokert.html',img:'jatekok/img/esokert.jpg',t:'Esőkert vagy csatorna?',min:'2–3 perc',hook:'Villámárvíz után 120 millió: nagy cső, esőkertek, vízáteresztő burkolat vagy zöldtető? Oszd el, aztán jön a vihar.',
-  design:'tervrajz (blueprint)',mode:'csúszkás keretosztás + vihar-szimuláció',data:'sematikus utcametszet',coll:'keretosztási arányok, mérés-hajlandóság'},
+  design:'sötét tervrajz',mode:'csúszkás keretosztás + vihar-szimuláció',data:'sematikus utcametszet',coll:'keretosztási arányok, mérés-hajlandóság'},
  {f:'jatekok/iskolautca.html',img:'jatekok/img/iskolautca.jpg',t:'Iskolautca',min:'2–3 perc',hook:'Hol a veszély: ott, ahol félünk, vagy ott, ahol a balesetek vannak? Öt döntés, mért válaszokkal Bécstől New Yorkig.',
-  design:'plakát (civic poster)',mode:'A/B/C döntések + veszélypont-bejelölés',data:'vázlat-térkép + mért bizonyítékok',coll:'észlelt veszélypont, támogatás, mit mérnének'},
- {f:'jatekok/ugyanaz-az-utca.html',img:'jatekok/img/ugyanaz.jpg',t:'Ugyanaz az utca',min:'2 perc',hook:'Fák, közlekedés, aztán a 300 milliós csomag. Három szakág, három döntés — és mind ugyanarra a zónára mutat.',
-  design:'pixel · izometrikus',mode:'zónaválasztás három körben',data:'sematikus kisváros, három réteg',coll:'zónaválasztások vakon és adattal'},
+  design:'GEOVERN sötét',mode:'A/B/C döntések + veszélypont-bejelölés',data:'vázlat-térkép + mért bizonyítékok',coll:'észlelt veszélypont, támogatás, mit mérnének'},
+ {f:'jatekok/ugyanaz-az-utca.html',img:'jatekok/img/ugyanaz.jpg',t:'Ugyanaz az utca',min:'2 perc',hook:'Fák, közlekedés, aztán a 300 milliós csomag — a település térképén, kilenc zónával. Három döntés, és mind ugyanarra mutat.',
+  design:'GIS-térkép, amőba-zónák',mode:'zónaválasztás három körben',data:'élő térkép, zónák az OSM-ből',coll:'zónaválasztások vakon és adattal'},
  {f:'jatekok/karcsu.html',img:'jatekok/img/karcsu.jpg',t:'Karcsú vagy túlméretezett?',min:'2 perc',hook:'Nyolc gyors pár: melyik ad többet egy forintért? Tározó vagy esőkertek, új szoftver vagy egy jó kérdés.',
-  design:'nagy számok, fehér',mode:'gyors párválasztás, 10 mp',data:'nagyságrendi költségek',coll:'árérzékelés: mit hisznek olcsóbbnak'},
+  design:'nagy számok, sötét',mode:'gyors párválasztás, 10 mp',data:'nagyságrendi költségek',coll:'árérzékelés: mit hisznek olcsóbbnak'},
  {f:'jatekok/lassit-es-mer.html',img:'jatekok/img/lassit.jpg',t:'Lassít és mér',min:'3 perc',hook:'Száguldanak az iskola mellett. Tábla, kijelző, küszöb — és mérsz-e? Tizenkét hét, aztán a következő utca kérése.',
   design:'szenzor-műszerfal',mode:'döntés → 12 hetes szimuláció → újradöntés',data:'idősor-diagram',coll:'mérési hajlandóság, eszközválasztás'}
 ];
-const BIG={f:'jatekok/zold-varosresz.html',img:'jatekok/img/zold.jpg',t:'Zöld városrész — 12 hónap',min:'5–10 perc',hook:'150 millió forint, 63 tömb, három kockázat — és egy térkép, amin eleinte semmi nem látszik. Fát ültetsz, esőkertet ásol, csillapítasz; vagy előbb szenzort teszel ki. A tavasz, a nyár és az ősz megmutatja, mit ért a döntés.',
-  design:'modern sim, HUD',mode:'építés + havi események + rejtett rétegek',data:'rácsos városrész, mérés fedi fel',coll:'adattal vs. vakon költött arány, elhelyezések, eseménykárok'};
+const BIG=[
+ {f:'jatekok/zold-varosresz.html',img:'jatekok/img/zold.jpg',t:'Zöld városrész — 12 hónap',min:'5–8 perc',hook:'120 millió forint, 48 tömb, három kockázat — és egy térkép, amin eleinte semmi nem látszik. Öt eszköz: fa, esőkert, csillapítás, szenzor, felmérés. A tavasz, a nyár és az ősz megmutatja, mit ért a döntés.',
+  design:'sim-nézet, nyugodt HUD',mode:'építés + havi események + rejtett rétegek',data:'rácsos városrész, mérés fedi fel',coll:'adattal vs. vakon költött arány, elhelyezések, károk'},
+ {f:'jatekok/ugymenet.html',img:'jatekok/img/hub.jpg',t:'Ügymenet',min:'3–4 perc',hook:'Minden lakossági kérés egy ügy, ami lépcsőkön halad — beérkezett, adat, döntés, végrehajtás, mérve. Mint egy CRM-pipeline, csak itt a lakók türelme a határidő. Hat hét, 300 millió, tizenkét ügy: a hangos nem mindig a fontos.',
+  design:'pipeline-nézet (Pipedrive-szerű)',mode:'lépcsőnként továbbvitt ügyek, heti akciók',data:'rejtett hatás, látható hangerő',coll:'adattal hozott döntések aránya, mért lezárások, hangos-de-haszontalan költés'}
+];
 const esc=GV.esc;
 function card(g,i,big){return `<article class="g ${big?'big':''}"><div class="im"><img src="${g.img}" alt="" loading="lazy"><span class="no">${big?'★':'0'+(i+1)}</span><span class="tm">⏱ ${g.min}</span></div>
   <div class="bd"><h3>${esc(g.t)}</h3><p class="hook">${esc(g.hook)}</p>
@@ -141,7 +145,7 @@ function card(g,i,big){return `<article class="g ${big?'big':''}"><div class="im
   <div class="coll"><b>Mit gyűjt:</b> ${esc(g.coll)}</div>
   <div class="go"><a href="${GV.urlFor(g.f)}">Indítás →</a></div></div></article>`;}
 document.getElementById('grid').innerHTML=GAMES.map((g,i)=>card(g,i,false)).join('');
-document.getElementById('gridbig').innerHTML=card(BIG,0,true);
+document.getElementById('gridbig').innerHTML=BIG.map((g,i)=>card(g,i,true)).join('');
 document.getElementById('cta1').href=GV.urlFor('jatekok/fak.html');document.getElementById('cta2').href=GV.urlFor('jatekok/zold-varosresz.html');
 function tryTown(){const v=document.getElementById('tn').value.trim();if(!v)return;location.href='jatekok.html?telepules='+encodeURIComponent(v);}
 document.getElementById('tn').addEventListener('keydown',e=>{if(e.key==='Enter')tryTown();});

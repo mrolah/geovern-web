@@ -4,306 +4,250 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Zöld városrész — 12 hónap — GEOVERN játékok</title>
-<meta name="description" content="Egy év egy városrész élén: 150 millió forint, hőhullám, villámárvíz, iskolakezdés. Fák, esőkertek, csillapítás — és szenzorok, mert ami nincs mérve, az nem látszik. SimCity-szerű folyamatjáték, 5–10 perc.">
-<meta name="theme-color" content="#07232b">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='12' height='12' fill='%233ddc97'/%3E%3Crect x='17' y='3' width='12' height='12' fill='%234aa8ff'/%3E%3Crect x='3' y='17' width='12' height='12' fill='%23ff9f45'/%3E%3Crect x='17' y='17' width='12' height='12' fill='%23ff6b4a'/%3E%3C/svg%3E">
+<meta name="description" content="Egy év egy városrész élén: 120 millió forint, tavaszi zápor, hőhullám, villámárvíz, iskolakezdés. Fák, esőkertek, csillapítás — és szenzorok, mert ami nincs mérve, az nem látszik. Folyamatjáték, 5–8 perc.">
+<meta name="theme-color" content="#050f14">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="config.js"></script>
 <script src="gv.js"></script>
 <style>
-:root{--bg:#07232b;--panel:#0c3340;--panel2:#114452;--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b4a;--blue:#4aa8ff;--green:#3ddc97;--purple:#c77bff;
-  --text:#EAF4F4;--muted:#9fc0c4;--line:rgba(42,209,181,.25);--font:'Nunito','Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
+:root{--bg:#050f14;--panel:rgba(6,17,22,.88);--panel2:rgba(15,74,87,.22);--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b4a;--blue:#4aa8ff;--green:#3ddc97;
+  --text:#EAF4F4;--muted:#9BB7BC;--faint:#5E7A80;--line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
   --gv-accent:var(--teal);--gv-accent-ink:#04211d;--gv-line:var(--line);--sab:env(safe-area-inset-bottom,0px)}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.4;min-height:100vh}
-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;max-width:560px;margin:0 auto;gap:8px}
-.home{font:700 11px var(--mono);letter-spacing:.06em;color:var(--teal);text-decoration:none;border:1px solid var(--line);padding:6px 10px;border-radius:100px}
-.mon{font:900 15px var(--font)}.mon small{font:500 11px var(--mono);color:var(--muted);display:block;line-height:1.1}
-main{max-width:560px;margin:0 auto;padding:0 10px calc(20px + var(--sab))}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 14px;margin-bottom:12px}
-h1{font:900 clamp(24px,6.5vw,34px)/1.1 var(--font);margin-bottom:8px}
-h2{font:900 19px/1.2 var(--font);margin-bottom:6px}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.45;min-height:100vh;background-image:radial-gradient(900px 600px at 70% 10%,rgba(15,74,87,.5),transparent 60%)}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;max-width:520px;margin:0 auto;gap:8px}
+.home{font:700 11px var(--mono);letter-spacing:.06em;color:var(--teal);text-decoration:none;border:1px solid var(--line);padding:7px 11px;border-radius:100px}
+.mon{text-align:right;font:900 16px var(--font)}.mon small{display:block;font:500 11px var(--mono);color:var(--muted);line-height:1.1}
+main{max-width:520px;margin:0 auto;padding:0 10px calc(20px + var(--sab))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 14px;margin-bottom:12px;backdrop-filter:blur(10px)}
+h1{font:900 clamp(24px,6.5vw,32px)/1.1 var(--font);margin-bottom:8px}
+h2{font:900 18px/1.2 var(--font);margin-bottom:6px}
 p{color:var(--muted);font-size:14.5px}p+p{margin-top:6px}
+.eyebrow{font:500 11px var(--mono);letter-spacing:.18em;color:var(--teal);text-transform:uppercase;display:block;margin-bottom:6px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:12px;font:900 15px var(--font);cursor:pointer;border:none;background:var(--teal);color:#04211d;min-height:46px;touch-action:manipulation}
 .btn:active{transform:scale(.98)}.btn[disabled]{opacity:.35;cursor:default}
 .btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--text)}
 .row{display:flex;gap:10px;margin-top:12px}.row .btn{flex:1}
-/* HUD */
-.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
-.ind{background:var(--panel2);border-radius:10px;padding:7px 8px}
-.ind span{display:block;font:700 9.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ind b{display:block;font:900 16px var(--font);margin-top:1px}
-.bar{height:5px;border-radius:3px;background:rgba(255,255,255,.1);margin-top:4px;overflow:hidden}
+/* felső sáv: keret, kockázat, elégedettség, következő hónap */
+.top{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
+.k{background:var(--panel2);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:8px 10px}
+.k span{display:block;font:700 9.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.k b{display:block;font:900 18px var(--font);margin-top:1px}
+.k.money b{color:var(--amber)}
+.bar{height:5px;border-radius:3px;background:rgba(255,255,255,.1);margin-top:5px;overflow:hidden}
 .bar i{display:block;height:100%;border-radius:3px;transition:width .4s}
-.money{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border-radius:10px;padding:8px 10px;margin-bottom:8px}
-.money b{font:900 20px var(--font);color:var(--amber)}
-.money span{font:500 11.5px var(--mono);color:var(--muted)}
+.nextbtn{width:100%;margin:0 0 10px;min-height:44px}
+.steps{display:flex;gap:6px;font:500 11.5px var(--mono);color:var(--muted);margin:0 0 8px;flex-wrap:wrap}
+.steps b{color:var(--teal);font-weight:700}
 /* térkép */
-.map{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;background:#061a20;padding:4px;border-radius:12px;border:1px solid var(--line);touch-action:manipulation}
-.cell{aspect-ratio:1;border-radius:4px;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;overflow:hidden;transition:transform .1s}
+.map{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:#061a20;padding:5px;border-radius:14px;border:1px solid var(--line);touch-action:manipulation}
+.cell{aspect-ratio:1;border-radius:7px;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:19px;overflow:hidden;transition:transform .1s;border:2px solid transparent}
 .cell:active{transform:scale(.93)}
-.cell .t{position:absolute;left:2px;top:1px;font-size:9px;opacity:.75}
-.cell .it{position:relative;z-index:2;font-size:16px;text-shadow:0 1px 2px rgba(0,0,0,.6)}
-.cell .it.two{font-size:12px;letter-spacing:-2px}
-.cell .q{position:absolute;right:3px;bottom:1px;font:700 9px var(--mono);color:rgba(255,255,255,.35)}
-.cell .m{position:absolute;width:7px;height:7px;border-radius:50%}
-.cell .mh{top:2px;right:2px;background:var(--red)}.cell .mf{bottom:2px;left:2px;background:var(--blue)}.cell .ma{bottom:2px;right:2px;background:var(--amber)}
-.cell.hit{animation:hit .9s ease}
-@keyframes hit{0%,60%{box-shadow:inset 0 0 0 3px var(--red)}100%{box-shadow:none}}
-.cell.sel{outline:2px solid #fff;outline-offset:-2px}
-.cell.cov::after{content:'';position:absolute;inset:0;border:1.5px dashed rgba(42,209,181,.55);border-radius:4px;pointer-events:none}
-.unknown{background-image:repeating-linear-gradient(45deg,rgba(0,0,0,.18) 0 3px,transparent 3px 7px)}
-/* rétegnézet */
-.lv{display:flex;gap:6px;margin:8px 0 6px}
-.lv button{flex:1;padding:7px 4px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:var(--panel2);color:var(--muted);font:700 11.5px var(--font);cursor:pointer}
-.lv button.on{color:var(--text);border-color:var(--teal);background:rgba(42,209,181,.12)}
+.cell .t{position:absolute;left:3px;top:2px;font-size:11px;opacity:.8}
+.cell .it{position:relative;z-index:2;font-size:18px;text-shadow:0 1px 2px rgba(0,0,0,.7)}
+.cell .it.two{font-size:13px;letter-spacing:-2px}
+.cell .q{position:absolute;right:4px;bottom:1px;font:700 10px var(--mono);color:rgba(255,255,255,.3)}
+.cell .s{position:absolute;right:3px;top:2px;font-size:9px}
+.cell.hit{animation:hit 1s ease}
+@keyframes hit{0%,60%{box-shadow:inset 0 0 0 3px var(--red),0 0 14px var(--red)}100%{box-shadow:none}}
+.cell.sel{border-color:#fff}
+.cell.riv{cursor:default}
+.lv{display:flex;gap:6px;margin:8px 0 4px}
+.lv button{flex:1;padding:7px 4px;border-radius:9px;border:1px solid rgba(255,255,255,.08);background:var(--panel2);color:var(--muted);font:700 11.5px var(--font);cursor:pointer}
+.lv button.on{color:var(--text);border-color:var(--teal);background:rgba(42,209,181,.14)}
+.legend{font-size:11.5px;color:var(--muted);margin:4px 0 2px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 4px 0 8px;vertical-align:-1px}
+.info{font-size:13px;color:var(--muted);background:var(--panel2);border-radius:10px;padding:7px 10px;margin-top:6px;min-height:34px}
+.info b{color:var(--text)}
 /* paletta */
-.pal{display:flex;gap:6px;overflow-x:auto;padding:6px 2px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-.pal::-webkit-scrollbar{display:none}
-.pi{flex:none;width:76px;background:var(--panel2);border:1.5px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 6px;text-align:center;cursor:pointer;color:var(--text);font-family:var(--font)}
-.pi .ic{font-size:22px;display:block}
+.pal{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+.pi{background:var(--panel2);border:1.5px solid rgba(255,255,255,.06);border-radius:12px;padding:8px 4px;text-align:center;cursor:pointer;color:var(--text);font-family:var(--font)}
+.pi .ic{font-size:22px;display:block;line-height:1.1}
 .pi b{display:block;font-size:11px;line-height:1.15;margin-top:3px}
 .pi small{display:block;font:700 10.5px var(--mono);color:var(--amber);margin-top:2px}
-.pi.on{border-color:var(--teal);background:rgba(42,209,181,.15)}
+.pi.on{border-color:var(--teal);background:rgba(42,209,181,.16)}
 .pi.no{opacity:.4}
-.help{font-size:12.5px;color:var(--muted);min-height:34px;padding:4px 2px}
+.help{font-size:12.5px;color:var(--muted);min-height:34px;padding:6px 2px 0}
 .help b{color:var(--text)}
 /* esemény-kártya */
-.ov{position:fixed;inset:0;background:rgba(3,14,18,.78);z-index:50;display:flex;align-items:center;justify-content:center;padding:12px;backdrop-filter:blur(4px)}
-.ev{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 16px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6);max-height:78vh;overflow:auto;position:relative}
-.ev .em{font-size:40px;line-height:1;margin-bottom:6px}
-.ev .k{font:700 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}
+.ov{position:fixed;inset:0;background:rgba(3,14,18,.8);z-index:50;display:flex;align-items:center;justify-content:center;padding:12px;backdrop-filter:blur(4px)}
+.ev{background:#0c1a21;border:1px solid var(--line);border-radius:18px;padding:18px 16px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6);max-height:78vh;overflow:auto;position:relative}
+.ev .em{font-size:38px;line-height:1;margin-bottom:6px}
 .ev ul{list-style:none;margin-top:10px;display:grid;gap:6px}
 .ev li{background:var(--panel2);border-radius:10px;padding:8px 10px;font-size:14px}
 .ev li.bad{border-left:3px solid var(--red)}.ev li.good{border-left:3px solid var(--green)}.ev li.info{border-left:3px solid var(--blue)}
-/* cella-infó */
-.ci{font-size:13px;background:var(--panel2);border-radius:10px;padding:8px 10px;margin-top:6px}
-.ci b{font-size:14px}
-.ci .vals{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;font-family:var(--mono);font-size:11.5px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + var(--sab));z-index:40;background:#0c1a21;border:1px solid var(--line);border-radius:100px;padding:9px 16px;font-size:13.5px;color:var(--text);box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.on{opacity:1}
 /* eredmény */
 .sc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-.sc div{background:var(--panel2);border-radius:12px;padding:10px}
+.sc div{background:var(--panel2);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:10px}
 .sc span{display:block;font:700 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.sc b{display:block;font:900 22px var(--font)}
+.sc b{display:block;font:900 22px var(--font)}.sc small{color:var(--muted);font-size:12px}
 .big{font:900 54px/1 var(--font);color:var(--teal)}.big small{font:700 13px var(--mono);color:var(--muted)}
 .badges{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
 .badge{font:700 12px var(--font);background:rgba(255,159,69,.15);border:1px solid rgba(255,159,69,.5);color:var(--amber);padding:5px 10px;border-radius:100px}
 .badge.g{background:rgba(61,220,151,.12);border-color:rgba(61,220,151,.5);color:var(--green)}
 .msg{border-left:3px solid var(--amber);background:rgba(255,159,69,.08);padding:9px 12px;border-radius:0 10px 10px 0;margin-top:10px;font-size:14.5px}
-.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--muted);margin-top:6px}
-.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px}
-footer{max-width:560px;margin:0 auto;padding:0 12px 30px;font-size:11.5px;color:var(--muted)}
+footer{max-width:520px;margin:0 auto;padding:0 12px 30px;font-size:11.5px;color:var(--muted)}
 </style>
 </head>
 <body>
-<header><a class="home" id="homelink" href="../jatekok.html">← JÁTÉKOK</a><div class="mon" id="mon"><span data-town>Zöld városrész</span><small>12 hónap · 150 M Ft</small></div></header>
+<header><a class="home" id="homelink" href="../jatekok.html">← JÁTÉKOK</a><div class="mon" id="mon"><span data-town>Zöld városrész</span><small>12 hónap · 120 M Ft</small></div></header>
 <main id="main"></main>
-<footer>A városrész és a rétegek kitaláltak, a dramaturgia valós: a hőség, a víz és a balesetek ugyanarra a két-három tömbre esnek; aki nem mér, az ott költ, ahol a hang nagy. A pontszám a kockázatcsökkentést, az elégedettséget, a költséghatékonyságot és azt méri, hogy adattal vagy vakon költöttél.</footer>
+<div class="toast" id="toast"></div>
+<footer>A városrész és a rétegek kitaláltak, a dramaturgia valós: a hőség, a víz és a balesetek ugyanarra a két-három tömbre esnek; aki nem mér, az ott költ, ahol a hang nagy. A pontszám: kockázatcsökkentés, elégedettség, költséghatékonyság — és hogy adattal vagy vakon költöttél.</footer>
 <script>
 /* =====================================================================
-   ZÖLD VÁROSRÉSZ — 12 HÓNAP
-   9×7 cellás városrész · rejtett rétegek (hő, víz, baleset, sérülékeny) · szenzor/felmérés fed fel
+   ZÖLD VÁROSRÉSZ — 12 HÓNAP (egyszerűsített)
+   8×6 tömb · 5 eszköz · rejtett rétegek (hő, víz, baleset), amiket a szenzor/felmérés — vagy a kár — fed fel
    Havi események tesztelik a döntéseket · év végi mérleg: adattal vagy vakon költöttél?
    ===================================================================== */
 document.getElementById('homelink').href=GV.hubUrl();
 const townTxt=GV.TOWN.name?GV.esc(GV.TOWN.name):'a városrész';
-const W=9,H=7;
-const LAYOUT=[
- 'KKKIIKKPP',
- 'KKKIFFPPL',
- 'KZZFFFLLL',
- 'GGZBBLLLL',
- 'GGVVVLLBL',
- 'SSVVVLLLL',
- 'STTVVVVVV'];
+const W=8,H=6;
+const LAYOUT=['KKIIKPPL','KZZFFPLL','GGZBBLLL','GGVVLLBL','SSVVLLLL','STVVVVVV'];
 const TYPES={K:{n:'Kertváros',ic:'🏡',bg:'#2f5b3a'},I:{n:'Iskola',ic:'🏫',bg:'#4a4f7a'},P:{n:'Piac',ic:'🍎',bg:'#7a4a2a'},F:{n:'Főtér',ic:'⛲',bg:'#5c5a55'},
  L:{n:'Lakótelep',ic:'🏢',bg:'#4e5a68'},Z:{n:'Park',ic:'🌳',bg:'#1f6b43'},G:{n:'Ipari út',ic:'🏭',bg:'#5e4a4a'},B:{n:'Bölcsőde · rendelő',ic:'🏥',bg:'#6b3f6b'},
  V:{n:'Patak',ic:'〰️',bg:'#1b4f73'},S:{n:'Sportpálya',ic:'⚽',bg:'#2f6b3a'},T:{n:'Buszpályaudvar',ic:'🚌',bg:'#6b5a2a'}};
-const rnd=GV.rng('zold-'+(GV.TOWN.key||'minta'));
+const rnd=GV.rng('zold2-'+(GV.TOWN.key||'minta'));
 const ITEMS=[
- {k:'fa',ic:'🌳',n:'Fa',cost:1.5,h:'Hűsít: a cella hősége −0,3, a szomszédoké −0,1.',layer:'heat'},
- {k:'eso',ic:'🌧️',n:'Esőkert',cost:3,h:'A cella elöntési kockázata −0,45, a szomszédoké −0,15.',layer:'flood'},
- {k:'csill',ic:'🚸',n:'Csillapítás',cost:4,h:'Forgalomcsillapítás: a cella balesetkockázata −0,6.',layer:'acc'},
- {k:'hut',ic:'❄️',n:'Hűsítő pont',cost:2.5,h:'Hőhullámban védi a sérülékeny lakókat a cellában és körülötte.',layer:'heat'},
- {k:'szenz',ic:'📡',n:'Szenzor',cost:1,h:'Felfedi mind a három réteget a cellában és a 8 szomszédban.',layer:null},
- {k:'felm',ic:'🛰️',n:'Felmérés',cost:8,h:'Felfed egy teljes réteget (hő / víz / baleset) az egész városrészben. Koppints bárhová.',layer:null},
- {k:'taroz',ic:'🏗️',n:'Tározó',cost:50,h:'Nagy mű: a patak menti cellák elöntési kockázata −0,35. Bárhová koppinthatsz.',layer:'flood'},
- {k:'aszf',ic:'🛣️',n:'Új aszfalt',cost:5,h:'Elégedettség +3 azonnal. A cella hősége +0,1 (sötét felület).',layer:null}
+ {k:'fa',ic:'🌳',n:'Fa',cost:2,h:'Hűsít: a tömb hősége −0,3, a szomszédoké −0,1.',layer:'heat'},
+ {k:'eso',ic:'🌧️',n:'Esőkert',cost:3,h:'A tömb elöntési kockázata −0,45, a szomszédoké −0,15.',layer:'flood'},
+ {k:'csill',ic:'🚸',n:'Csillapítás',cost:4,h:'A tömb balesetkockázata −0,6.',layer:'acc'},
+ {k:'szenz',ic:'📡',n:'Szenzor',cost:1,h:'Megmutatja mind a három réteget a tömbben és a 8 szomszédban.',layer:null},
+ {k:'felm',ic:'🛰️',n:'Felmérés',cost:8,h:'Egy teljes réteg (hő, víz vagy baleset) az egész városrészben.',layer:null}
 ];
 const MONTHS=['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
-let G=null;
-const main=document.getElementById('main');
-const monEl=document.getElementById('mon');
-
-/* ---- világ generálása ---- */
-function newWorld(){
-  const cells=[];
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const t=LAYOUT[y][x];cells.push({x,y,t,items:[],kh:false,kf:false,ka:false,hitH:0,hitF:0,hitA:0});}
-  const at=(x,y)=>(x<0||y<0||x>=W||y>=H)?null:cells[y*W+x];
-  const n=()=>(rnd()*2-1)*0.08;
-  cells.forEach(c=>{
-    const base={K:[.25,.15,.15,.3],I:[.45,.1,.45,.4],P:[.75,.2,.3,.2],F:[.5,.1,.35,.15],L:[.6,.3,.35,.7],Z:[.05,.3,.05,.1],G:[.65,.25,.2,.1],B:[.85,.3,.5,1],V:[0,.9,0,0],S:[.4,.2,.1,.1],T:[.7,.2,.6,.2]}[c.t];
-    c.heat=base[0]+n();c.flood=base[1]+n();c.acc=base[2]+n();c.vuln=base[3];
-    /* patak-közelség → elöntés (közepes), a lakótelep lejtő-oldala (magas) */
-    let nearV=false;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const o=at(c.x+dx,c.y+dy);if(o&&o.t==='V'&&!(dx===0&&dy===0))nearV=true;}
-    if(nearV&&c.t!=='V')c.flood=Math.max(c.flood,0.45+n());
-    if(c.t==='L'&&c.y>=4&&c.x>=5)c.flood=Math.max(c.flood,0.68+n());
-    c.heat=clamp(c.heat);c.flood=clamp(c.flood);c.acc=clamp(c.acc);
-  });
-  /* kiemelt gócok: a lejtő mélypontjai (víz), lakótelepi kereszteződés + buszpályaudvar (baleset), piac és bölcsőde (hő × sérülékeny) */
-  at(5,4).flood=0.88;at(6,5).flood=0.85;at(2,3).flood=0.78;at(8,4).flood=0.8;
-  at(6,3).acc=0.9;at(7,2).acc=0.75;at(4,1).acc=0.72;at(1,6).acc=0.7;
-  at(7,0).heat=0.9;at(8,1).heat=0.88;at(4,3).heat=0.9;at(3,3).heat=0.85;at(6,2).heat=0.82;at(7,3).heat=0.8;at(7,4).heat=0.9;
-  return{cells,at};
-}
+let G=null;const main=document.getElementById('main'),monEl=document.getElementById('mon');
 const clamp=v=>Math.max(0,Math.min(1,v));
-function eff(c){ /* hatásos (beavatkozásokkal csökkentett) értékek */
-  const w=G.world;let h=c.heat,f=c.flood,a=c.acc;
-  const nb=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(dx||dy){const o=w.at(c.x+dx,c.y+dy);if(o)nb.push(o);}}
-  c.items.forEach(k=>{if(k==='fa')h-=0.3;if(k==='eso')f-=0.45;if(k==='csill')a-=0.6;if(k==='aszf')h+=0.1;});
-  nb.forEach(o=>o.items.forEach(k=>{if(k==='fa')h-=0.1;if(k==='eso')f-=0.15;}));
-  if(G.reservoir){let nearV=c.t==='V';nb.forEach(o=>{if(o.t==='V')nearV=true;});if(nearV)f-=0.35;}
-  return{h:clamp(h),f:clamp(f),a:clamp(a)};
-}
-function cooled(c){const w=G.world;if(c.items.includes('hut'))return true;
-  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const o=w.at(c.x+dx,c.y+dy);if(o&&o.items.includes('hut'))return true;}return false;}
-function risk(){let h=0,f=0,a=0,h0=0,f0=0,a0=0;G.world.cells.forEach(c=>{if(c.t==='V')return;const e=eff(c);h+=e.h*c.vuln;f+=e.f;a+=e.a;h0+=c.heat*c.vuln;f0+=c.flood;a0+=c.acc;});
-  return{h,f,a,h0,f0,a0};}
-function coverage(){ /* a magas kockázatú cellák hány %-a ismert a releváns rétegben */
-  let n=0,k=0;G.world.cells.forEach(c=>{if(c.t==='V')return;if(c.heat*c.vuln>=0.4){n++;if(c.kh)k++;}if(c.flood>=0.55){n++;if(c.kf)k++;}if(c.acc>=0.5){n++;if(c.ka)k++;}});
-  return n?Math.round(k/n*100):0;}
 
-function start(){G={world:newWorld(),month:0,money:0,spent:0,sat:50,sel:null,view:'all',selCell:null,log:[],events:[],reservoir:false,incidents:0,surveys:[],ended:false};
-  G.st='play';monthStart();}
+/* ---- világ ---- */
+function newWorld(){const cells=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const t=LAYOUT[y][x];cells.push({x,y,t,items:[],kh:false,kf:false,ka:false});}
+  const at=(x,y)=>(x<0||y<0||x>=W||y>=H)?null:cells[y*W+x];const n=()=>(rnd()*2-1)*0.08;
+  cells.forEach(c=>{const b={K:[.25,.15,.15,.3],I:[.45,.1,.45,.4],P:[.75,.2,.3,.2],F:[.5,.1,.35,.15],L:[.6,.3,.35,.7],Z:[.05,.3,.05,.1],G:[.65,.25,.2,.1],B:[.85,.3,.5,1],V:[0,.9,0,0],S:[.4,.2,.1,.1],T:[.7,.2,.6,.2]}[c.t];
+    c.heat=b[0]+n();c.flood=b[1]+n();c.acc=b[2]+n();c.vuln=b[3];
+    let nearV=false;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const o=at(c.x+dx,c.y+dy);if(o&&o.t==='V'&&(dx||dy))nearV=true;}
+    if(nearV&&c.t!=='V')c.flood=Math.max(c.flood,0.45+n());if(c.t==='L'&&c.y>=3&&c.x>=4)c.flood=Math.max(c.flood,0.68+n());
+    c.heat=clamp(c.heat);c.flood=clamp(c.flood);c.acc=clamp(c.acc);});
+  /* gócok: a lejtő mélypontjai (víz), lakótelepi kereszteződés + buszpályaudvar (baleset), piac és bölcsőde (hő × sérülékeny) */
+  at(4,3).flood=0.88;at(5,4).flood=0.85;at(2,2).flood=0.78;at(7,3).flood=0.8;
+  at(5,2).acc=0.9;at(6,1).acc=0.75;at(3,0).acc=0.72;at(1,5).acc=0.7;
+  at(6,0).heat=0.9;at(7,1).heat=0.88;at(3,2).heat=0.9;at(4,2).heat=0.85;at(5,1).heat=0.82;at(6,2).heat=0.8;at(6,3).heat=0.9;
+  return{cells,at};}
+function eff(c){const w=G.world;let h=c.heat,f=c.flood,a=c.acc;const nb=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(dx||dy){const o=w.at(c.x+dx,c.y+dy);if(o)nb.push(o);}}
+  c.items.forEach(k=>{if(k==='fa')h-=0.3;if(k==='eso')f-=0.45;if(k==='csill')a-=0.6;});nb.forEach(o=>o.items.forEach(k=>{if(k==='fa')h-=0.1;if(k==='eso')f-=0.15;}));
+  if(G.reservoir){let nv=c.t==='V';nb.forEach(o=>{if(o.t==='V')nv=true;});if(nv)f-=0.35;}return{h:clamp(h),f:clamp(f),a:clamp(a)};}
+function risk(){let h=0,f=0,a=0,h0=0,f0=0,a0=0;G.world.cells.forEach(c=>{if(c.t==='V')return;const e=eff(c);h+=e.h*c.vuln;f+=e.f;a+=e.a;h0+=c.heat*c.vuln;f0+=c.flood;a0+=c.acc;});return{h,f,a,h0,f0,a0,pct:Math.round((h+f+a)/(h0+f0+a0)*100)};}
+function coverage(){let n=0,k=0;G.world.cells.forEach(c=>{if(c.t==='V')return;if(c.heat*c.vuln>=0.4){n++;if(c.kh)k++;}if(c.flood>=0.55){n++;if(c.kf)k++;}if(c.acc>=0.5){n++;if(c.ka)k++;}});return n?Math.round(k/n*100):0;}
+function informedShare(){const p=G.log.filter(l=>l.mitig);if(!p.length)return 0;const inf=p.filter(l=>l.informed).reduce((a,l)=>a+l.cost,0),all=p.reduce((a,l)=>a+l.cost,0);return Math.round(inf/all*100);}
+function start(){G={world:newWorld(),month:0,money:0,spent:0,sat:50,sel:null,view:'all',selCell:null,log:[],reservoir:false,incidents:0,surveys:[],st:'play',help:''};monthStart();}
+
 /* ---- hónapok ---- */
-function monthStart(){const m=G.month;const ev={m,title:'',em:'',text:'',items:[]};
-  const add=(cls,t)=>ev.items.push({cls,t});
-  if(m===0){G.money+=60;ev.em='🏛️';ev.title='Új év, új keret: 60 M Ft';ev.text='Te vezeted a városrészt. Hőség, víz, balesetek — a lakók mindhárommal jönnek, a térképen még semmi nem látszik. A GIS-es kolléga megkérdezi: „Mérjünk előbb, vagy építsünk?”';add('info','Koppints egy eszközre, aztán a térképre. A 📡 szenzor és a 🛰️ felmérés mutatja meg, mi van a cellák alatt.');add('info','Május és szeptember hoz még 45–45 M-et.');}
-  if(m===1){ev.em='🗣️';ev.title='Lakossági fórum';ev.text='A főtér árnyékolását kérik — „régi ígéret”. A piac árusai a hőségre panaszkodnak. Egy nagymama a bölcsőde előtti átkelőt emlegeti.';add('info','Három kérés, három hely. Melyik mögött van mért kockázat?');}
-  if(m===2){ev.em='🌦️';ev.title='Tavaszi zápor';ev.text='Húsz perc alatt húsz milliméter. Hol állt meg a víz?';test('flood',0.75,1,ev);}
-  if(m===3){ev.em='🌳';ev.title='Fakataszter-ajánlat';ev.text='Egy cég felméréssel házal: 8 M-ért a teljes hőtérkép és lombkorona-hiány, légifelvételből. A pénzügyes szerint drága. A nyár jön.';add('info','A 🛰️ felmérés pontosan ezt tudja: egy teljes réteg, azonnal.');}
-  if(m===4){G.money+=45;ev.em='💶';ev.title='Félév: +45 M Ft';ev.text='Az iskola szülői munkaközössége 400 aláírással zebrát kér a kapu elé. A rendőrség a lakótelepi kereszteződést emlegeti.';add('info','A balesetréteg (📡 vagy 🛰️) megmondja, kinek van igaza.');}
-  if(m===5){ev.em='🌡️';ev.title='Hőségriasztás-előrejelzés';ev.text='Két hét múlva három hét 35 fok felett. A háziorvosok az idős rosszulléteket jelzik előre — ott, ahol nincs árnyék.';add('info','A hőség ott veszélyes, ahol a sérülékeny lakók (bölcsőde, rendelő, lakótelep) és a hőgóc egybeesik. 🌳 és ❄️ segít.');}
-  if(m===6){ev.em='🔥';ev.title='Hőhullám';ev.text='Harmadfokú riasztás. Hol lettek rosszul az emberek?';test('heat',0.7,2,ev);}
-  if(m===7){ev.em='⛈️';ev.title='Villámárvíz';ev.text='Negyven perc alatt egy havi eső. A patak kilépett, a lejtőn lezúdult a víz.';test('flood',0.6,2,ev);}
-  if(m===8){G.money+=45;ev.em='🎒';ev.title='Iskolakezdés: +45 M Ft';ev.text='Reggel 7:45, a gyerekek úton. Hol történt baj?';test('acc',0.6,2,ev);}
-  if(m===9){ev.em='🍂';ev.title='Őszi vihar';ev.text='Ismét zápor, ismét a lejtő.';test('flood',0.7,1,ev);}
-  if(m===10){ev.em='📋';ev.title='Testületi ülés: mit mértél?';const cov=coverage();const inf=informedShare();ev.text=`A testület beszámolót kér. A magas kockázatú helyek ${cov}%-áról van mért adatod. A pénz ${inf}%-át költötted olyan helyre, ahol előtte tudtad, mi van ott.`;
-    add(cov>=60?'good':'bad',cov>=60?'A testület elégedett: a térkép beszél.':'A testület kérdez: honnan tudtad, hová kell?');}
-  if(m===11){ev.em='📊';ev.title='Évzárás';ev.text='Decemberben már nem épül semmi. Ami a térképen van, az számít.';}
-  G.events.push(ev);G.pending=ev;render();}
-function test(layer,thr,dmg,ev){let hits=[];G.world.cells.forEach(c=>{if(c.t==='V')return;const e=eff(c);
-  if(layer==='flood'&&e.f>=thr)hits.push(c);
-  if(layer==='heat'&&e.h>=thr&&c.vuln>=0.5&&!cooled(c))hits.push(c);
-  if(layer==='acc'&&e.a>=thr)hits.push(c);});
-  const key={flood:'kf',heat:'kh',acc:'ka'}[layer];const hitKey={flood:'hitF',heat:'hitH',acc:'hitA'}[layer];
-  const loss=Math.min(12,dmg*hits.length);
-  hits.forEach(c=>{c[key]=true;c[hitKey]=1;});G.sat-=loss;G.incidents+=hits.length;
-  G.flash=hits.map(c=>c.y*W+c.x);
-  const names=hits.map(c=>TYPES[c.t].n);const uniq=[...new Set(names)];
-  if(hits.length)ev.items.push({cls:'bad',t:`${hits.length} cella érintett (${uniq.slice(0,4).join(', ')}${uniq.length>4?'…':''}). Elégedettség −${loss}. A kár megmutatta, mi volt ott — ez a legdrágább mérés.`});
-  else{G.sat=Math.min(100,G.sat+3);ev.items.push({cls:'good',t:'Sehol nem volt baj: ahol kockázat volt, ott kezelted. Elégedettség +3.'});}
-  if(G.sat<0)G.sat=0;}
-function informedShare(){const p=G.log.filter(l=>l.mitig);if(!p.length)return 0;const inf=p.filter(l=>l.informed).reduce((a,l)=>a+l.cost,0);const all=p.reduce((a,l)=>a+l.cost,0);return Math.round(inf/all*100);}
+function monthStart(){const m=G.month;const ev={m,em:'',title:'',text:'',items:[]};const add=(cls,t)=>ev.items.push({cls,t});let modal=true;
+  if(m===0){G.money+=50;ev.em='🏛️';ev.title='Január: 50 M Ft a kezedben';ev.text='Te vezeted a városrészt egy évig. A lakók hőségről, vízről és balesetekről panaszkodnak — a térképen még semmi nem látszik.';add('info','1 · Válassz eszközt · 2 · Koppints egy tömbre · 3 · Következő hónap');add('info','A 📡 szenzor és a 🛰️ felmérés mutatja meg, mi van a tömbök alatt. Május és szeptember hoz még pénzt.');}
+  else if(m===2){ev.em='🌦️';ev.title='Tavaszi zápor';ev.text='Húsz perc alatt húsz milliméter. Hol állt meg a víz?';test('flood',0.75,1,ev);}
+  else if(m===4){G.money+=35;ev.em='💶';ev.title='Május: +35 M Ft';ev.text='Az iskola szülői 400 aláírással zebrát kérnek a kapu elé. A rendőrség a lakótelepi kereszteződést emlegeti.';add('info','A balesetréteg megmondja, kinek van igaza.');}
+  else if(m===6){ev.em='🔥';ev.title='Hőhullám';ev.text='Harmadfokú riasztás, három hét. Hol lettek rosszul az emberek?';test('heat',0.7,2,ev);}
+  else if(m===7){ev.em='⛈️';ev.title='Villámárvíz';ev.text='Negyven perc alatt egy havi eső. A patak kilépett.';test('flood',0.6,2,ev);
+    if(!G.reservoir&&G.money>=40)add('offer','A mérnökök terve: 40 M-ért tározó a patakra — a patak menti tömbök kockázata csökkenne. Megépíted?');}
+  else if(m===8){G.money+=35;ev.em='🎒';ev.title='Szeptember: +35 M Ft';ev.text='Iskolakezdés, reggel 7:45. Hol történt baj?';test('acc',0.6,2,ev);}
+  else if(m===10){const cov=coverage(),inf=informedShare();ev.em='📋';ev.title='Testületi ülés';ev.text=`A magas kockázatú helyek ${cov}%-áról van mért adatod. A pénz ${inf}%-át költötted olyan helyre, ahol előtte tudtad, mi van ott.`;add(cov>=60?'good':'bad',cov>=60?'A testület elégedett: a térkép beszél.':'A testület kérdez: honnan tudtad, hová kell?');}
+  else if(m===11){ev.em='📊';ev.title='December: évzárás';ev.text='Ami a térképen van, az számít.';}
+  else modal=false;
+  G.pending=modal?ev:null;render();
+  if(!modal)toast(['','Csendes február — építs vagy mérj.','','Április: a nyár jön. Hol lesz a hőség?','','Június: hőségriasztás jön két hét múlva.','','','','Csendes október.','',''][m]);}
+function test(layer,thr,dmg,ev){const hits=[];G.world.cells.forEach(c=>{if(c.t==='V')return;const e=eff(c);
+  if(layer==='flood'&&e.f>=thr)hits.push(c);if(layer==='heat'&&e.h>=thr&&c.vuln>=0.5)hits.push(c);if(layer==='acc'&&e.a>=thr)hits.push(c);});
+  const key={flood:'kf',heat:'kh',acc:'ka'}[layer];const loss=Math.min(10,dmg*hits.length);hits.forEach(c=>{c[key]=true;});G.sat=Math.max(0,G.sat-loss);G.incidents+=hits.length;G.flash=hits.map(c=>c.y*W+c.x);
+  const uniq=[...new Set(hits.map(c=>TYPES[c.t].n))];
+  if(hits.length)ev.items.push({cls:'bad',t:`${hits.length} tömb érintett (${uniq.slice(0,3).join(', ')}${uniq.length>3?'…':''}). Elégedettség −${loss}. A kár megmutatta, mi volt ott — ez a legdrágább mérés.`});
+  else{G.sat=Math.min(100,G.sat+3);ev.items.push({cls:'good',t:'Sehol nem volt baj: ahol kockázat volt, ott kezelted. Elégedettség +3.'});}}
 function nextMonth(){if(G.month>=11){finish();return;}G.month++;G.sat=Math.min(100,G.sat+1);G.sel=null;G.selCell=null;monthStart();}
+function buildReservoir(){if(G.money<40||G.reservoir)return;G.reservoir=true;G.money-=40;G.spent+=40;const known=G.world.cells.some(c=>c.flood>=0.55&&c.kf);G.log.push({m:G.month,k:'taroz',cost:40,mitig:true,informed:known});G.pending=null;render();toast(known?'Tározó: a patak menti tömbök kockázata csökkent.':'Tározó — vakon. Csökkent a kockázat, de nem tudtad, hol volt.');}
+let toastT=null;function toast(t){if(!t)return;const el=document.getElementById('toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),2600);}
 
 /* ---- építés ---- */
 function selectItem(k){G.sel=G.sel===k?null:k;G.selCell=null;render();}
 function tapCell(i){const c=G.world.cells[i];if(G.pending)return;
   if(!G.sel){G.selCell=G.selCell===i?null:i;render();return;}
   const it=ITEMS.find(x=>x.k===G.sel);
-  if(G.money<it.cost){help('Nincs rá keret: '+it.cost+' M kellene, '+G.money.toFixed(1)+' M van.');return;}
-  if(it.k==='felm'){G.surveyPick=i;render();return;}
-  if(it.k==='taroz'){if(G.reservoir){help('Már áll a tározó.');return;}G.reservoir=true;pay(it,c,false);help('A tározó áll. A patak menti cellák kockázata csökkent — ahol tudtad, hol volt, ahol nem, ott is.');render();return;}
+  if(G.money<it.cost){help('Nincs rá keret: '+it.cost+' M kellene, '+G.money.toFixed(0)+' M van.');return;}
+  if(it.k==='felm'){G.surveyPick=true;render();return;}
   if(c.t==='V'){help('A patakba nem építünk.');return;}
   if(it.k==='szenz'){if(c.items.includes('szenz')){help('Itt már van szenzor.');return;}
-    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const o=G.world.at(c.x+dx,c.y+dy);if(o){o.kh=o.kf=o.ka=true;}}
-    c.items.push('szenz');pay(it,c,true);help('Szenzor: a 3×3-as környék mindhárom rétege látszik.');render();return;}
-  if(c.items.filter(k=>k!=='szenz').length>=2){help('Egy cellába legfeljebb két beavatkozás fér.');return;}
-  if(c.items.includes(it.k)){help('Ilyen már van ebben a cellában.');return;}
-  const informed=it.layer==='heat'?c.kh:it.layer==='flood'?c.kf:it.layer==='acc'?c.ka:true;
-  c.items.push(it.k);if(it.k==='aszf')G.sat+=3;pay(it,c,informed);
-  help((informed?'Adattal építettél: tudtad, mi van itt.':'Vakon építettél: ezt a réteget itt még nem mérted.')+' '+it.h);render();}
-function survey(layer){const it=ITEMS.find(x=>x.k==='felm');G.world.cells.forEach(c=>{if(layer==='heat')c.kh=true;if(layer==='flood')c.kf=true;if(layer==='acc')c.ka=true;});
-  G.surveys.push(layer);pay(it,null,true);G.surveyPick=null;G.view=layer;help('Felmérés kész: a '+({heat:'hő',flood:'víz',acc:'baleset'}[layer])+'-réteg az egész városrészben látszik.');render();}
-function pay(it,c,informed){G.money=+(G.money-it.cost).toFixed(1);G.spent+=it.cost;
-  const mitig=['fa','eso','csill','hut','taroz'].includes(it.k);G.log.push({m:G.month,k:it.k,cost:it.cost,x:c?c.x:null,y:c?c.y:null,mitig,informed:mitig?!!informed:null});}
-let helpT=null;function help(t){G.help=t;const h=document.getElementById('help');if(h)h.innerHTML=t;clearTimeout(helpT);}
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const o=G.world.at(c.x+dx,c.y+dy);if(o){o.kh=o.kf=o.ka=true;}}c.items.push('szenz');pay(it,c,true);help('Szenzor: a 3×3-as környék mindhárom rétege látszik.');render();return;}
+  if(c.items.filter(k=>k!=='szenz').length>=2){help('Egy tömbbe legfeljebb két beavatkozás fér.');return;}
+  if(c.items.includes(it.k)){help('Ilyen már van ebben a tömbben.');return;}
+  const informed=it.layer==='heat'?c.kh:it.layer==='flood'?c.kf:c.ka;c.items.push(it.k);pay(it,c,informed);
+  help((informed?'<b>Adattal építettél:</b> tudtad, mi van itt.':'<b>Vakon építettél:</b> ezt a réteget itt még nem mérted.')+' '+it.h);render();}
+function survey(layer){const it=ITEMS.find(x=>x.k==='felm');G.world.cells.forEach(c=>{if(layer==='heat')c.kh=true;if(layer==='flood')c.kf=true;if(layer==='acc')c.ka=true;});G.surveys.push(layer);pay(it,null,true);G.surveyPick=null;G.view=layer;G.sel=null;help('Felmérés kész: a '+({heat:'hő',flood:'víz',acc:'baleset'}[layer])+'-réteg az egész városrészben látszik.');render();}
+function pay(it,c,informed){G.money=+(G.money-it.cost).toFixed(1);G.spent+=it.cost;const mitig=['fa','eso','csill'].includes(it.k);G.log.push({m:G.month,k:it.k,cost:it.cost,x:c?c.x:null,y:c?c.y:null,mitig,informed:mitig?!!informed:null});}
+function help(t){G.help=t;const h=document.getElementById('help');if(h)h.innerHTML=t;}
 
 /* ---- render ---- */
-function hudColor(v){return v<35?'var(--green)':v<65?'var(--amber)':'var(--red)';}
 function render(){
-  if(!G||G.st==='intro'){monEl.innerHTML='<span>'+townTxt+'</span><small>12 hónap · 150 M Ft</small>';
-    main.innerHTML=`<div class="card"><span style="font:700 11px var(--mono);letter-spacing:.18em;color:var(--teal)">FOLYAMATJÁTÉK · 5–10 PERC</span>
-    <h1 style="margin-top:6px">Zöld városrész — 12 hónap</h1>
-    <p>Egy évig te vezeted ${townTxt==='a városrész'?'a városrészt':townTxt+' egyik városrészét'}: 150 millió forint, 63 tömb, három kockázat — hőség, víz, balesetek — és egy térkép, amin eleinte semmi nem látszik.</p>
-    <p>Fát ültethetsz, esőkertet áshatsz, csillapíthatsz. Vagy előbb szenzort teszel ki és felmérsz. A tavasz, a nyár és az ősz megmutatja, mit ért a döntés.</p>
-    <div class="legend"><span><i style="background:var(--red)"></i>hőség</span><span><i style="background:var(--blue)"></i>elöntés</span><span><i style="background:var(--amber)"></i>baleset</span><span>— a jelölés csak ott látszik, ahol mértél</span></div>
+  if(!G||G.st==='intro'){monEl.innerHTML='<span>'+townTxt+'</span><small>12 hónap · 120 M Ft</small>';
+    main.innerHTML=`<div class="card"><span class="eyebrow">Folyamatjáték · 5–8 perc</span><h1>Zöld városrész — 12 hónap</h1>
+    <p>Egy évig te vezeted ${townTxt==='a városrész'?'a városrészt':townTxt+' egyik városrészét'}: 120 millió forint, 48 tömb, három kockázat — hőség, víz, balesetek — és egy térkép, amin eleinte semmi nem látszik.</p>
+    <p>Öt eszköz: fa, esőkert, csillapítás — és szenzor, felmérés. A tavasz, a nyár és az ősz megmutatja, mit ért a döntés.</p>
     <div class="row"><button class="btn" onclick="start()">Indul az év</button></div></div>
     <img src="img/zold.jpg" alt="" style="width:100%;border-radius:16px;display:block;opacity:.9">`;return;}
   if(G.st==='final'){renderFinal();return;}
-  const r=risk();const H1=Math.round(r.h/r.h0*100),F1=Math.round(r.f/r.f0*100),A1=Math.round(r.a/r.a0*100);const cov=coverage();
-  monEl.innerHTML=`<span>${MONTHS[G.month]}</span><small>${G.month+1}. hónap / 12 · ${townTxt}</small>`;
+  const r=risk();const cov=coverage();monEl.innerHTML=`<span>${MONTHS[G.month]}</span><small>${G.month+1}. hónap / 12 · ${townTxt}</small>`;
   const sel=G.sel?ITEMS.find(x=>x.k===G.sel):null;
-  const cellHtml=G.world.cells.map((c,i)=>{const T=TYPES[c.t];const e=eff(c);let bg=T.bg,unknown=false;
-    if(G.view!=='all'){const known=G.view==='heat'?c.kh:G.view==='flood'?c.kf:c.ka;if(c.t==='V'&&G.view!=='flood'){bg='#1b4f73';}
-      else if(!known){bg='#2a3a40';unknown=true;}else{const v=G.view==='heat'?e.h*(0.5+0.5*c.vuln):G.view==='flood'?e.f:e.a;const col=G.view==='heat'?'255,80,60':G.view==='flood'?'74,168,255':'255,159,69';bg=`rgba(${col},${(0.12+v*0.85).toFixed(2)})`;}}
+  const cells=G.world.cells.map((c,i)=>{const T=TYPES[c.t];const e=eff(c);let bg=T.bg,border='';
+    const vals={heat:c.kh?e.h*(0.5+0.5*c.vuln):null,flood:c.kf?e.f:null,acc:c.ka?e.a:null};
+    if(c.t==='V')bg=T.bg;
+    else if(G.view!=='all'){const v=vals[G.view];if(v==null)bg='#1a262c';else{const col=G.view==='heat'?'255,80,60':G.view==='flood'?'74,168,255':'255,159,69';bg=`rgba(${col},${(0.15+v*0.8).toFixed(2)})`;}}
+    else{let best=null;['heat','flood','acc'].forEach(k=>{if(vals[k]!=null&&(!best||vals[k]>best.v))best={k,v:vals[k]};});
+      if(best&&best.v>=0.3){const col=best.k==='heat'?'255,80,60':best.k==='flood'?'74,168,255':'255,159,69';border=`border-color:rgba(${col},${(0.35+best.v*0.65).toFixed(2)})`;}}
     const items=c.items.filter(k=>k!=='szenz');const icons=items.map(k=>ITEMS.find(x=>x.k===k).ic).join('');const hasS=c.items.includes('szenz');
-    const marks=G.view==='all'?`${c.kh?`<i class="m mh" style="opacity:${(0.25+e.h*c.vuln*0.9).toFixed(2)}"></i>`:''}${c.kf?`<i class="m mf" style="opacity:${(0.25+e.f*0.9).toFixed(2)}"></i>`:''}${c.ka?`<i class="m ma" style="opacity:${(0.25+e.a*0.9).toFixed(2)}"></i>`:''}`:'';
-    const unk=G.view==='all'&&!c.kh&&!c.kf&&!c.ka&&c.t!=='V';
-    return `<div class="cell ${G.flash&&G.flash.includes(i)?'hit':''} ${G.selCell===i?'sel':''} ${hasS?'cov':''} ${unknown||unk?'unknown':''}" style="background:${bg}" onclick="tapCell(${i})" title="${T.n}">
-      <span class="t">${T.ic}</span>${icons?`<span class="it ${items.length>1?'two':''}">${icons}</span>`:''}${hasS&&!icons?'<span class="it" style="font-size:11px">📡</span>':''}${marks}${unk?'<span class="q">?</span>':''}</div>`;}).join('');
+    const unk=c.t!=='V'&&!c.kh&&!c.kf&&!c.ka;
+    return `<div class="cell ${c.t==='V'?'riv':''} ${G.flash&&G.flash.includes(i)?'hit':''} ${G.selCell===i?'sel':''}" style="background:${bg};${border}" onclick="tapCell(${i})">
+      <span class="t">${T.ic}</span>${hasS?'<span class="s">📡</span>':''}${icons?`<span class="it ${items.length>1?'two':''}">${icons}</span>`:''}${unk?'<span class="q">?</span>':''}</div>`;}).join('');
   G.flash=null;
-  const ci=G.selCell!=null?(()=>{const c=G.world.cells[G.selCell];const T=TYPES[c.t];const e=eff(c);const v=(k,known,val,col)=>`<span style="color:${col}">${k}: ${known?Math.round(val*100)+'%':'nem mért'}</span>`;
-    return `<div class="ci"><b>${T.ic} ${T.n}</b> · (${c.x+1}, ${c.y+1})${c.items.length?' · '+c.items.map(k=>ITEMS.find(x=>x.k===k).ic+' '+ITEMS.find(x=>x.k===k).n).join(', '):''}
-      <div class="vals">${v('hő',c.kh,e.h,'var(--red)')}${v('víz',c.kf,e.f,'var(--blue)')}${v('baleset',c.ka,e.a,'var(--amber)')}<span style="color:var(--purple)">sérülékeny: ${c.vuln>=0.7?'sok':c.vuln>=0.3?'közepes':'kevés'}</span></div></div>`;})():'';
+  const ci=G.selCell!=null?(()=>{const c=G.world.cells[G.selCell];const T=TYPES[c.t];const e=eff(c);const v=(k,known,val)=>known?Math.round(val*100)+'%':'nem mért';
+    return `<div class="info"><b>${T.ic} ${T.n}</b> · hő <b>${v('h',c.kh,e.h)}</b> · víz <b>${v('f',c.kf,e.f)}</b> · baleset <b>${v('a',c.ka,e.a)}</b> · sérülékeny lakó: ${c.vuln>=0.7?'sok':c.vuln>=0.3?'közepes':'kevés'}${c.items.length?' · '+c.items.map(k=>ITEMS.find(x=>x.k===k).ic).join(' '):''}</div>`;})():'';
   main.innerHTML=`
-   <div class="money"><div><b>${G.money.toFixed(1)} M Ft</b><span> keret · elköltve ${G.spent.toFixed(1)} M</span></div><button class="btn" style="min-height:40px;padding:8px 14px" onclick="nextMonth()">${G.month>=11?'Évzárás':'Következő hónap ▶'}</button></div>
-   <div class="hud">
-    <div class="ind"><span>Hőség-kitettség</span><b>${H1}%</b><div class="bar"><i style="width:${H1}%;background:${hudColor(H1)}"></i></div></div>
-    <div class="ind"><span>Vízkockázat</span><b>${F1}%</b><div class="bar"><i style="width:${F1}%;background:${hudColor(F1)}"></i></div></div>
-    <div class="ind"><span>Balesetkockázat</span><b>${A1}%</b><div class="bar"><i style="width:${A1}%;background:${hudColor(A1)}"></i></div></div>
-    <div class="ind"><span>Elégedettség</span><b>${G.sat}</b><div class="bar"><i style="width:${Math.min(100,G.sat)}%;background:var(--teal)"></i></div></div>
-   </div>
+   <div class="top"><div class="k money"><span>Keret</span><b>${G.money.toFixed(0)} M</b></div>
+    <div class="k"><span>Kockázat</span><b>${r.pct}%</b><div class="bar"><i style="width:${r.pct}%;background:${r.pct<45?'var(--green)':r.pct<70?'var(--amber)':'var(--red)'}"></i></div></div>
+    <div class="k"><span>Elégedettség</span><b>${G.sat}</b><div class="bar"><i style="width:${Math.min(100,G.sat)}%;background:var(--teal)"></i></div></div></div>
+   <button class="btn nextbtn" onclick="nextMonth()">${G.month>=11?'Évzárás ▶':'Következő hónap ▶'}</button>
+   ${G.month===0&&G.log.length<2?'<div class="steps"><span><b>1</b> eszköz</span><span>·</span><span><b>2</b> koppints egy tömbre</span><span>·</span><span><b>3</b> következő hónap</span></div>':''}
+   <div class="map">${cells}</div>
    <div class="lv"><button class="${G.view==='all'?'on':''}" onclick="G.view='all';render()">Minden</button><button class="${G.view==='heat'?'on':''}" onclick="G.view='heat';render()">🔥 Hő</button><button class="${G.view==='flood'?'on':''}" onclick="G.view='flood';render()">💧 Víz</button><button class="${G.view==='acc'?'on':''}" onclick="G.view='acc';render()">🚸 Baleset</button></div>
-   <div class="map">${cellHtml}</div>
-   <div class="legend"><span><i style="background:var(--red)"></i>hő × sérülékeny</span><span><i style="background:var(--blue)"></i>elöntés</span><span><i style="background:var(--amber)"></i>baleset</span><span>? = még nem mért · szaggatott = szenzor</span><span>Mért lefedettség: <b style="color:var(--text)">${cov}%</b></span></div>
+   <div class="legend">? = még nem mért · keret színe = a mért kockázat:<i style="background:#ff5c5c"></i>hő<i style="background:#4aa8ff"></i>víz<i style="background:#FF9F45"></i>baleset · mérve: <b style="color:var(--text)">${cov}%</b></div>
    ${ci}
    <div class="pal">${ITEMS.map(it=>`<button class="pi ${G.sel===it.k?'on':''} ${G.money<it.cost?'no':''}" onclick="selectItem('${it.k}')"><span class="ic">${it.ic}</span><b>${it.n}</b><small>${it.cost} M</small></button>`).join('')}</div>
-   <div class="help" id="help">${G.help||(sel?'<b>'+sel.n+':</b> '+sel.h+' Koppints a térképre.':'Válassz eszközt a palettáról, aztán koppints egy cellára. Eszköz nélkül a cella adatait nézheted meg.')}</div>
-   ${G.surveyPick!=null?`<div class="ov"><div class="ev"><div class="k">Felmérés · 8 M</div><h2>Melyik réteget mérjük fel?</h2><p>Az egész városrészben látni fogod.</p>
+   <div class="help" id="help">${G.help||(sel?'<b>'+sel.n+':</b> '+sel.h+' Koppints egy tömbre.':'Válassz eszközt, aztán koppints egy tömbre. Eszköz nélkül a tömb adatait látod.')}</div>
+   ${G.surveyPick?`<div class="ov"><div class="ev"><span class="eyebrow">Felmérés · 8 M</span><h2>Melyik réteget mérjük fel?</h2><p>Az egész városrészben látni fogod.</p>
      <div class="row"><button class="btn" onclick="survey('heat')">🔥 Hő</button><button class="btn" onclick="survey('flood')">💧 Víz</button><button class="btn" onclick="survey('acc')">🚸 Baleset</button></div><div class="row"><button class="btn btn-ghost" onclick="G.surveyPick=null;render()">Mégse</button></div></div></div>`:''}
-   ${G.pending?`<div class="ov"><div class="ev"><div class="em">${G.pending.em}</div><div class="k">${MONTHS[G.pending.m]} · ${G.pending.m+1}/12</div><h2>${G.pending.title}</h2><p>${G.pending.text}</p>
-     ${G.pending.items.length?`<ul>${G.pending.items.map(i=>`<li class="${i.cls}">${i.t}</li>`).join('')}</ul>`:''}
-     <div class="row"><button class="btn" onclick="${G.month>=11?'finish()':"G.pending=null;G.help='';render()"}">${G.month>=11?'Mérleg ▶':'Rendben'}</button></div></div></div>`:''}`;
+   ${G.pending?`<div class="ov"><div class="ev"><div class="em">${G.pending.em}</div><span class="eyebrow">${MONTHS[G.pending.m]} · ${G.pending.m+1}/12</span><h2>${G.pending.title}</h2><p>${G.pending.text}</p>
+     ${G.pending.items.length?`<ul>${G.pending.items.map(i=>i.cls==='offer'?`<li class="info">${i.t}<div class="row"><button class="btn" onclick="buildReservoir()">Igen, 40 M</button><button class="btn btn-ghost" onclick="G.pending=null;render()">Nem</button></div></li>`:`<li class="${i.cls}">${i.t}</li>`).join('')}</ul>`:''}
+     ${G.pending.items.some(i=>i.cls==='offer')?'':`<div class="row"><button class="btn" onclick="${G.month>=11?'finish()':"G.pending=null;G.help='';render()"}">${G.month>=11?'Mérleg ▶':'Rendben'}</button></div>`}</div></div>`:''}`;
   G.help='';
 }
 /* ---- évzárás ---- */
-function finish(){G.st='final';G.pending=null;const r=risk();
-  const red=1-((r.h+r.f+r.a)/(r.h0+r.f0+r.a0));const sRisk=Math.round(Math.max(0,Math.min(1,red/0.55))*45);
-  const sSat=Math.round(Math.max(0,Math.min(1,(G.sat-20)/60))*20);
-  const effPerM=G.spent?red/G.spent*100:0;const sEff=Math.round(Math.max(0,Math.min(1,effPerM/0.5))*15);
-  const inf=informedShare();const sInf=Math.round(inf/100*20);
-  const total=sRisk+sSat+sEff+sInf;
-  const badges=[];
+function finish(){G.st='final';G.pending=null;clearTimeout(toastT);document.getElementById('toast').classList.remove('on');const r=risk();const red=1-((r.h+r.f+r.a)/(r.h0+r.f0+r.a0));
+  const sRisk=Math.round(clamp(red/0.5)*45),sSat=Math.round(clamp((G.sat-20)/60)*20),sEff=Math.round(clamp((G.spent?red/G.spent*100:0)/0.6)*15),inf=informedShare(),sInf=Math.round(inf/100*20);
+  const total=sRisk+sSat+sEff+sInf;const badges=[];
   if(inf<30)badges.push({t:'Vakon költő',g:false});if(inf>=70)badges.push({t:'Adattal költő',g:true});
-  const covJulyLog=G.log.filter(l=>l.m<=6&&(l.k==='szenz'||l.k==='felm'));if(covJulyLog.length>=4||G.surveys.length>=2)badges.push({t:'Mérő polgármester',g:true});
-  if(G.reservoir){const rl=G.log.find(l=>l.k==='taroz');const knownBefore=G.world.cells.filter(c=>c.flood>=0.55).some(c=>c.kf);badges.push({t:G.log.filter(l=>l.m<rl.m&&(l.k==='szenz'||l.k==='felm')).length?'Tározó — adattal':'Tározó-csapda',g:false});}
+  if(G.log.filter(l=>l.m<=6&&(l.k==='szenz'||l.k==='felm')).length>=3)badges.push({t:'Mérő polgármester',g:true});
+  if(G.reservoir){const rl=G.log.find(l=>l.k==='taroz');badges.push({t:rl.informed?'Tározó — adattal':'Tározó-csapda',g:!!rl.informed});}
   const top=G.world.cells.filter(c=>c.t!=='V').sort((a,b)=>(b.heat*b.vuln+b.flood+b.acc)-(a.heat*a.vuln+a.flood+a.acc)).slice(0,3);
-  if(top.some(c=>c.items.filter(k=>['fa','eso','csill','hut'].includes(k)).length>=2))badges.push({t:'Metszet-mester',g:true});
+  if(top.some(c=>c.items.filter(k=>['fa','eso','csill'].includes(k)).length>=2))badges.push({t:'Metszet-mester',g:true});
   if(G.incidents===0)badges.push({t:'Csendes év',g:true});
-  G.result={total,sRisk,sSat,sEff,sInf,inf,red:Math.round(red*100),badges,incidents:G.incidents};
-  GV.record('zold',{score:total,parts:{risk:sRisk,sat:sSat,eff:sEff,informed:sInf},informedShare:inf,riskReduction:Math.round(red*100),spent:G.spent,incidents:G.incidents,
-    reservoir:G.reservoir,surveys:G.surveys,placements:G.log.map(l=>[l.m,l.k,l.x,l.y,l.informed])});
+  G.result={total,sRisk,sSat,sEff,sInf,inf,red:Math.round(red*100),badges};
+  GV.record('zold',{score:total,parts:{risk:sRisk,sat:sSat,eff:sEff,informed:sInf},informedShare:inf,riskReduction:Math.round(red*100),spent:G.spent,incidents:G.incidents,reservoir:G.reservoir,surveys:G.surveys,placements:G.log.map(l=>[l.m,l.k,l.x,l.y,l.informed])});
   render();window.scrollTo({top:0});}
 function renderFinal(){const R=G.result;monEl.innerHTML=`<span>Évzárás</span><small>${townTxt}</small>`;
-  main.innerHTML=`<div class="card"><span style="font:700 11px var(--mono);letter-spacing:.18em;color:var(--teal)">A HÉT LENYOMATA · 12 HÓNAP</span>
-   <div class="big" style="margin-top:6px">${R.total} <small>/ 100</small></div>
-   <h2 style="margin-top:6px">${R.sInf>=14&&R.sRisk>=30?'Előbb mértél, aztán építettél. Ez a különbség.':R.sRisk>=30?'A kockázat csökkent — de mennyi pénz ment vakon?':R.sInf>=14?'Mértél, de kevés épült: a térkép csak a döntés eleje.':'A hang irányított, nem a térkép. Nem vagy egyedül — így dönt a legtöbb testület.'}</h2>
-   <div class="sc"><div><span>Kockázatcsökkentés</span><b>${R.sRisk} / 45</b><small style="color:var(--muted)">−${R.red}% összkockázat</small></div><div><span>Elégedettség</span><b>${R.sSat} / 20</b><small style="color:var(--muted)">${G.sat} pont, ${R.incidents} kár</small></div>
-   <div><span>Költséghatékonyság</span><b>${R.sEff} / 15</b><small style="color:var(--muted)">${G.spent.toFixed(1)} M elköltve</small></div><div><span>Adattal költött</span><b>${R.sInf} / 20</b><small style="color:var(--muted)">a beavatkozások ${R.inf}%-a</small></div></div>
+  main.innerHTML=`<div class="card"><span class="eyebrow">A hét lenyomata · 12 hónap</span><div class="big">${R.total} <small>/ 100</small></div>
+   <h2 style="margin-top:6px">${R.sInf>=14&&R.sRisk>=25?'Előbb mértél, aztán építettél. Ez a különbség.':R.sRisk>=25?'A kockázat csökkent — de mennyi pénz ment vakon?':R.sInf>=14?'Mértél, de kevés épült: a térkép csak a döntés eleje.':'A hang irányított, nem a térkép. Így dönt a legtöbb testület — nem vagy egyedül.'}</h2>
+   <div class="sc"><div><span>Kockázatcsökkentés</span><b>${R.sRisk} / 45</b><small>−${R.red}% összkockázat</small></div><div><span>Elégedettség</span><b>${R.sSat} / 20</b><small>${G.sat} pont, ${G.incidents} kár</small></div>
+   <div><span>Költséghatékonyság</span><b>${R.sEff} / 15</b><small>${G.spent.toFixed(0)} M elköltve</small></div><div><span>Adattal költött</span><b>${R.sInf} / 20</b><small>a beavatkozások ${R.inf}%-a</small></div></div>
    <div class="badges">${R.badges.map(b=>`<span class="badge ${b.g?'g':''}">${b.t}</span>`).join('')||'<span class="badge">Első év</span>'}</div>
    <div class="msg">Itt nincs mentés és újratöltés — ezért kell előbb az adat, aztán a beruházás. Egy szenzor 1 millió. Egy kár, ami megmutatja ugyanazt, elégedettségbe és évekbe kerül.</div>
    <div class="row"><button class="btn btn-ghost" onclick="G=null;render();window.scrollTo({top:0})">Új év, újra</button></div>

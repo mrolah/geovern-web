@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ügymenet — GEOVERN játékok</title>
+<meta name="description" content="Pipedrive-szerű ügymenet az önkormányzatban: minden lakossági kérés egy ügy, ami lépcsőkön halad — beérkezett, adat, döntés, végrehajtás, mérés. Hat hét, 300 millió, tizenkét ügy. Adat nélkül nincs jó döntés.">
+<meta name="theme-color" content="#050f14">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<script src="gv.js"></script>
+<style>
+:root{--bg:#050f14;--panel:rgba(6,17,22,.88);--panel2:rgba(15,74,87,.22);--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b4a;--blue:#4aa8ff;--green:#3ddc97;
+  --text:#EAF4F4;--muted:#9BB7BC;--faint:#5E7A80;--line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
+  --gv-accent:var(--teal);--gv-accent-ink:#04211d;--gv-line:var(--line);--sab:env(safe-area-inset-bottom,0px)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.45;min-height:100vh;background-image:radial-gradient(900px 600px at 70% 10%,rgba(15,74,87,.5),transparent 60%)}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;max-width:560px;margin:0 auto;gap:8px}
+.home{font:700 11px var(--mono);letter-spacing:.06em;color:var(--teal);text-decoration:none;border:1px solid var(--line);padding:7px 11px;border-radius:100px}
+.wk{text-align:right;font:900 16px var(--font)}.wk small{display:block;font:500 11px var(--mono);color:var(--muted);line-height:1.1}
+main{max-width:560px;margin:0 auto;padding:0 10px calc(20px + var(--sab))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 14px;margin-bottom:12px;backdrop-filter:blur(10px)}
+h1{font:900 clamp(24px,6.5vw,32px)/1.1 var(--font);margin-bottom:8px}
+h2{font:900 18px/1.2 var(--font);margin-bottom:6px}
+p{color:var(--muted);font-size:14.5px}p+p{margin-top:6px}
+.eyebrow{font:500 11px var(--mono);letter-spacing:.18em;color:var(--teal);text-transform:uppercase;display:block;margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:12px;font:900 15px var(--font);cursor:pointer;border:none;background:var(--teal);color:#04211d;min-height:46px;touch-action:manipulation}
+.btn:active{transform:scale(.98)}.btn[disabled]{opacity:.35;cursor:default}
+.btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--text)}
+.row{display:flex;gap:10px;margin-top:12px}.row .btn{flex:1}
+/* fejléc-sáv */
+.top{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
+.k{background:var(--panel2);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:8px 10px}
+.k span{display:block;font:700 9.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.k b{display:block;font:900 18px var(--font);margin-top:1px}.k.money b{color:var(--amber)}
+.ap{display:flex;gap:4px;margin-top:4px}.ap i{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.12)}.ap i.on{background:var(--teal)}
+.nextbtn{width:100%;margin:0 0 10px;min-height:44px}
+/* pipeline-sáv (Pipedrive-szerű lépcsők) */
+.pipe{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:10px}
+.st{background:var(--panel2);border-radius:10px;padding:7px 4px;text-align:center;border:1px solid rgba(255,255,255,.05);position:relative}
+.st b{display:block;font:900 16px var(--font)}.st span{display:block;font:700 9px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st.on{border-color:var(--teal)}
+.st::after{content:'›';position:absolute;right:-6px;top:50%;transform:translateY(-50%);color:var(--faint);font-weight:900}
+.st:last-child::after{content:''}
+/* ügy-kártyák */
+.cs{background:var(--panel);border:1px solid rgba(143,176,181,.2);border-radius:14px;padding:12px 12px 10px;margin-bottom:8px;position:relative}
+.cs.urgent{border-color:rgba(255,107,74,.5)}
+.cs.done{opacity:.55}
+.cs h3{font:700 15px/1.25 var(--font);margin-right:70px}
+.cs .meta{display:flex;flex-wrap:wrap;gap:6px 12px;font:500 12px var(--mono);color:var(--muted);margin-top:4px}
+.cs .meta b{color:var(--text);font-weight:500}
+.loud{color:var(--amber)}
+.prog{display:flex;gap:3px;margin:8px 0 6px}.prog i{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.1)}.prog i.on{background:var(--teal)}.prog i.lost{background:var(--red)}
+.tag{position:absolute;right:10px;top:10px;font:700 10px var(--mono);letter-spacing:.08em;padding:3px 8px;border-radius:100px;border:1px solid var(--line);color:var(--teal)}
+.tag.lost{color:var(--red);border-color:rgba(255,107,74,.5)}.tag.won{color:var(--green);border-color:rgba(61,220,151,.5)}
+.data{font-size:13px;background:rgba(42,209,181,.08);border-left:3px solid var(--teal);padding:6px 9px;border-radius:0 8px 8px 0;margin:6px 0}
+.data.blind{background:rgba(255,159,69,.08);border-color:var(--amber)}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.acts button{font:700 12.5px var(--font);padding:8px 11px;border-radius:9px;border:1.5px solid var(--line);background:transparent;color:var(--text);cursor:pointer;touch-action:manipulation}
+.acts button.pri{background:var(--teal);color:#04211d;border-color:var(--teal)}
+.acts button.warn{border-color:rgba(255,159,69,.6);color:var(--amber)}
+.acts button[disabled]{opacity:.35}
+.help{font-size:12.5px;color:var(--muted);padding:4px 2px 8px}
+/* heti összefoglaló / modal */
+.ov{position:fixed;inset:0;background:rgba(3,14,18,.8);z-index:50;display:flex;align-items:center;justify-content:center;padding:12px;backdrop-filter:blur(4px)}
+.ev{background:#0c1a21;border:1px solid var(--line);border-radius:18px;padding:18px 16px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6);max-height:78vh;overflow:auto}
+.ev ul{list-style:none;margin-top:10px;display:grid;gap:6px}
+.ev li{background:var(--panel2);border-radius:10px;padding:8px 10px;font-size:14px}
+.ev li.bad{border-left:3px solid var(--red)}.ev li.good{border-left:3px solid var(--green)}.ev li.info{border-left:3px solid var(--blue)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + var(--sab));z-index:40;background:#0c1a21;border:1px solid var(--line);border-radius:100px;padding:9px 16px;font-size:13.5px;box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.on{opacity:1}
+/* eredmény */
+.sc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.sc div{background:var(--panel2);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:10px}
+.sc span{display:block;font:700 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.sc b{display:block;font:900 22px var(--font)}.sc small{color:var(--muted);font-size:12px}
+.big{font:900 54px/1 var(--font);color:var(--teal)}.big small{font:700 13px var(--mono);color:var(--muted)}
+.msg{border-left:3px solid var(--amber);background:rgba(255,159,69,.08);padding:9px 12px;border-radius:0 10px 10px 0;margin-top:10px;font-size:14.5px}
+.list{margin-top:8px;font-size:13px}.list div{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+footer{max-width:560px;margin:0 auto;padding:0 12px 30px;font-size:11.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header><a class="home" id="homelink" href="../jatekok.html">← JÁTÉKOK</a><div class="wk" id="wk"><span data-town>Ügymenet</span><small>6 hét · 300 M Ft</small></div></header>
+<main id="main"></main>
+<div class="toast" id="toast"></div>
+<footer>Az ügyek a korábbi játékokból ismerős dilemmák; a „hangerő” a lakossági nyomás, a hatás a rejtett valós érték, amit csak az adat-lépcső mutat meg. A pipeline-logika a CRM-rendszerekből jön: egy ügy csak akkor léphet tovább, ha az előző lépcső megvan.</footer>
+<script>
+/* =====================================================================
+   ÜGYMENET — Pipedrive-szerű ügykezelés az önkormányzatban
+   Lépcsők: Beérkezett → Adat → Döntés → Végrehajtás → Mérve (nyert) · Elutasítva (vesztett)
+   6 hét, hetente 4 akció, 300 M keret, 12 ügy. Hangerő ≠ hatás; adat nélkül vakon döntesz.
+   ===================================================================== */
+document.getElementById('homelink').href=GV.hubUrl();
+const townTxt=GV.TOWN.name?GV.esc(GV.TOWN.name):'a település';
+const STAGES=['Beérkezett','Adat','Döntés','Végrehajtás','Mérve'];
+const AP=4,WEEKS=6,BUDGET=300;
+const CASES=[
+ {t:'Zebra és tábla az iskola kapuja elé',loud:5,cost:6,imp:2,dl:2,d:'400 aláírás. Az adat: a gyerekbalesetek a 300 méterre lévő kereszteződésben történnek, a kapunál már van lámpa.'},
+ {t:'Forgalomcsillapítás a lakótelepi kereszteződésben',loud:1,cost:8,imp:9,dl:4,d:'Senki nem kérte. Az adat: itt történik a gyerekbalesetek 70%-a.'},
+ {t:'Mobil gát a Fő utcára',loud:4,cost:60,imp:3,dl:2,d:'A Fő utca lakói követelik. Az adat: a károk a lejtő vonalán sorakoznak — fent van a baj, a gát a tünetet kezeli.'},
+ {t:'Árkok és átereszek tisztítása a lejtőn',loud:1,cost:9,imp:8,dl:4,d:'Az adat: az elöntés 80%-a két eltömődött áteresznél keletkezik.'},
+ {t:'Díszfák a főtérre',loud:4,cost:12,imp:2,dl:2,d:'Régi ígéret. Az adat: a főtéren már van lombkorona; a hőgóc a lakótelepen és a piacnál van.'},
+ {t:'Hűsítő pont és fásítás a rendelő körül',loud:2,cost:14,imp:9,dl:4,d:'A háziorvos jelezte. Az adat: a hőtérkép, a 75+ lakók és a gyalogos forgalom itt metszi egymást.'},
+ {t:'Földkábel a főutcán',loud:3,cost:90,imp:2,dl:3,d:'A boltok kérik. Az adat: a kimaradások 85%-a két külső szakaszon keletkezik.'},
+ {t:'Két külső gócszakasz megerősítése',loud:1,cost:25,imp:8,dl:4,d:'Az adat: a hibalista szerint itt szakad a hálózat — a gócszakasz erősítése az egészet stabilizálja.'},
+ {t:'Saját városi app hőségriasztásra',loud:3,cost:45,imp:1,dl:3,d:'A fejlesztő ajánlata. Az adat: a lakók 4%-a töltene le egy appot; aki hőségben rosszul lesz, nem appot keres.'},
+ {t:'SMS-riasztás és önkéntesek az idősekhez',loud:1,cost:3,imp:7,dl:4,d:'Az adat: a háziorvosi lista a 75+ lakók 80%-át eléri — három millióból.'},
+ {t:'Nagy záportározó a város szélén',loud:4,cost:150,imp:4,dl:3,d:'A mérnökök terve. Az adat: a tározó egy kockázatot kezel, három évig épül; a pincék addig áznak.'},
+ {t:'Esőkertek a mélypontokon (30 db)',loud:1,cost:36,imp:9,dl:4,d:'A mérőhálózat adata: tíz mélypont, ott gyűlik a víz. Fél év alatt kész, hűsít is.'}];
+let G=null;const main=document.getElementById('main'),wkEl=document.getElementById('wk');
+function start(){G={st:'play',week:1,ap:AP,money:BUDGET,sat:50,cases:[],log:[],events:[],help:''};arrive();render();}
+function arrive(){const n=G.cases.length;const batch=CASES.slice(n,n+2).map((c,i)=>Object.assign({id:n+i,stage:0,known:false,blind:null,lost:false,won:false,measured:false,dlLeft:c.dl,arrived:G.week},c));
+  G.cases.push(...batch);if(batch.length)toast(batch.length+' új ügy érkezett.');}
+let toastT=null;function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),2400);}
+function help(t){G.help=t;const h=document.getElementById('help');if(h)h.innerHTML=t;}
+/* ---- akciók ---- */
+function act(id,what){const c=G.cases.find(x=>x.id===id);if(!c||c.lost||c.won)return;
+  const need=what==='reject'?0:1;if(G.ap<need){help('Ezen a héten elfogyott az akció. Következő hét.');return;}
+  if(what==='data'){if(G.money<1){help('Nincs keret.');return;}c.known=true;c.stage=Math.max(c.stage,1);G.ap--;G.money-=1;G.log.push({id,what,week:G.week});help('<b>Adat:</b> '+c.d);}
+  if(what==='decide'){if(c.stage<1&&!c.known){c.blind=true;}else c.blind=false;c.stage=2;G.ap--;G.log.push({id,what,week:G.week,blind:c.blind});help(c.blind?'<b>Vakon hagytad jóvá.</b> A hatás majd a végrehajtás után derül ki.':'Jóváhagyva, adattal.');}
+  if(what==='exec'){if(G.money<c.cost){help('Nincs rá keret: '+c.cost+' M kell.');return;}c.stage=3;G.ap--;G.money-=c.cost;G.log.push({id,what,week:G.week});help('Végrehajtás indul: '+c.cost+' M. '+(c.known?'':'Most derül ki, mit ért: hatás '+c.imp+'/10.'));c.known=true;}
+  if(what==='measure'){if(G.money<1){help('Nincs keret.');return;}c.stage=4;c.won=true;c.measured=true;G.ap--;G.money-=1;G.log.push({id,what,week:G.week});help('Mérve, lezárva. A következő hasonló döntés jobb lesz.');}
+  if(what==='reject'){c.lost=true;c.rejBlind=!c.known;G.log.push({id,what,week:G.week,blind:!c.known});if(!c.known&&c.loud>=3){G.sat-=3;help('Elutasítva adat nélkül: a lakók felháborodtak (elégedettség −3).');}else help(c.known?'Elutasítva, adattal indokolva.':'Elutasítva.');}
+  render();}
+function nextWeek(){const ev=[];
+  G.cases.forEach(c=>{if(c.lost||c.won)return;if(c.stage<=2){c.dlLeft--;if(c.dlLeft<0){c.lost=true;c.expired=true;G.sat-=5;ev.push({cls:'bad',t:'„'+c.t+'” — lejárt a türelem, az ügy elhalt. Elégedettség −5.'});}}
+    if(c.stage===3&&c.loud>=3){G.sat+=1;}});
+  const n=G.cases.filter(c=>c.stage===3&&!c.won).length;if(n)ev.push({cls:'info',t:n+' ügy végrehajtás alatt — mérés nélkül nem zárul le.'});
+  if(G.week>=WEEKS){finish();return;}
+  G.week++;G.ap=AP;arrive();G.pending={title:(G.week)+'. hét',items:ev};render();}
+/* ---- render ---- */
+function stageCounts(){const c=[0,0,0,0,0];G.cases.forEach(x=>{if(!x.lost)c[x.stage]++;});return c;}
+function render(){
+  if(!G||G.st==='intro'){wkEl.innerHTML='<span>'+townTxt+'</span><small>6 hét · 300 M Ft</small>';
+    main.innerHTML=`<div class="card"><span class="eyebrow">Folyamatjáték · 3–4 perc</span><h1>Ügymenet</h1>
+    <p>Minden lakossági kérés egy ügy, ami lépcsőkön halad: <b>beérkezett → adat → döntés → végrehajtás → mérve</b>. Mint egy CRM-pipeline — csak itt a lakók türelme a határidő.</p>
+    <p>Hat hét, hetente négy akció, 300 millió forint, tizenkét ügy. A hangos ügy nem feltétlenül a fontos ügy — ezt csak az adat-lépcső mutatja meg.</p>
+    <div class="row"><button class="btn" onclick="start()">Indul a hat hét</button></div></div>`;return;}
+  if(G.st==='final'){renderFinal();return;}
+  wkEl.innerHTML=`<span>${G.week}. hét / ${WEEKS}</span><small>${townTxt}</small>`;const sc=stageCounts();
+  const cards=G.cases.slice().sort((a,b)=>(a.lost||a.won)-(b.lost||b.won)||a.stage-b.stage||a.dlLeft-b.dlLeft).map(c=>{
+    const dead=c.lost||c.won;const urgent=!dead&&c.stage<=2&&c.dlLeft<=1;
+    const tag=c.won?'<span class="tag won">MÉRVE · NYERT</span>':c.lost?`<span class="tag lost">${c.expired?'ELHALT':'ELUTASÍTVA'}</span>`:`<span class="tag">${STAGES[c.stage]}</span>`;
+    const prog=`<div class="prog">${[0,1,2,3,4].map(i=>`<i class="${c.lost?(i<=c.stage?'lost':''):(i<=c.stage?'on':'')}"></i>`).join('')}</div>`;
+    const data=c.known?`<div class="data"><b>Hatás: ${c.imp}/10.</b> ${c.d}</div>`:(c.stage>=2&&c.blind?`<div class="data blind">Vakon jóváhagyva — a hatás ismeretlen.</div>`:'');
+    let acts='';if(!dead){
+      if(c.stage===0)acts=`<button class="pri" onclick="act(${c.id},'data')">🔍 Adat kérése · 1 M</button><button class="warn" onclick="act(${c.id},'decide')">Jóváhagyás adat nélkül</button><button onclick="act(${c.id},'reject')">Elutasít</button>`;
+      else if(c.stage===1)acts=`<button class="pri" onclick="act(${c.id},'decide')">✅ Jóváhagyás</button><button onclick="act(${c.id},'reject')">Elutasít (indokolt)</button>`;
+      else if(c.stage===2)acts=`<button class="pri" onclick="act(${c.id},'exec')">🏗️ Végrehajtás · ${c.cost} M</button><button onclick="act(${c.id},'reject')">Mégse</button>`;
+      else if(c.stage===3)acts=`<button class="pri" onclick="act(${c.id},'measure')">📏 Mérés és lezárás · 1 M</button>`;}
+    return `<div class="cs ${urgent?'urgent':''} ${dead?'done':''}">${tag}<h3>${GV.esc(c.t)}</h3>
+      <div class="meta"><span class="loud">${'🔊'.repeat(c.loud)}${'·'.repeat(5-c.loud)} hangerő</span><span><b>${c.cost} M</b> költség</span>${!dead&&c.stage<=2?`<span>⏳ <b>${Math.max(0,c.dlLeft)} hét</b> türelem</span>`:''}${c.known?`<span>hatás <b>${c.imp}/10</b></span>`:'<span>hatás <b>?</b></span>'}</div>
+      ${prog}${data}<div class="acts">${acts}</div></div>`;}).join('');
+  main.innerHTML=`<div class="top"><div class="k money"><span>Keret</span><b>${G.money} M</b></div><div class="k"><span>Akció a héten</span><b>${G.ap} / ${AP}</b><div class="ap">${[0,1,2,3].map(i=>`<i class="${i<G.ap?'on':''}"></i>`).join('')}</div></div><div class="k"><span>Elégedettség</span><b>${G.sat}</b></div></div>
+   <button class="btn nextbtn" onclick="nextWeek()">${G.week>=WEEKS?'Lezárás ▶':'Következő hét ▶'}</button>
+   <div class="pipe">${STAGES.map((s,i)=>`<div class="st ${sc[i]?'on':''}"><b>${sc[i]}</b><span>${s}</span></div>`).join('')}</div>
+   <div class="help" id="help">${G.help||'Az ügyek a lépcsőkön haladnak. Az adat 1 millió és egy akció — a vak jóváhagyás ingyen van, csak később kerül sokba.'}</div>
+   ${cards}
+   ${G.pending?`<div class="ov"><div class="ev"><span class="eyebrow">Heti jelentés</span><h2>${G.pending.title}</h2><p>${G.ap} akció, ${G.money} M keret. ${G.cases.filter(c=>!c.lost&&!c.won).length} nyitott ügy.</p>
+     ${G.pending.items.length?`<ul>${G.pending.items.map(i=>`<li class="${i.cls}">${i.t}</li>`).join('')}</ul>`:''}<div class="row"><button class="btn" onclick="G.pending=null;render()">Rendben</button></div></div></div>`:''}`;
+  G.help='';}
+/* ---- lezárás ---- */
+function finish(){G.st='final';clearTimeout(toastT);document.getElementById('toast').classList.remove('on');
+  const done=G.cases.filter(c=>c.stage>=3);const impact=done.reduce((a,c)=>a+c.imp*(c.measured?1.2:1),0);const spent=BUDGET-G.money;
+  /* viszonyítás: a legjobb 300 M-ből elérhető hatás (hatás/költség sorrendben) */
+  const sorted=CASES.slice().sort((a,b)=>b.imp/b.cost-a.imp/a.cost);let b=BUDGET,best=0;sorted.forEach(c=>{if(c.cost+3<=b){b-=c.cost+3;best+=c.imp*1.2;}});
+  const sImp=Math.round(Math.min(1,impact/best)*40);
+  const dec=G.log.filter(l=>l.what==='decide'||l.what==='reject');const inf=dec.length?Math.round(dec.filter(l=>!l.blind).length/dec.length*100):0;const sInf=Math.round(inf/100*30);
+  const meas=done.length?Math.round(done.filter(c=>c.measured).length/done.length*100):0;const sMeas=Math.round(meas/100*15);
+  const sSat=Math.round(Math.max(0,Math.min(1,(G.sat-20)/50))*15);const total=sImp+sInf+sMeas+sSat;
+  const loudWaste=done.filter(c=>c.loud>=3&&c.imp<=3).reduce((a,c)=>a+c.cost,0);
+  G.result={total,sImp,sInf,sMeas,sSat,impact:Math.round(impact),best:Math.round(best),inf,meas,spent,loudWaste,done:done.length,expired:G.cases.filter(c=>c.expired).length};
+  GV.record('ugymenet',{score:total,parts:{impact:sImp,informed:sInf,measured:sMeas,sat:sSat},informedShare:inf,measuredShare:meas,spent,impact:Math.round(impact),loudWaste,
+    cases:G.cases.map(c=>[c.id,c.stage,c.known,c.blind,c.lost,c.won,c.measured])});render();window.scrollTo({top:0});}
+function renderFinal(){const R=G.result;wkEl.innerHTML=`<span>Lezárás</span><small>${townTxt}</small>`;
+  main.innerHTML=`<div class="card"><span class="eyebrow">A hat hét lenyomata</span><div class="big">${R.total} <small>/ 100</small></div>
+   <h2 style="margin-top:6px">${R.loudWaste>0&&R.sInf<20?'A hangerő vitte a pénzt. Így jár a legtöbb hivatal.':R.total>=70?'Adat-kapu a döntés előtt. Így megy a pipeline.':R.sInf<20?'Sok vak döntés — szerencséd volt, nem rendszered.':'Jó irány: adat a döntés előtt. A következő lépés a mérés.'}</h2>
+   <div class="sc"><div><span>Hatás a pénzért</span><b>${R.sImp} / 40</b><small>${R.impact} hatáspont a lehetséges ${R.best}-ból</small></div><div><span>Adattal döntött</span><b>${R.sInf} / 30</b><small>a döntések ${R.inf}%-a</small></div>
+   <div><span>Mérve lezárt</span><b>${R.sMeas} / 15</b><small>${R.meas}% a végrehajtottakból</small></div><div><span>Elégedettség</span><b>${R.sSat} / 15</b><small>${G.sat} pont, ${R.expired} elhalt ügy</small></div></div>
+   <div class="list">${G.cases.map(c=>`<div><span>${GV.esc(c.t)}</span><span style="color:${c.won?'var(--green)':c.lost?'var(--red)':'var(--amber)'}">${c.won?'nyert':c.lost?(c.expired?'elhalt':'elutasítva'):STAGES[c.stage]}${c.blind?' · vak':''}</span></div>`).join('')}</div>
+   ${R.loudWaste?`<div class="msg">${R.loudWaste} M ment hangos, de kis hatású ügyekre. Az adat-lépcső 1 millió lett volna ügyenként.</div>`:'<div class="msg">Egyetlen hangos, kis hatású ügyre sem költöttél. Ez a különbség a pipeline és a panaszláda között.</div>'}
+   <div class="row"><button class="btn btn-ghost" onclick="G=null;render();window.scrollTo({top:0})">Újra</button></div>
+   ${GV.endPanel({game:'ugymenet',share:'Ügymenet: '+R.total+'/100 — a döntéseim '+R.inf+'%-a adattal.'})}</div>`;}
+render();
+</script>
+</body>
+</html>
