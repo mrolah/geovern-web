@@ -50,18 +50,27 @@
     .replace(/ő|ö/g,'o').replace(/ű|ü/g,'u').replace(/[^a-z0-9. ]+/g,' ').replace(/\s+/g,' ').trim();}
   function cap(s){s=String(s||'').trim().replace(/\s+/g,' ');return s.charAt(0).toUpperCase()+s.slice(1);}
 
+  /* A település neve az URL-ből jön (?telepules=…); a böngésző 30 napig megjegyzi, hogy a QR-ról érkező játékos
+     paraméter nélkül is a saját településén maradjon. Törlés: a hub „✕” gombja, vagy ?telepules= (üresen), vagy ?reset=1. */
+  const TOWN_TTL=30*864e5;
+  function forgetTown(){try{localStorage.removeItem(LS_TOWN);localStorage.removeItem(LS_TOWN+'_ts');}catch(e){}}
   function readTown(){
     const q=new URLSearchParams(location.search);
     let t=q.get('telepules')||q.get('t')||'';
     t=t.replace(/[<>"']/g,'').slice(0,40).trim();
-    if(t){try{localStorage.setItem(LS_TOWN,t);}catch(e){}}
-    else{try{t=localStorage.getItem(LS_TOWN)||'';}catch(e){}}
-    if(!t)t=CFG.TOWN_DEFAULT||'';
+    let source='url';
+    if(q.has('reset')||(q.has('telepules')&&!q.get('telepules'))||(q.has('t')&&!q.get('t'))){forgetTown();t='';}
+    if(t){try{localStorage.setItem(LS_TOWN,t);localStorage.setItem(LS_TOWN+'_ts',String(Date.now()));}catch(e){}}
+    else{try{const ts=+localStorage.getItem(LS_TOWN+'_ts')||0;t=localStorage.getItem(LS_TOWN)||'';
+      if(t&&ts&&Date.now()-ts>TOWN_TTL){forgetTown();t='';}source='saved';}catch(e){}}
+    if(!t){t=CFG.TOWN_DEFAULT||'';source='config';}
     const key=norm(t);
     const c=TOWNS[key]||null;
-    return {name:t?cap(t):'', key, center:c||DEFAULT_CENTER, known:!!c, generic:!t, demo:t?'':DEFAULT_NAME};
+    return {name:t?cap(t):'', key, center:c||DEFAULT_CENTER, known:!!c, generic:!t, demo:t?'':DEFAULT_NAME, source:t?source:''};
   }
   const TOWN=readTown();
+  /* a megjegyzett település törlése és vissza a hubra, paraméter nélkül */
+  function clearTown(){forgetTown();location.href=(inSub?'../':'')+'jatekok.html?reset=1';}
 
   function sid(){let s='';try{s=localStorage.getItem(LS_SID)||'';}catch(e){}
     if(!s){s=Math.random().toString(36).slice(2,10)+Date.now().toString(36);try{localStorage.setItem(LS_SID,s);}catch(e){}}return s;}
@@ -157,7 +166,7 @@
     document.querySelectorAll('[data-town-hide]').forEach(el=>{if(!TOWN.name)el.style.display='none';});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fillTown);else fillTown();
 
-  window.GV={CFG,TOWN,GAMES,sid,record,results,clearResults,exportCSV,toCSV,urlFor,hubUrl,nextGame,endPanel,opinion,share,esc,fillTown,
+  window.GV={CFG,TOWN,GAMES,sid,record,results,clearResults,exportCSV,toCSV,urlFor,hubUrl,nextGame,endPanel,opinion,share,esc,fillTown,clearTown,forgetTown,
     rng(seed){let t=0;for(let i=0;i<seed.length;i++)t=(t*31+seed.charCodeAt(i))>>>0;return()=>{t+=0x6D2B79F5;let r=Math.imul(t^t>>>15,1|t);
       r^=r+Math.imul(r^r>>>7,61|r);return((r^r>>>14)>>>0)/4294967296;};},
     fmtFt(m){return (m>=1000?(m/1000).toFixed(m%1000?1:0).replace('.',',')+' Mrd':m+' M')+' Ft';}

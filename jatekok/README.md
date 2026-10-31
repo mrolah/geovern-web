@@ -80,4 +80,4 @@ plusz a „Változott a véleményed?” válasz külön sorként.
 - Esőkert-játék háttérképe: ha létezik `img/esokert-metszet.jpg`, a játék azt teszi a metszet mögé, és csak a dinamikus elemeket (víz, eső, esőkertek, cső) rajzolja rá. A kép kompozíciója a `scene()` függvény koordinátáit kövesse: bal oldalt ház pincével, járda, zöldsáv, út, jobb oldalt középület; a föld alatt csatorna.
 - A `zold-varosresz.html` városrésze a `LAYOUT` sorokból épül (8×6, betűnként egy tömbtípus).
 - Képek: `img/` (1280 px széles JPEG-ek, a projekt generált látványképeiből).
-- Frissítéskor a `?v=3` a script-hivatkozásokban a böngésző-gyorsítótárat kerüli meg; új `gv.js`/`gvmap.js` kiadásánál a számot emeld.
+- Frissítéskor a `?v=4` a script-hivatkozásokban a böngésző-gyorsítótárat kerüli meg; új `gv.js`/`gvmap.js` kiadásánál a számot emeld.

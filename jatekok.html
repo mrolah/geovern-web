@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="jatekok/config.js?v=3"></script>
-<script src="jatekok/gv.js?v=3"></script>
+<script src="jatekok/config.js?v=4"></script>
+<script src="jatekok/gv.js?v=4"></script>
 <style>
 :root{--bg:#050f14;--petrol:#0F4A57;--teal:#2AD1B5;--amber:#FF9F45;--text:#EAF4F4;--muted:#8FB0B5;--faint:#5E7A80;
   --card:rgba(5,15,20,.68);--cardline:rgba(42,209,181,.22);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace}
@@ -30,7 +30,8 @@ header{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:c
 h1{font-size:clamp(32px,5vw,54px);font-weight:900;line-height:1.06;margin-bottom:16px;max-width:760px}
 h1 em{font-style:normal;color:var(--teal)}
 .sub{color:var(--muted);font-size:17px;max-width:640px}
-.town{display:inline-flex;align-items:center;gap:8px;margin-top:16px;border:1px solid rgba(255,159,69,.5);background:rgba(255,159,69,.08);color:var(--amber);padding:8px 14px;border-radius:100px;font:500 13px var(--mono)}
+.town{display:inline-flex;align-items:center;gap:10px;margin-top:16px;border:1px solid rgba(255,159,69,.5);background:rgba(255,159,69,.08);color:var(--amber);padding:8px 10px 8px 14px;border-radius:20px;font:500 13px/1.35 var(--mono);max-width:100%}.town b{font-weight:700}
+.town-x{flex:0 0 auto;border:1px solid rgba(255,159,69,.5);background:transparent;color:var(--amber);border-radius:100px;width:28px;height:28px;font:700 13px var(--mono);cursor:pointer;line-height:1}.town-x:hover{background:rgba(255,159,69,.2)}
 .ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:10px;font-weight:700;font-size:14.5px;cursor:pointer;border:1px solid transparent;transition:.2s;font-family:var(--font)}
 .btn-primary{background:var(--teal);color:#04211d}.btn-primary:hover{background:#63e6cf;transform:translateY(-1px)}
@@ -83,7 +84,7 @@ h2{font-size:clamp(22px,3vw,30px);font-weight:900;line-height:1.12;margin:54px 0
   <span class="eyebrow">GEOVERN · JÁTÉKOK ÖNKORMÁNYZATOKNAK</span>
   <h1>Döntésjátékok <em>a lakosságnak.</em></h1>
   <p class="sub">Nyolc döntési helyzet — hőhullám, villámárvíz, iskolautca, fák, költségvetés — a saját település nevével, a lakók telefonján. Mindegyik ugyanazt mutatja meg játszva, amit egy testületi ülésen nehéz elmondani: <b>előbb az adat, aztán a beruházás.</b></p>
-  <div class="town" data-town-hide>📍 Ez a játékcsomag <span data-town></span> lakóinak készült</div>
+  <div class="town" data-town-hide><span>📍 Ez a játékcsomag <b data-town></b> lakóinak készült</span> <button class="town-x" type="button" onclick="GV.clearTown()" title="Település törlése — a név a böngészőben marad, amíg nem törlöd" aria-label="Település törlése">✕</button></div>
   <div class="ctas"><a class="btn btn-primary" id="cta1" href="jatekok/fak.html">Kezdd az elsővel →</a><a class="btn btn-ghost" id="cta2" href="jatekok/zold-varosresz.html">A 12 hónapos játék</a></div>
 
   <h2>Rövid játékok — 1–3 perc</h2>
@@ -97,7 +98,7 @@ h2{font-size:clamp(22px,3vw,30px);font-weight:900;line-height:1.12;margin:54px 0
   <h2>Önkormányzatoknak — hogyan használd</h2>
   <div class="two">
     <div class="box"><h3>1 · Kiadás a település nevével</h3>
-      <p>Minden játék a cím végére írt paraméterrel a saját településre szól: <code>geovern.com/jatekok.html?telepules=Pápa</code>. A térképes játékok a település valódi utcáira állnak rá (OpenStreetMap; paraméter nélkül Pápa a bemutató-település), a többi a nevet írja ki. Egy QR-kód a hírlevélbe, a fórum meghívójára, az iskolai szülői levélbe — ennyi a telepítés.</p>
+      <p>Minden játék a cím végére írt paraméterrel a saját településre szól: <code>geovern.com/jatekok.html?telepules=Pápa</code>. A térképes játékok a település valódi utcáira állnak rá (OpenStreetMap; paraméter nélkül Pápa a bemutató-település), a többi a nevet írja ki. Egy QR-kód a hírlevélbe, a fórum meghívójára, az iskolai szülői levélbe — ennyi a telepítés. A nevet a böngésző 30 napig megjegyzi (hogy a játékos paraméter nélkül is a saját településén maradjon); törlés a fenti ✕ gombbal vagy a <code>?reset=1</code> paraméterrel.</p>
       <div class="try"><input id="tn" placeholder="A település neve" maxlength="40"><button onclick="tryTown()">Próbáld ki</button></div></div>
     <div class="box"><h3>2 · Mit tanul a lakos</h3>
       <p>Nem előadás, hanem tapasztalat: előbb vakon dönt, aztán adattal — és látja a különbséget a saját döntésén. Ezért tudja elfogadni, amikor a testület nem a főtérre, hanem a lakótelepre költ.</p>
