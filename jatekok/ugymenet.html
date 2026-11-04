@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
-<script src="config.js?v=7"></script>
-<script src="gv.js?v=7"></script>
+<script src="config.js?v=8"></script>
+<script src="gv.js?v=8"></script>
 <style>
 :root{--bg:#050f14;--panel:rgba(6,17,22,.9);--col:rgba(15,74,87,.16);--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b4a;--green:#3ddc97;--blue:#4aa8ff;
   --text:#EAF4F4;--muted:#9BB7BC;--faint:#5E7A80;--line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
@@ -64,6 +64,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .menu{position:fixed;z-index:90;background:#0c1a21;border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 20px 50px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:4px;min-width:200px}
 .menu button{text-align:left;font:700 13px var(--font);padding:9px 10px;border-radius:8px;border:none;background:transparent;color:var(--text);cursor:pointer}
 .menu button:hover{background:rgba(42,209,181,.12)}.menu button.r{color:var(--red)}
+/* heti lépés-számláló + pulzáló tovább-gomb, ha elfogyott */
+.k.mv i{display:flex;gap:3px;margin-top:4px}.k.mv em{width:12px;height:6px;border-radius:3px;background:rgba(143,176,181,.25)}.k.mv em.on{background:var(--teal,#2AD1B5)}
+.k.mv.out b{color:#ff6b4a}
+.btn.pulse{animation:btnp 1.4s ease-in-out infinite}@keyframes btnp{0%,100%{box-shadow:0 0 0 0 rgba(42,209,181,.5)}50%{box-shadow:0 0 0 10px rgba(42,209,181,0)}}
 /* intro / modal / vég */
 .ov{position:fixed;inset:0;background:rgba(3,14,18,.8);z-index:80;display:flex;align-items:center;justify-content:center;padding:12px;backdrop-filter:blur(4px)}
 .ev{background:#0c1a21;border:1px solid var(--line);border-radius:18px;padding:18px 16px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6);max-height:84vh;overflow:auto}
@@ -101,7 +105,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 document.getElementById('homelink').href=GV.hubUrl();
 const townTxt=GV.TOWN.name?GV.esc(GV.TOWN.name):'a település';
 const ST=['Beérkezett','Adat','Döntés','Végrehajtás','Mérve'];
-const WEEKS=6,BUDGET=300;
+const WEEKS=6,BUDGET=300,MOVES=5; /* hetente ennyi lépés: nem jut minden ügyre — választani és kockáztatni kell */
 const CASES=[
  {t:'Zebra az iskola kapuja elé',loud:5,cost:6,imp:2,dl:2,d:'A balesetek a 300 m-es kereszteződésben vannak, nem a kapunál.'},
  {t:'Csillapítás a lakótelepi kereszteződésben',loud:1,cost:8,imp:9,dl:4,d:'Itt történik a gyerekbalesetek 70%-a.'},
@@ -117,13 +121,14 @@ const CASES=[
  {t:'Esőkertek a mélypontokon',loud:1,cost:36,imp:9,dl:4,d:'Tíz mélypont, ott gyűlik a víz. Fél év, hűsít is.'}];
 let G=null;
 const $=id=>document.getElementById(id);
-function start(){G={st:'play',week:1,money:BUDGET,sat:50,cases:[],log:[],pending:null};arrive();render();}
+function start(){G={st:'play',week:1,money:BUDGET,sat:50,moves:MOVES,unused:0,cases:[],log:[],pending:null};arrive();render();}
 function arrive(){const n=G.cases.length;const b=CASES.slice(n,n+2).map((c,i)=>Object.assign({id:n+i,stage:0,known:false,blind:false,lost:false,won:false,measured:false,dlLeft:c.dl},c));G.cases.push(...b);if(b.length)toast(b.length+' új ügy érkezett a Beérkezett oszlopba.');}
 let toastT=null;function toast(t){const el=$('toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),2600);}
 /* ---- lépés-szabályok ---- */
 function canMove(c,to){ /* visszaad: {ok, cost, why} */
   if(c.lost||c.won)return{ok:false,why:'Lezárt ügy.'};
-  if(to==='lost')return{ok:true,cost:0};
+  if(to==='lost')return{ok:true,cost:0}; /* az elutasítás nem lépés */
+  if(G.moves<=0)return{ok:false,why:'Elfogyott a heti '+MOVES+' lépés — Következő hét ▶'};
   if(to<=c.stage)return{ok:false,why:'Visszafelé nem megy — a pipeline előre halad.'};
   if(to===1)return G.money>=1?{ok:true,cost:1}:{ok:false,why:'Nincs 1 M az adatra.'};
   if(to===2)return c.stage<=1?{ok:true,cost:0}:{ok:false};
@@ -131,7 +136,7 @@ function canMove(c,to){ /* visszaad: {ok, cost, why} */
   if(to===4)return c.stage===3?(G.money>=1?{ok:true,cost:1}:{ok:false,why:'Nincs 1 M a mérésre.'}):{ok:false,why:'Előbb a végrehajtás.'};
   return{ok:false};}
 function move(id,to){const c=G.cases.find(x=>x.id===id);const r=canMove(c,to);if(!r.ok){if(r.why)toast(r.why);render();return false;}
-  G.money-=r.cost;
+  G.money-=r.cost;if(to!=='lost')G.moves--;
   if(to==='lost'){c.lost=true;c.rejBlind=!c.known;G.log.push({id,what:'reject',week:G.week,blind:!c.known});if(!c.known&&c.loud>=3){G.sat-=3;toast('Elutasítva adat nélkül — a lakók felháborodtak (−3).');}else toast(c.known?'Elutasítva, adattal indokolva.':'Elutasítva.');}
   else{if(to===1){c.known=true;G.log.push({id,what:'data',week:G.week});toast('Adat: hatás '+c.imp+'/10.');}
     if(to===2){c.blind=!c.known;G.log.push({id,what:'decide',week:G.week,blind:c.blind});if(c.blind)toast('Vakon jóváhagyva — a hatás majd a végrehajtás után derül ki.');}
@@ -142,8 +147,9 @@ function move(id,to){const c=G.cases.find(x=>x.id===id);const r=canMove(c,to);if
 function nextWeek(){const ev=[];
   G.cases.forEach(c=>{if(c.lost||c.won)return;if(c.stage<=2){c.dlLeft--;if(c.dlLeft<0){c.lost=true;c.expired=true;G.sat-=5;ev.push({cls:'bad',t:'„'+c.t+'” — lejárt a lakók türelme, az ügy elhalt (−5).'});}}});
   const n=G.cases.filter(c=>c.stage===3&&!c.won).length;if(n)ev.push({cls:'info',t:n+' ügy végrehajtás alatt — mérés nélkül nem zárul le.'});
+  if(G.moves>0){G.unused+=G.moves;ev.push({cls:'info',t:G.moves+' lépés kihasználatlan maradt a héten.'});}
   if(G.week>=WEEKS){finish();return;}
-  G.week++;arrive();G.pending={title:G.week+'. hét',items:ev};render();}
+  G.week++;G.moves=MOVES;arrive();G.pending={title:G.week+'. hét',items:ev.concat([{cls:'ok',t:'Új hét: '+MOVES+' lépés.'}])};render();}
 /* ---- render ---- */
 function cardHtml(c){const dead=c.lost||c.won;const urgent=!dead&&c.stage<=2&&c.dlLeft<=1;
   return `<div class="card ${urgent?'urgent':''} ${dead?'done':''}" data-id="${c.id}">${c.blind&&!dead?'<span class="vak">VAK</span>':''}<h3>${GV.esc(c.t)}</h3>
@@ -155,12 +161,12 @@ function render(){
     $('ov').innerHTML=`<div class="ov"><div class="ev"><span class="eyebrow">Folyamatjáték · 3–4 perc</span><h1>Ügymenet</h1>
      <p>Minden lakossági kérés egy kártya. Húzd balról jobbra a lépcsőkön — mint egy CRM-ben:</p>
      <div class="steps">${ST.map(s=>`<div>${s}</div>`).join('')}</div>
-     <p>Az <b style="color:var(--text)">Adat</b> 1 millió, és megmutatja az ügy valódi hatását. Dönthetsz nélküle is — a hangos ügy nem mindig a fontos. A lakók türelme a határidő.</p>
-     <p>Hat hét, 300 millió, tizenkét ügy.</p><div class="row"><button class="btn" onclick="start()">Indul a hat hét</button></div></div></div>`;return;}
+     <p><b style="color:var(--text)">Hetente ${MOVES} lépésed van.</b> Tizenkét ügy jön, mindegyik négy lépés — nem jut mindenre. Válassz, és néha kockáztass: az <b style="color:var(--text)">Adat</b> (1 lépés, 1 M) megmutatja az ügy valódi hatását, vakon dönteni egy lépéssel gyorsabb — de a hangos ügy nem mindig a fontos.</p>
+     <p>Hat hét, 300 millió, ${WEEKS*MOVES} lépés, tizenkét ügy. A lakók türelme a határidő.</p><div class="row"><button class="btn" onclick="start()">Indul a hat hét</button></div></div></div>`;return;}
   if(G.st==='final'){renderFinal();return;}
   $('lost').style.display='';$('ttl').innerHTML=`<span>${G.week}. hét / ${WEEKS}</span><small>${townTxt}</small>`;
-  $('bar').innerHTML=`<div class="k m"><span>Keret</span><b>${G.money} M</b></div><div class="k"><span>Elégedettség</span><b>${G.sat}</b></div><div class="k"><span>Nyitott</span><b>${G.cases.filter(c=>!c.lost&&!c.won).length}</b></div><div class="spacer"></div><button class="btn" onclick="nextWeek()">${G.week>=WEEKS?'Lezárás ▶':'Következő hét ▶'}</button>`;
-  $('hint').textContent=G.week===1&&G.log.length<2?'Húzd a kártyákat balról jobbra a következő lépcsőre. Koppintásra menü nyílik.':'';
+  $('bar').innerHTML=`<div class="k mv ${G.moves?'':'out'}"><span>Lépés a héten</span><b>${G.moves}/${MOVES}</b><i>${Array.from({length:MOVES},(_,i)=>`<em class="${i<G.moves?'on':''}"></em>`).join('')}</i></div><div class="k m"><span>Keret</span><b>${G.money} M</b></div><div class="k"><span>Elégedettség</span><b>${G.sat}</b></div><div class="k"><span>Nyitott</span><b>${G.cases.filter(c=>!c.lost&&!c.won).length}</b></div><div class="spacer"></div><button class="btn ${G.moves?'':'pulse'}" onclick="nextWeek()">${G.week>=WEEKS?'Lezárás ▶':'Következő hét ▶'}</button>`;
+  $('hint').textContent=G.moves===0?'Elfogyott a heti '+MOVES+' lépés. Elutasítani még lehet — vagy jöhet a következő hét.':(G.week===1&&G.log.length<2?'Hetente '+MOVES+' lépés: minden húzás jobbra egy lépés. Adat = 1 lépés + 1 M; vakon dönteni gyorsabb, de kockázat.':'');
   $('board').innerHTML=ST.map((s,i)=>{const cs=G.cases.filter(c=>!c.lost&&c.stage===i);const sum=cs.reduce((a,c)=>a+c.cost,0);
     return `<div class="col" data-stage="${i}"><div class="ch"><b>${s}</b><span>${cs.length} ügy · <i class="cost">${sum} M</i></span></div><div class="cards">${cs.map(cardHtml).join('')}</div></div>`;}).join('');
   $('ov').innerHTML=G.pending?`<div class="ov"><div class="ev"><span class="eyebrow">Heti jelentés</span><h2>${G.pending.title}</h2><p>${G.money} M keret · ${G.cases.filter(c=>!c.lost&&!c.won).length} nyitott ügy · elégedettség ${G.sat}.</p>

@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
-<script src="config.js?v=7"></script>
-<script src="gv.js?v=7"></script>
+<script src="config.js?v=8"></script>
+<script src="gv.js?v=8"></script>
 <style>
 :root{--sun:#050f14;--navy:#EAF4F4;--coral:#FF9F45;--cream:rgba(15,74,87,.2);--mint:#2AD1B5;--line:rgba(42,209,181,.25);--card:rgba(6,17,22,.85);--muted:#9BB7BC;
   --font:'Roboto',system-ui,sans-serif;--disp:'Roboto',system-ui,sans-serif;--gv-accent:var(--mint);--gv-accent-ink:#04211d;--gv-line:var(--line)}
@@ -47,6 +47,13 @@ p{font-size:15.5px;color:var(--muted)}p+p{margin-top:8px}
 .reveal{margin-top:14px;border-left:4px solid var(--coral);background:rgba(255,159,69,.1);padding:12px 14px;border-radius:0 14px 14px 0;font-size:15px}
 .reveal b{display:block;font-size:16px;margin-bottom:4px}
 .pts{display:inline-block;font:700 12px 'Roboto Mono',monospace;background:var(--coral);color:#2b1400;padding:3px 9px;border-radius:100px;margin-left:6px;vertical-align:1px}
+/* 2. kör tipp-sor */
+.hint{font:500 13px 'Roboto Mono',monospace;color:var(--muted);margin-top:10px}.hint b{color:var(--mint)}
+/* a probléma pontokban: ikon + egy rövid mondat soronként */
+.prob{display:grid;gap:8px;margin:6px 0 10px}
+.prob>div{display:flex;gap:10px;align-items:flex-start;font-size:15.5px;line-height:1.4}
+.prob .ic{flex:none;width:30px;height:30px;border-radius:9px;background:rgba(42,209,181,.12);display:flex;align-items:center;justify-content:center;font-size:16px}
+.how{font-size:14px;color:var(--muted)}
 /* vázlat-térkép */
 .mapbox{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#0b1c22;margin-top:12px}
 .mapbox svg{display:block;width:100%;height:auto}
@@ -56,7 +63,14 @@ p{font-size:15.5px;color:var(--muted)}p+p{margin-top:8px}
 .hot line.ln{stroke:#EAF4F4;stroke-width:4;opacity:.85}
 .hot text{font:700 46px var(--font);fill:#EAF4F4;pointer-events:none}
 .hot.pick circle.r{fill:#FF9F45;stroke:#FF9F45;stroke-width:4}.hot.pick text{fill:#2b1400}
-.rev .hot:not(.pick){opacity:.45}
+.rev .hot:not(.pick){opacity:.6}
+.rev .hot.first circle.r{stroke:#FF9F45;stroke-dasharray:6 5}
+.hot.om.pick circle.r{fill:#FF9F45;stroke:#FF9F45}.hot.om.pick text{fill:#2b1400}
+.hot.om.sym circle.r{fill:rgba(11,28,34,.92);stroke:#EAF4F4}.hot.om.sym text.em{font-size:42px;fill:#fff}
+.hot.om.sym.best circle.r{stroke:var(--mint);stroke-width:6}.hot.om.sym.pick:not(.best) circle.r{stroke:#FF9F45;stroke-width:6}
+.hot.om.sym rect.fx{fill:rgba(11,28,34,.9);stroke:#8FB0B5;stroke-width:2}.hot.om.sym.best rect.fx{stroke:var(--mint)}
+.hot.om.sym text.fxt{font:700 32px 'Roboto Mono',monospace;fill:#EAF4F4}.hot.om.sym.best text.fxt{fill:var(--mint)}
+.hot.om.sym{cursor:default}
 .fear{fill:#FF9F45;opacity:.3}.acc{fill:#ff5c5c;stroke:#fff;stroke-width:3}
 .ml{font:700 11px var(--font);fill:#8FB0B5;letter-spacing:.06em}
 .ml.p{font:900 13px var(--font);fill:#EAF4F4}
@@ -74,36 +88,38 @@ footer{max-width:680px;margin:0 auto;padding:0 16px 30px;font-size:12px;color:va
 <body>
 <header><a class="home" id="homelink" href="../jatekok.html">← JÁTÉKOK</a><div class="prog" id="prog"></div></header>
 <main id="main"></main>
-<footer>A számok mért értékelésekből származnak: New York SRTS (Pediatrics, 2013), Barcelona (AJPH, 2023), London 20 mph (BMJ, 2009), Bécs és Salzburg iskolautca-értékelések, CROSS (166 iskola, 2025), holland táblakísérlet (SWOV, 2017), Koppenhága iskolaút-felmérés (2020). A madártávlati kép kitalált iskolakörnyék (illusztráció).</footer>
+<footer><a href="../impresszum.html#jatek-forrasok">Források és adatok a játékokhoz →</a></footer>
 <script>
 /* =====================================================================
    ISKOLAUTCA — 5 jelenet: hol félsz? · mit teszel? · hová tűnnek az autók? · mit javít? · támogatnád?
    ===================================================================== */
 document.getElementById('homelink').href=GV.hubUrl();
-const townTxt=GV.TOWN.name?GV.esc(GV.TOWN.name):'a település';
+const townTxt=GV.TOWN.name?GV.esc(GV.TOWN.name):'a település';const esc=GV.esc;
 /* A pontok a háttérkép (img/iskolautca-terkep.jpg, 1200×900) koordinátáiban: iskola bal fent, főút lent, körforgalom jobbra, bringaút a jobb szélen. */
 const HOT=[
- {id:1,x:398,y:392,dx:-78,dy:-70,n:'Az iskolakapu'},{id:2,x:539,y:632,dx:-80,dy:62,n:'Zebra a kapu előtt'},{id:3,x:953,y:613,dx:-82,dy:-80,n:'A kereszteződés 300 méterre'},
- {id:4,x:211,y:551,dx:72,dy:56,n:'Buszmegálló'},{id:5,x:812,y:331,dx:-82,dy:-64,n:'Szülői „kitétel” a parkolónál'},{id:6,x:1069,y:476,dx:-84,dy:-20,n:'Kerékpárút torkolata'}];
+ {id:1,x:398,y:392,dx:-78,dy:-70,n:'Az iskolakapu',sn:'iskolakapu'},{id:2,x:539,y:632,dx:-80,dy:62,n:'Zebra a kapu előtt',sn:'zebra a kapunál'},{id:3,x:953,y:613,dx:-82,dy:-80,n:'A kereszteződés 300 méterre',sn:'kereszteződés'},
+ {id:4,x:211,y:551,dx:72,dy:56,n:'Buszmegálló',sn:'buszmegálló'},{id:5,x:812,y:331,dx:-82,dy:-64,n:'Szülői „kitétel” a parkolónál',sn:'parkoló'},{id:6,x:1069,y:476,dx:-84,dy:-20,n:'Kerékpárút torkolata',sn:'bringaút'}];
+/* A döntés négy változata — a képen is jelölve (x,y a hely, dx,dy a címke eltolása) */
 const Q2=[
- {l:'A',t:'„Vigyázz, gyerekek!” tábla és villogó a kapu elé',s:'Olcsó, látványos, a szülők kérik',pts:10,
+ {l:'A',t:'Tábla és villogó a kapu elé',s:'Olcsó, látványos — a szülők kérik',x:398,y:392,dx:-80,dy:-70,ic:'🪧',fx:'2 hét múlva: 0',pts:10,
   r:'<b>Két hét múlva nulla.</b> A holland „gyerekes” táblák 478 ezer mérésben az első napokban −0,75 km/h-t hoztak, két hét után semmit. Torontóban a villogó iskolazóna-tábla mellett a sofőrök 85%-a továbbra is 47 km/h-val ment.'},
- {l:'B',t:'Iskolautca: a kapu előtti szakasz lezárása reggel 7:30–8:15',s:'Virágláda, sorompó, önkéntes szülők',pts:70,
+ {l:'B',t:'Iskolautca: lezárás a kapu előtt reggel',s:'7:30–8:15, sorompó, szülői ügyelet',x:470,y:600,dx:-96,dy:72,ic:'🚧',fx:'−52…68% forgalom',pts:70,
   r:'<b>A kapu előtt −52…−68% forgalom</b> (Bécs), és +6 százalékpont gyalog-bringa (166 brit iskola). De a szülői autók száma nem csökkent: 100–300 méterrel odébb álltak meg (Bécs, Salzburg, Köln). Kell hozzá K+R-hely és terv a szomszéd utcának.'},
- {l:'C',t:'Forgalomcsillapítás a 300 méterre lévő kereszteződésben — a balesettérkép alapján',s:'Fekvőrendőr, szűkítés, jól látható zebra',pts:100,
+ {l:'C',t:'Csillapítás a körforgalomnál (300 m)',s:'Fekvőrendőr, szűkítés, zebra — a balesettérkép alapján',x:953,y:613,dx:-84,dy:-80,ic:'🛑',fx:'−44% sérülés',pts:100,
   r:'<b>Ott hat, ahol a baleset van.</b> New Yorkban ugyanezekkel az eszközökkel, a balesettérképpel kiválasztott iskoláknál 44%-kal esett a gyerekek sérülése — a többi városrészben nullával. Torontóban a fekvőrendőr a 0–14 évesek ütközéseit 44%-kal vitte le.'},
- {l:'D',t:'Gyalogló iskolabusz: szülők kísérik a gyerekeket',s:'Pedibusz-vonalak, mellények, menetrend',pts:40,
+ {l:'D',t:'Gyalogló iskolabusz (pedibusz)',s:'Szülők kísérik a gyerekeket a parkon át',x:330,y:740,dx:84,dy:44,ic:'🚶',fx:'részvétel ↑, biztonság ?',pts:40,
   r:'<b>Részvétel igen, biztonság nem.</b> A pedibusz elégedettséget hoz, módváltást néhány pontot, és a vonalak ~3 év után kifulladnak. Jó belépő a szülőknek — nem biztonsági beavatkozás.'}];
 const Q3=[
- {l:'A',t:'Eltűnnek — a szülők gyalog hozzák a gyereket',pts:0,r:'<b>Sajnos nem.</b> Bécsben a délutáni iskolautcánál ugyanannyi szülői autó jött — csak kétszáz méterrel odébb állt meg.'},
- {l:'B',t:'100–300 méterrel odébb állnak meg',pts:100,r:'<b>Pontosan ez történik</b> (Bécs, Salzburg, Köln). Ezért kell a lezáráshoz K+R-hely és „park & stride” — különben a sor és a kitétel a sarkon lesz, rosszabb rálátással.'},
- {l:'C',t:'A szomszéd utcába terelődnek',pts:60,r:'<b>Részben.</b> Kölnben a sorompóponthoz és a szomszéd utcába tolódott a kitétel; Islingtonban viszont minden környező úton csökkent a forgalom. A kérdés nem az eszköz, hanem a hely — és hogy mérik-e.'}];
+ {l:'A',t:'Eltűnnek — a szülők gyalog hozzák a gyereket',x:300,y:730,dx:84,dy:40,ic:'🚶',fx:'sajnos nem',pts:0,r:'<b>Sajnos nem.</b> Bécsben a délutáni iskolautcánál ugyanannyi szülői autó jött — csak kétszáz méterrel odébb állt meg.'},
+ {l:'B',t:'100–300 méterrel odébb állnak meg',x:770,y:612,dx:-80,dy:-70,ic:'🚗',fx:'ide állnak (Bécs, Köln)',pts:100,r:'<b>Pontosan ez történik</b> (Bécs, Salzburg, Köln). Ezért kell a lezáráshoz K+R-hely és „park & stride” — különben a sor és a kitétel a sarkon lesz, rosszabb rálátással.'},
+ {l:'C',t:'A szomszéd utcába terelődnek',x:1148,y:230,dx:-84,dy:30,ic:'🚗',fx:'részben',pts:60,r:'<b>Részben.</b> Kölnben a sorompóponthoz és a szomszéd utcába tolódott a kitétel; Islingtonban viszont minden környező úton csökkent a forgalom. A kérdés nem az eszköz, hanem a hely — és hogy mérik-e.'}];
 const Q4=[
- {l:'A',t:'A levegőt az iskola előtt',pts:0,r:'<b>Alig.</b> Londonban a legjobb mérőponton a reggeli csúcsban −23% NO₂, napi átlagban ~2%. Barcelona: „nincs általános javulás”. Ezzel ne add el.'},
- {l:'B',t:'A forgalmat a kapu előtt',pts:100,r:'<b>Igen: −50…−90%</b> a lezárás idején (Bécs, Hackney, Barcelona). Ez a biztos hatás — a többi a részletektől függ.'},
- {l:'C',t:'A balesetszámot',pts:30,r:'<b>Még nincs rá tanulmány.</b> Balesetcsökkenést a mérnöki csomagok mutatnak (sebesség!), az iskolautcát erre még senki nem mérte. Logikus, de nem bizonyított.'}];
+ {l:'A',t:'A levegőt az iskola előtt',x:480,y:470,dx:-90,dy:-60,ic:'💨',fx:'NO₂ napi ~−2%',pts:0,r:'<b>Alig.</b> Londonban a legjobb mérőponton a reggeli csúcsban −23% NO₂, napi átlagban ~2%. Barcelona: „nincs általános javulás”. Ezzel ne add el.'},
+ {l:'B',t:'A forgalmat a kapu előtt',x:540,y:612,dx:-90,dy:70,ic:'🚗',fx:'−50…90%',pts:100,r:'<b>Igen: −50…−90%</b> a lezárás idején (Bécs, Hackney, Barcelona). Ez a biztos hatás — a többi a részletektől függ.'},
+ {l:'C',t:'A balesetszámot',x:953,y:613,dx:-84,dy:-80,ic:'🚑',fx:'még nincs mérés',pts:30,r:'<b>Még nincs rá tanulmány.</b> Balesetcsökkenést a mérnöki csomagok mutatnak (sebesség!), az iskolautcát erre még senki nem mérte. Logikus, de nem bizonyított.'}];
 const MEAS=['Forgalom a kapunál (számláló)','Sebesség (radar)','Hogyan jön a gyerek (kézfeltartás)','Levegő (NO₂)','Biztonságérzet (szülői kérdőív)','Hol állnak meg az autók'];
-let S={st:'intro',step:0,fear:null,a2:null,a3:null,a4:null,support:null,meas:[],pts:0,ly:{fear:true,acc:true,pts:true}};
+const MEAS_SHORT=['forgalom','sebesség','módválasztás','levegő','biztonságérzet','parkolás'];
+let S={st:'intro',step:0,fear:null,fear2:null,a2:null,a3:null,a4:null,support:null,meas:[],pts:0,ly:{fear:true,acc:true,pts:true}};
 const main=document.getElementById('main');
 function prog(n){document.getElementById('prog').innerHTML=Array.from({length:5},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('');}
 
@@ -111,15 +127,24 @@ function prog(n){document.getElementById('prog').innerHTML=Array.from({length:5}
 const ACC=[[935,585],[975,590],[920,622],[985,632],[950,652],[905,600],[1000,606],[950,606],[930,640],[1006,642],[215,577],[560,656],[870,384]];
 function sketch(reveal){
   return `<div class="mapbox ${reveal?'rev':''}"><svg viewBox="0 0 1200 900" aria-label="Madártávlati kép az iskola környékéről">
-   <image href="img/iskolautca-terkep.jpg" x="0" y="0" width="1200" height="900" preserveAspectRatio="xMidYMid slice"/>
+   <image href="img/iskolautca-terkep.jpg?v=${GV.VER}" x="0" y="0" width="1200" height="900" preserveAspectRatio="xMidYMid slice"/>
    ${reveal?`<g class="lyr" data-ly="fear" style="display:${S.ly.fear?'':'none'}"><circle class="fear" cx="398" cy="392" r="82"/><circle class="fear" cx="539" cy="632" r="62"/><circle class="fear" cx="812" cy="331" r="52"/></g>
      <g class="lyr" data-ly="acc" style="display:${S.ly.acc?'':'none'}">${ACC.map(p=>`<circle class="acc" cx="${p[0]}" cy="${p[1]}" r="11"/>`).join('')}</g>`:''}
    <!-- pontok: kis jel a helyen + szám-címke mellette (vonallal összekötve) -->
-   <g class="lyr" data-ly="pts" style="display:${!reveal||S.ly.pts?'':'none'}">${HOT.map(h=>`<g class="hot ${S.fear===h.id?'pick':''}" onclick="pickFear(${h.id})"><line class="ln" x1="${h.x}" y1="${h.y}" x2="${h.x+h.dx}" y2="${h.y+h.dy}"/><circle class="p" cx="${h.x}" cy="${h.y}" r="12"/><circle class="r" cx="${h.x+h.dx}" cy="${h.y+h.dy}" r="42"/><text x="${h.x+h.dx}" y="${h.y+h.dy+16}" text-anchor="middle">${h.id}</text></g>`).join('')}</g>
+   <g class="lyr" data-ly="pts" style="display:${!reveal||S.ly.pts?'':'none'}">${HOT.map(h=>`<g class="hot ${(reveal?S.fear2===h.id:S.fear===h.id)?'pick':''} ${reveal&&S.fear===h.id?'first':''}" onclick="pickFear(${h.id})"><line class="ln" x1="${h.x}" y1="${h.y}" x2="${h.x+h.dx}" y2="${h.y+h.dy}"/><circle class="p" cx="${h.x}" cy="${h.y}" r="12"/><circle class="r" cx="${h.x+h.dx}" cy="${h.y+h.dy}" r="42"/><text x="${h.x+h.dx}" y="${h.y+h.dy+16}" text-anchor="middle">${h.id}</text></g>`).join('')}</g>
   </svg></div>`;
 }
+/* a döntés változatai a képen: betűs buborék + vonal + pont a helyen; koppintásra választ */
+function sketchOpts(opts,picked,revealed,fn){
+  return `<div class="mapbox"><svg viewBox="0 0 1200 900" aria-label="A változatok helye a képen">
+   <image href="img/iskolautca-terkep.jpg?v=${GV.VER}" x="0" y="0" width="1200" height="900" preserveAspectRatio="xMidYMid slice"/>
+   ${opts.map((o,i)=>{const bx=o.x+o.dx,by=o.y+o.dy;if(revealed&&o.ic){const w=(o.l+' · '+o.fx).length*19+30;const lx=Math.max(w/2+8,Math.min(1200-w/2-8,bx));
+     return `<g class="hot om sym ${picked===i?'pick':''} ${o.pts>=100?'best':''}"><line class="ln" x1="${o.x}" y1="${o.y}" x2="${bx}" y2="${by}"/><circle class="p" cx="${o.x}" cy="${o.y}" r="12"/><circle class="r" cx="${bx}" cy="${by}" r="42"/><text class="em" x="${bx}" y="${by+15}" text-anchor="middle">${o.ic}</text>
+       <rect class="fx" x="${lx-w/2}" y="${by+50}" width="${w}" height="50" rx="25"/><text class="fxt" x="${lx}" y="${by+86}" text-anchor="middle">${o.l} · ${o.fx}</text></g>`;}
+     return `<g class="hot om ${picked===i?'pick':''}" onclick="${fn}(${i})"><line class="ln" x1="${o.x}" y1="${o.y}" x2="${bx}" y2="${by}"/><circle class="p" cx="${o.x}" cy="${o.y}" r="12"/><circle class="r" cx="${bx}" cy="${by}" r="42"/><text x="${bx}" y="${by+16}" text-anchor="middle">${o.l}</text></g>`;}).join('')}
+  </svg></div>`;}
 /* rétegkapcsoló a felfedés után — ugyanaz a chip-sor, mint a fák-játékban és a Krízishétben (GV.layerControl) */
-const LYS=[{id:'fear',label:'Ahol a szülők félnek',icon:'🧡',color:'#FF9F45',title:'Koppenhágai minta: 13 691 szülői pont'},{id:'acc',label:'Rendőrségi balesetek',icon:'🚨',color:'#ff5c5c',title:'Tanítási időben, 250 m-es körzet'},{id:'pts',label:'A hat pont',icon:'🔢',color:'#9BB7BC',title:'A választható helyek'}];
+const LYS=[{id:'fear',label:'Szülők szerint veszélyes',icon:'🧡',color:'#FF9F45',title:'Ahol a szülők félnek — koppenhágai minta: 13 691 szülői pont'},{id:'acc',label:'Balesetek helyszínei',icon:'🚨',color:'#ff5c5c',title:'Rendőrségi balesetek tanítási időben'},{id:'pts',label:'Gócpontok',icon:'🔢',color:'#9BB7BC',title:'A hat választható hely'}];
 function mountLayers(){const el=document.getElementById('iskl');if(!el)return;
   GV.layerControl({container:el,title:'Rétegek',hint:(matchMedia('(hover:hover) and (pointer:fine)').matches?'kattintásra':'koppintásra')+' be / ki',
     layers:LYS.map(l=>Object.assign({on:S.ly[l.id],apply:on=>{S.ly[l.id]=on;document.querySelectorAll('.lyr[data-ly="'+l.id+'"]').forEach(g=>{g.style.display=on?'':'none';});}},l))});}
@@ -129,23 +154,23 @@ function render(){
   const T=S.st;
   if(T==='intro'){prog(0);main.innerHTML=`<div class="hero"><img src="img/iskolautca.jpg" alt=""><span class="tag">Lakossági döntésjáték · 2–3 perc</span></div>
    <div class="card"><span class="eyebrow">${townTxt} · iskola körül</span><h1>Iskolautca</h1>
-   <p>Négyszáz aláírás érkezett: zebrát az iskola elé! A rendőrség máshová mutat. Egy keret van.</p>
-   <p>Öt gyors kérdés — mindegyikre mért válasz van, Bécstől New Yorkig. Nézzük, hol hallgat a megérzés a hangerőre.</p>
+   <div class="prob"><div><span class="ic">💬</span><span>400 aláírás: „Zebrát az iskola elé!”</span></div><div><span class="ic">🚓</span><span>A rendőrség máshová mutat.</span></div><div><span class="ic">💰</span><span>Egy keret van. Te döntesz.</span></div></div>
+   <p class="how">Öt gyors kérdés — mindegyikre mért válasz van, Bécstől New Yorkig.</p>
    <div class="row"><button class="btn" onclick="go('fear')">Indítás</button></div></div>`;return;}
-  if(T==='fear'){prog(1);const rv=S.fearRevealed;main.innerHTML=`<div class="card"><span class="eyebrow">1 / 5 · Észlelt veszély</span>
-   <h2>Hol a legveszélyesebb pont a gyerekeknek?</h2><p>${rv?'Két réteg a képen — kapcsold ki-be, és nézd meg, hol találkoznak.':'Koppints a számra a képen. A narancs pont a hely, a szám a címkéje.'}</p>${rv?'<div id="iskl"></div>':''}${sketch(rv)}
-   ${rv?`
-   <div class="reveal"><b>${S.fear===3?'Te a balesettérképre mutattál — ritka.':'A legtöbben a kapura mutatnak. A baleset nem ott van.'}</b>Koppenhága 13 691 szülői pontot gyűjtött arról, hol félnek — a rendőrségi balesethelyek „csak ritkán” estek ezekre. Torontóban a gyerekbalesetek 62%-a iskolaidőn kívül történt. Két réteg kell: a félelem térképe és a baleseteké — és a döntésnek mindkettőt látnia kell.</div>
-   <div class="row"><button class="btn" onclick="go('q2')">Tovább</button></div>`:`<div class="row"><button class="btn" onclick="revealFear()" ${S.fear?'':'disabled'}>Mutasd a két réteget</button></div>`}</div>`;return;}
+  if(T==='fear'){prog(1);const rv=S.fearRevealed;const done=S.fear2!=null;main.innerHTML=`<div class="card"><span class="eyebrow">1 / 5 · ${rv?'2. kör — a rétegekkel':'Észlelt veszély'}</span>
+   <h2>${rv?(done?'Most már a rétegekkel: '+esc(HOT.find(h=>h.id===S.fear2).n):'Hol a legveszélyesebb pont a gyerekeknek? — most a rétegekkel'):'Hol a legveszélyesebb pont a gyerekeknek?'}</h2><p>${rv?(done?'A szaggatott kör az első tipped, a narancs a mostani.':'Két réteg a képen — kapcsold ki-be, és koppints újra a számra.'):'Koppints a számra a képen. A narancs pont a hely, a szám a címkéje.'}</p>${rv?'<div id="iskl"></div>':''}${sketch(rv)}
+   ${rv&&!done?`<div class="hint">Első tipp: <b>${esc(HOT.find(h=>h.id===S.fear).n)}</b>${S.fear===3?' — ez a balesetgóc.':''} Hová mutatnál most?</div></div>`:''}${rv&&done?`
+   <div class="reveal"><b>${S.fear2===3?'Jó: a balesetgóc a körforgalom.':'A balesetgóc a körforgalom — nem ott, ahol félünk.'}</b>Koppenhága 13 691 szülői félelem-pontot gyűjtött: a rendőrségi balesethelyek „csak ritkán” estek ezekre. Két réteg kell — a félelemé és a baleseteké.</div>
+   <div class="row"><button class="btn" onclick="go('q2')">Tovább</button></div></div>`:''}${!rv?`<div class="row"><button class="btn" onclick="revealFear()" ${S.fear?'':'disabled'}>Mutasd a két réteget</button></div></div>`:''}`;return;}
   if(T==='q2'){prog(2);const rv=S.a2!=null;main.innerHTML=`<div class="card"><span class="eyebrow">2 / 5 · A döntés</span>
-   <h2>Egy keret van. Mit teszel?</h2><p>A szülők zebrát és táblát kérnek a kapu elé. A rendőrség szerint a baj 300 méterrel odébb van.</p>
-   ${optList(Q2,S.a2,rv,'pick2')}${rv?`<div class="reveal">${Q2[S.a2].r}<span class="pts">+${Math.round(Q2[S.a2].pts*0.4)}</span></div><div class="row"><button class="btn" onclick="go('q3')">Tovább</button></div>`:''}</div>`;return;}
+   <h2>Egy keret van. Mit teszel?</h2><p>A szülők a kapu elé kérnek zebrát. A rendőrség szerint a baj a körforgalomnál van. Válassz a képen vagy a listából.</p>
+   ${sketchOpts(Q2,S.a2,rv,'pick2')}${optList(Q2,S.a2,rv,'pick2')}${rv?`<div class="reveal">${Q2[S.a2].r}<span class="pts">+${Math.round(Q2[S.a2].pts*0.4)}</span></div><div class="row"><button class="btn" onclick="go('q3')">Tovább</button></div>`:''}</div>`;return;}
   if(T==='q3'){prog(3);const rv=S.a3!=null;main.innerHTML=`<div class="card"><span class="eyebrow">3 / 5 · A tévhit</span>
    <h2>Ha lezárjuk a kapu előtti utcát reggel — hová tűnnek az autók?</h2>
-   ${optList(Q3,S.a3,rv,'pick3')}${rv?`<div class="reveal">${Q3[S.a3].r}<span class="pts">+${Math.round(Q3[S.a3].pts*0.2)}</span></div><div class="row"><button class="btn" onclick="go('q4')">Tovább</button></div>`:''}</div>`;return;}
+   ${sketchOpts(Q3,S.a3,rv,'pick3')}${optList(Q3,S.a3,rv,'pick3')}${rv?`<div class="reveal">${Q3[S.a3].r}<span class="pts">+${Math.round(Q3[S.a3].pts*0.2)}</span></div><div class="row"><button class="btn" onclick="go('q4')">Tovább</button></div>`:''}</div>`;return;}
   if(T==='q4'){prog(4);const rv=S.a4!=null;main.innerHTML=`<div class="card"><span class="eyebrow">4 / 5 · Mit mér a világ</span>
    <h2>Mit javít <u>biztosan</u> az iskolautca?</h2>
-   ${optList(Q4,S.a4,rv,'pick4')}${rv?`<div class="reveal">${Q4[S.a4].r}<span class="pts">+${Math.round(Q4[S.a4].pts*0.2)}</span></div><div class="row"><button class="btn" onclick="go('q5')">Tovább</button></div>`:''}</div>`;return;}
+   ${sketchOpts(Q4,S.a4,rv,'pick4')}${optList(Q4,S.a4,rv,'pick4')}${rv?`<div class="reveal">${Q4[S.a4].r}<span class="pts">+${Math.round(Q4[S.a4].pts*0.2)}</span></div><div class="row"><button class="btn" onclick="go('q5')">Tovább</button></div>`:''}</div>`;return;}
   if(T==='q5'){prog(5);main.innerHTML=`<div class="card"><span class="eyebrow">5 / 5 · A te utcád</span>
    <h2>Támogatnád a saját utcádban?</h2>
    <div class="opts">${['Igen','Igen, ha van hol megállni (K+R) és mérik a hatását','Nem'].map((t,i)=>`<button class="opt ${S.support===i?'pick':''}" onclick="S.support=${i};render()"><span class="l">${'ABC'[i]}</span><span><b>${t}</b></span></button>`).join('')}</div>
@@ -155,19 +180,20 @@ function render(){
   if(T==='final'){prog(5);const p=S.pts;main.innerHTML=`<div class="card"><span class="eyebrow">A hét lenyomata</span>
    <div class="big">${p}<small> / 100 pont</small></div>
    <h2 style="margin-top:8px">${p>=80?'Te a balesettérképpel döntöttél.':p>=50?'Jó irány — a hely dönt, nem az eszköz.':'A hangerő győzött. Nem vagy egyedül.'}</h2>
-   <div class="kv"><div><span>Hol féltél</span><b>${HOT.find(h=>h.id===S.fear).n}</b></div><div><span>A baleset</span><b>A kereszteződés</b></div><div><span>Döntésed</span><b>${Q2[S.a2].l} · +${Math.round(Q2[S.a2].pts*0.4)} pont</b></div><div><span>Mérnél</span><b>${S.meas.length} dolgot</b></div></div>
+   <div class="kv"><div><span>Első tipp → rétegekkel</span><b>${S.fear===S.fear2?HOT.find(h=>h.id===S.fear).sn+' (mindkétszer)':HOT.find(h=>h.id===S.fear).sn+' → '+HOT.find(h=>h.id===S.fear2).sn}</b></div><div><span>A baleset</span><b>A kereszteződés</b></div><div><span>Döntésed</span><b>${Q2[S.a2].l} · +${Math.round(Q2[S.a2].pts*0.4)} pont</b></div><div><span>Mit mérnél előtte–utána</span><b>${S.meas.length?S.meas.slice(0,3).map(i=>MEAS_SHORT[i]).join(', ')+(S.meas.length>3?' +'+(S.meas.length-3):''):'semmit — a következő döntés is vak marad'}</b></div></div>
    <div class="reveal"><b>Az EU adatlapja szerint</b> a sérült iskoláskorú gyerekek legalább 35%-a egy iskola 250 méteres körzetében, tanítási időben sérül meg. Ezt a kört ma minden település meg tudná rajzolni — az iskolakoordináta és a balesetadat megvan, csak még senki nem tette egymásra.</div>
    ${GV.endPanel({game:'iskolautca',share:'Iskolautca-játék: '+p+'/100 — hol a veszély valójában?'})}</div>`;return;}
 }
 function go(st){S.st=st;render();window.scrollTo({top:0,behavior:'smooth'});}
 const _render=render;render=function(){_render();mountLayers();};
-function pickFear(id){if(S.fearRevealed)return;S.fear=id;render();}
-function revealFear(){S.fearRevealed=true;if(S.fear===3)S.pts+=20;else if(S.fear===4||S.fear===5)S.pts+=8;render();}
+/* 1. kör vakon (max 12 pont), 2. kör a rétegekkel (max 8 pont) — a jó hely a körforgalom (3) */
+function pickFear(id){if(S.fearRevealed){if(S.fear2!=null)return;S.fear2=id;if(id===3)S.pts+=8;render();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});return;}S.fear=id;render();}
+function revealFear(){S.fearRevealed=true;if(S.fear===3)S.pts+=12;else if(S.fear===4||S.fear===5)S.pts+=5;render();}
 function pick2(i){S.a2=i;S.pts+=Q2[i].pts*0.4;render();}
 function pick3(i){S.a3=i;S.pts+=Q3[i].pts*0.2;render();}
 function pick4(i){S.a4=i;S.pts+=Q4[i].pts*0.2;render();}
 function togMeas(i){const k=S.meas.indexOf(i);if(k>=0)S.meas.splice(k,1);else S.meas.push(i);render();}
-function finish(){S.pts=Math.round(S.pts);GV.record('iskolautca',{fear:S.fear,fearName:HOT.find(h=>h.id===S.fear).n,decision:Q2[S.a2].l,cars:Q3[S.a3].l,improves:Q4[S.a4].l,support:['igen','feltetellel','nem'][S.support],measure:S.meas.map(i=>MEAS[i]),score:S.pts});go('final');}
+function finish(){S.pts=Math.round(S.pts);GV.record('iskolautca',{fear:S.fear,fear2:S.fear2,fearName:HOT.find(h=>h.id===S.fear).n,decision:Q2[S.a2].l,cars:Q3[S.a3].l,improves:Q4[S.a4].l,support:['igen','feltetellel','nem'][S.support],measure:S.meas.map(i=>MEAS[i]),score:S.pts});go('final');}
 render();
 </script>
 </body>

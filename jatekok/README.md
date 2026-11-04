@@ -11,10 +11,10 @@ beállítások: `config.js`.
 | `esokert.html` | Esőkert vagy csatorna? | csúszkás keretosztás (a kép a képernyő tetején ragad, a csúszkák alatta, húzás közben a DOM nem épül újra) + vihar-szimuláció; a mérőhálózat 10 M, a mérés-diagram csak bekapcsolva látszik | generált utcametszet-kép (`img/esokert-metszet.jpg`, az ég levágva, 1200×807), rajta a beavatkozások rajzolt rétege: nagyobb cső, új esőkertek, áteresztő parkoló, zöldtető + ciszterna, víz a felszínen és a pincében; a kép alatt a terv összefoglaló sora | 2–3 perc |
 | `iskolautca.html` | Iskolautca | A/B/C döntések + veszélypont-bejelölés; a felfedés után a két réteg és a pontok a közös chip-sorral kapcsolhatók | generált madártávlati kép (`img/iskolautca-terkep.jpg`) a hat ponttal, félelem-körök és balesetpontok rajta + mért bizonyítékok | 2–3 perc |
 | `ugyanaz-az-utca.html` | Ugyanaz az utca | zónaválasztás három körben | élő 3D térkép, a település adottságaiból képzett, nevesített amőba-zónák | 2 perc |
-| `karcsu.html` | Karcsú vagy túlméretezett? | gyors párválasztás, 10 mp, véletlen kártyasorrend | nagyságrendi költségek | 2 perc |
+| `karcsu.html` | Karcsú vagy túlméretezett? | gyors párválasztás, 10 mp; a nyerő kártya pontosan az esetek felében balra, véletlen sorrendben | nagyságrendi költségek | 2 perc |
 | `lassit-es-mer.html` | Lassít és mér | döntés → 12 hetes szimuláció → újradöntés | idősor-diagram | 3 perc |
 | `zold-varosresz.html` | Zöld városrész — 12 hónap | építés + havi események + rejtett rétegek | rácsos városrész (8×6), mérés fedi fel | 5–8 perc |
-| `ugymenet.html` | Ügymenet | Pipedrive-szerű tábla: a kártyákat húzod balról jobbra (beérkezett → adat → döntés → végrehajtás → mérve) | rejtett hatás, látható hangerő | 3–4 perc |
+| `ugymenet.html` | Ügymenet | Pipedrive-szerű tábla: a kártyákat húzod balról jobbra (beérkezett → adat → döntés → végrehajtás → mérve); **hetente 5 lépés** — nem jut minden ügyre, választani és kockáztatni kell (vakon dönteni egy lépéssel gyorsabb) | rejtett hatás, látható hangerő | 3–4 perc |
 
 Egységes GEOVERN-arculat (sötét petrol, teal, amber, Roboto); csak a Google Fonts és — a két térképes játéknál — a MapLibre a külső függőség.
 
@@ -27,7 +27,7 @@ szintkülönbségű utca a „lejtő” (a kártya nevén nevezi), a károk a le
 nevével; **kedd** — a központhoz legközelebbi iskola, a tőle 150–650 m-re lévő főúti csomópont a balesetgóc, a gyaloglás és az iskolautak az utcahálózaton;
 **szerda** — a légvezeték az utcák mentén fut a központból kifelé, a viharzóna az erdőhöz legközelebbi két külső szakasz; **csütörtök** — hőgóc a burkolt,
 sok épületes, zöld nélküli részen (legalább 250 m-re a főtértől), a 75+ réteg a magas házak csoportja, a gondozók valós intézmények; **péntek** — a három
-zóna metszete. A probléma felvetésekor (2. fázis) a kamera a helyszínre repül, a góc pulzáló jelet kap, a rétegek bekapcsolása után rázoomol; a rétegsáv a közös chip-sor (`GV.layerControl`).
+zóna metszete. Minden nap az első kártyánál a problémás terület látszik (szaggatott körvonal + jelölő, adatréteg nélkül; kedden az iskola jelölője kattintható buborékkal), a 2. fázisban jönnek a rétegek, a kamera mindig repül (sosem ugrik); a ✓/✗ döntésjelek csak a hét végi nézetben látszanak; a helyes válasz oldala napról napra véletlen; a rétegsáv a kártya fölött, a közös chip-sor (`GV.layerControl`); a hőtérkép a település saját skáláján (zöld faluban is látszik).
 Településlista típusonként (domborzatos, patakos helyek: Tihany, Nagymaros, Zebegény, Pilisborosjenő · Kőszeg, Zirc, Pilisvörösvár, Budakeszi · Veszprém, Eger,
 Szentendre, Budaörs · Pécs, Miskolc, Sopron, Kaposvár); induláskor a játék ellenőrzi az adatot (utcák, nevek, iskola, lejtő), és ha hiányos, a lista következő
 tagját sorsolja; ha a csempék nem jönnek, az illusztratív minta fut. A rangsor-webhook változatlan (`mode: osm|legacy` mező került a sorba).

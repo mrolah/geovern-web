@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
-<script src="config.js?v=7"></script>
-<script src="gv.js?v=7"></script>
+<script src="config.js?v=8"></script>
+<script src="gv.js?v=8"></script>
 <style>
 :root{--paper:#050f14;--paper2:#0b1a21;--ink:#EAF4F4;--ink2:#9BB7BC;--blue:#2AD1B5;--water:#4AA8FF;--green:#3ddc97;--amber:#FF9F45;--red:#ff6b4a;
   --line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--slab:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
@@ -24,6 +24,17 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 .home{font:700 12px var(--mono);letter-spacing:.08em;color:var(--blue);text-decoration:none;border:1px solid var(--line);padding:7px 12px;border-radius:100px;background:transparent}
 .stamp{font:700 11px var(--mono);letter-spacing:.12em;color:var(--amber);border:1.5px solid var(--amber);padding:5px 10px;border-radius:4px;transform:rotate(-2deg)}
 main{max-width:760px;margin:0 auto;padding:0 16px 40px}
+/* széles képernyőn (keretosztás, eredmény): a kép balra, a vezérlők jobbra — a kép nem veszi el a helyet a csúszkáktól */
+@media(min-width:900px){
+  main.wide{max-width:1180px}
+  .cols{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(380px,1fr);gap:18px;align-items:stretch}
+  .cols .colL{display:block}
+  .cols .scenewrap{margin-bottom:0}
+  .cols .scenewrap.stick{top:12px}
+  .cols .sheet{margin-bottom:0}
+  .cols .ctl{grid-template-columns:1fr}
+  .cols .badges{flex-wrap:wrap;overflow:visible}
+}
 .sheet{background:rgba(6,17,22,.85);border:1px solid var(--line);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.45);padding:18px 18px 16px;margin-bottom:16px;position:relative;backdrop-filter:blur(10px)}
 .eyebrow{font:500 11px var(--mono);letter-spacing:.18em;color:var(--blue);text-transform:uppercase;display:block;margin-bottom:6px}
 h1{font:900 clamp(24px,6vw,32px)/1.12 var(--slab);margin-bottom:8px}
@@ -34,6 +45,10 @@ p{color:var(--ink2);font-size:15.5px}p+p{margin-top:8px}
 .btn:active{transform:scale(.98)}.btn[disabled]{opacity:.4;cursor:default}
 .btn-light{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
 .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.row .btn{flex:1}
+/* a probléma pontokban: ikon + egy rövid mondat soronként */
+.prob{display:grid;gap:8px;margin:6px 0 10px}
+.prob>div{display:flex;gap:10px;align-items:flex-start;font-size:15.5px;line-height:1.4;color:var(--ink)}
+.prob .ic{flex:none;width:30px;height:30px;border-radius:9px;background:rgba(42,209,181,.12);display:flex;align-items:center;justify-content:center;font-size:16px}
 /* metszet */
 /* a metszet: generált háttérkép (img/esokert-metszet.jpg, 1200×1022) + a beavatkozások rajzolt rétege + HTML-feliratok */
 .scene{background:linear-gradient(180deg,#0b2430 0%,#10384a 40%,#3a2f24 41%,#2a2119 100%);border:1px solid var(--line);border-radius:16px;overflow:hidden;position:relative;aspect-ratio:1200/807}
@@ -49,6 +64,7 @@ p{color:var(--ink2);font-size:15.5px}p+p{margin-top:8px}
 .scenewrap .scene{border:none;border-radius:0}
 /* keretosztáskor a kép a képernyő tetején marad, a csúszkák alatta görgethetők — látszik, mit állítasz */
 .scenewrap.stick{position:sticky;top:6px;z-index:6;box-shadow:0 14px 40px rgba(0,0,0,.55)}
+.colL{display:contents} /* keskeny képernyőn nincs külön oszlop: a kép közvetlenül a main-ben ragad */
 .badges{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;padding:8px 10px;border-top:1px solid var(--line);overflow-x:auto;scrollbar-width:none;min-height:46px}
 .badges::-webkit-scrollbar{display:none}
 .badges .t{font:500 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);white-space:nowrap;flex:none;margin-right:2px}
@@ -97,7 +113,7 @@ footer{max-width:760px;margin:0 auto;padding:0 16px 30px;font-size:12px;color:va
 <body>
 <header><a class="home" id="homelink" href="../jatekok.html">← JÁTÉKOK</a><span class="stamp">TERV-01 · <span data-town>MINTAUTCA</span></span></header>
 <main id="main"></main>
-<footer>A számok illusztratívak, nagyságrendileg a hazai tapasztalatot követik (zápor: 30 mm / 30 perc, 20 hektáros vízgyűjtő). A mérőhálózat-ötlet gdański minta: előbb esőmérők és vízszint-szondák, aztán kétszáz esőkert.</footer>
+<footer><a href="../impresszum.html#jatek-forrasok">Források és adatok a játékokhoz →</a></footer>
 <script>
 /* =====================================================================
    ESŐKERT VAGY CSATORNA? — keretosztás csúszkákkal, utcametszet, vihar
@@ -164,7 +180,7 @@ function sceneBadges(res){
   return `<span class="t">${res?'Ez volt a terv':'A terved a képen'}</span>${badges.join('')}`;
 }
 function scene(storm,res,stick){
-  return `<div class="scenewrap${stick?' stick':''}"><div class="scene ${storm?'storm':''}" id="scene"><img class="bgimg" src="img/esokert-metszet.jpg" alt="Utcametszet: lakóház pincével, esőkert, parkoló, középület, a föld alatt a csatorna">
+  return `<div class="scenewrap${stick?' stick':''}"><div class="scene ${storm?'storm':''}" id="scene"><img class="bgimg" src="img/esokert-metszet.jpg?v=${GV.VER}" alt="Utcametszet: lakóház pincével, esőkert, parkoló, középület, a föld alatt a csatorna">
    <div class="ovl" id="ovl">${sceneOverlay(storm,res)}</div></div><div class="badges" id="badges">${sceneBadges(res)}</div></div>`;
 }
 function plan(){ /* felülnézeti vázlat: hol gyűlik a víz — csak méréssel látszik */
@@ -179,14 +195,13 @@ function plan(){ /* felülnézeti vázlat: hol gyűlik a víz — csak mérésse
   </svg></div>`;}
 
 function render(){
-  if(S.st==='intro'){main.innerHTML=`<div class="sheet"><span class="eyebrow">Lakossági döntésjáték · 2–3 perc</span>
+  if(S.st==='intro'){main.className='';main.innerHTML=`<div class="sheet"><span class="eyebrow">Lakossági döntésjáték · 2–3 perc</span>
    <h1>Esőkert vagy csatorna?</h1>
-   <p>Villámárvíz után ${townTxt==='a település'?'a település':townTxt} 120 millió forintot kap csapadékvíz-kezelésre. A lakók fele nagyobb csövet akar, a másik fele zöldet.</p>
-   <p>Oszd el a keretet, aztán jön a következő vihar — és megmutatja, mit ér a döntésed.</p>
+   <div class="prob"><div><span class="ic">🌧️</span><span>Villámárvíz után ${BUDGET} millió forint jut csapadékvíz-kezelésre.</span></div><div><span class="ic">🗣️</span><span>A lakók fele nagyobb csövet akar, a másik fele zöldet.</span></div><div><span class="ic">⛈️</span><span>Oszd el a keretet — a következő vihar megmutatja, mit ér.</span></div></div>
    <div class="row"><button class="btn" onclick="go('alloc')">Oszd el a 120 milliót</button></div></div>
    ${scene(false,null)}`;return;}
   if(S.st==='alloc'){const t=total(S.a);const over=t>BUDGET;
-   main.innerHTML=`${scene(false,null,true)}
+   main.className='wide';main.innerHTML=`<div class="cols"><div class="colL">${scene(false,null,true)}</div>
    <div class="sheet"><div class="hd"><span class="eyebrow">Keretosztás</span><div class="sum ${over?'over':''}" id="sum"><span>Elköltve</span><b>${t} / ${BUDGET} M</b></div></div><h2>Mire menjen a pénz?</h2>
    <div class="ctl">${M.map(m=>`<label class="m ${S.a[m.k]?'':'off'}" id="m-${m.k}"><b>${m.n}</b><span class="v">${S.a[m.k]} M</span>
      <input type="range" min="0" max="${BUDGET}" step="10" value="${S.a[m.k]}" aria-label="${m.n}" oninput="setA('${m.k}',this)"><small>${m.s}</small></label>`).join('')}</div>
@@ -194,17 +209,17 @@ function render(){
    ${S.meas?plan():''}
    <div class="row"><button class="btn" id="stormbtn" onclick="storm()" ${t===0||over?'disabled':''}>Jön a vihar ⛈</button></div>
    ${S.tries.length?`<div class="hist">Eddigi próbák: ${S.tries.map(x=>x.surplus>0?x.surplus+' m³ felszínen':'száraz').join(' · ')}</div>`:''}
-   </div>`;return;}
+   </div></div>`;return;}
   if(S.st==='result'){const r=S.res;const good=r.surplus===0;
-   main.innerHTML=`${scene(true,r)}
+   main.className='wide';main.innerHTML=`<div class="cols"><div class="colL">${scene(true,r,true)}</div>
    <div class="sheet"><span class="eyebrow">A vihar után</span>
    <h2>${good?'Száraz pincék.':r.basements+' pince ázott el.'}</h2>
    <div class="kpis"><div class="k ${good?'good':'bad'}"><span>Víz a felszínen</span><b>${r.surplus} m³</b></div><div class="k"><span>Visszatartva / elvezetve</span><b>+${r.cap} m³</b></div>
    <div class="k"><span>Ár egy m³-re</span><b>${r.cost} e Ft</b></div><div class="k"><span>Elkészül</span><b>${r.lead} hó</b></div></div>
    <p>Hűsítő hatás az utcán: ${'●'.repeat(r.cool)}${'○'.repeat(5-r.cool)} · Mérés: ${S.meas?'volt — az esőkertek a mélypontokra kerültek':'nem volt — a zöld oda került, ahol hely volt'}</p>
    <div class="verdict ${good&&r.cool>=2?'good':''}">${r.verdict}</div>
-   <div class="row"><button class="btn btn-light" onclick="go('alloc')">Újratervezem</button><button class="btn" onclick="finish()">Ennyi, lezárom</button></div></div>`;return;}
-  if(S.st==='final'){const best=S.tries.reduce((a,b)=>b.surplus<a.surplus||(b.surplus===a.surplus&&b.cool>a.cool)?b:a,S.tries[0]);
+   <div class="row"><button class="btn btn-light" onclick="go('alloc')">Újratervezem</button><button class="btn" onclick="finish()">Ennyi, lezárom</button></div></div></div>`;return;}
+  if(S.st==='final'){main.className='';const best=S.tries.reduce((a,b)=>b.surplus<a.surplus||(b.surplus===a.surplus&&b.cool>a.cool)?b:a,S.tries[0]);
    main.innerHTML=`<div class="sheet"><span class="eyebrow">A hét lenyomata</span>
    <h1>${best.surplus===0?'Megtaláltad a receptet.':'A víz megtalálta a rést.'}</h1>
    <p>${S.tries.length} próba · legjobb: ${best.surplus===0?'száraz utca':best.surplus+' m³ a felszínen'}, ${best.cost} ezer Ft/m³, kész ${best.lead} hónap alatt${best.meas?', méréssel':''}.</p>

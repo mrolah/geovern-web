@@ -12,9 +12,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="jatekok/config.js?v=7"></script>
-<script src="jatekok/gv.js?v=7"></script>
-<script src="jatekok/gvmap.js?v=7"></script>
+<script src="jatekok/config.js?v=8"></script>
+<script src="jatekok/gv.js?v=8"></script>
+<script src="jatekok/gvmap.js?v=8"></script>
 <style>
 :root{
   --bg:#050f14; --teal:#2AD1B5; --amber:#FF9F45; --red:#ff8a7a;
@@ -125,10 +125,15 @@ h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
 }
 /* csökkentett animációnál a kéz statikusan is látszik, csak nem mozog */
 @media(prefers-reduced-motion:reduce){.scard.demo,.hand,.chev{animation:none}.hand{transform:translate(-50%,0)}}
-/* 2. fázis: rétegsáv fent (a közös GV.layerControl chip-sora, ugyanaz, mint a fák-játékban) + mini-kártya lent */
-.lybar{position:fixed;top:calc(62px + var(--sat));left:50%;transform:translateX(-50%);width:100%;max-width:760px;z-index:35;padding:4px 12px 0}
-.lybar .gvl{margin:0}
-.lybar .gvl-head{padding-bottom:4px}
+/* 2. fázis: a rétegsáv a kártya fölött, a lapban (a közös GV.layerControl chip-sora, ugyanott, mint a többi játékban) */
+.sheet .gvl{margin:0 0 10px}
+/* sötét buborék a kattintható jelölőkhöz (iskola) */
+.maplibregl-popup-content{background:rgba(6,17,22,.96);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:500 13.5px/1.4 var(--font);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.maplibregl-popup-content b{color:var(--amber)}
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip{border-top-color:rgba(6,17,22,.96)}
+.maplibregl-popup-anchor-top .maplibregl-popup-tip{border-bottom-color:rgba(6,17,22,.96)}
+.maplibregl-popup-close-button{color:var(--muted);font-size:18px;padding:2px 6px}
+.micon.act{pointer-events:auto;cursor:pointer;width:34px;height:34px;font-size:18px;border-width:2px}
 .minicard .sc-title{font-size:17px;margin-bottom:2px}
 .g-call{display:flex;gap:9px;align-items:flex-start;font-size:14px;color:var(--amber);margin-bottom:10px;line-height:1.4}
 .g-call .ic{font-size:18px;flex:none}
@@ -179,7 +184,7 @@ h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
 /* keskeny képernyőn az állapotsáv jobbra, hogy ne takarja a GEOVERN-gombot */
 @media(max-width:480px){.topbar{left:auto;right:10px;transform:none;gap:10px;padding:8px 14px}}
 /* a hidden attribútum a display:flex szabályokkal szemben is érvényesüljön (rétegsáv, állapotsáv) */
-.lybar[hidden],.topbar[hidden],.revstamp[hidden]{display:none!important}
+.topbar[hidden],.revstamp[hidden]{display:none!important}
 /* v2 (OSM): betöltés, probléma-kiemelés a térképen, lejtő-címkék */
 .g-load{display:flex;align-items:center;gap:12px;justify-content:center;color:var(--muted);font-size:15px;margin-top:6px;min-height:24px}
 .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--faint);border-top-color:var(--teal);border-radius:50%;animation:sp .8s linear infinite;flex:none}
@@ -187,7 +192,7 @@ h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
 .g-src{font:500 11.5px var(--mono);color:var(--faint);margin-top:10px;line-height:1.5}
 .g-town-sub{font:500 12.5px var(--mono);color:var(--faint);margin-top:-10px;margin-bottom:14px}
 /* pulzáló „itt a baj” jel */
-.pulse{position:relative;width:26px;height:26px}
+.pulse{position:relative;width:26px;height:26px;pointer-events:none}
 .pulse::before,.pulse::after{content:'';position:absolute;inset:0;border-radius:50%;border:2.5px solid var(--amber)}
 .pulse::before{animation:pulse 1.8s ease-out infinite}
 .pulse::after{background:rgba(255,159,69,.35)}
@@ -210,7 +215,6 @@ h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
   <span class="tb-t" id="gTimer">⏱ 0:00</span>
   <span class="tb-s" id="gScore">0</span>
 </div>
-<div class="lybar" id="lybar" hidden></div>
 <div class="sheet" id="sheet"></div>
 <div class="revstamp" id="revstamp" hidden></div>
 
@@ -246,7 +250,7 @@ const HOME_VIEW={center:[19.3,47.2],zoom:5.6,pitch:45,bearing:-15};
 /* ---- állapot ---- */
 let G={st:'type',type:null,town:null,i:0,sc:0,ph:1,p1:null,earn:0,ly:[],seen:[],
   t0:null,time:null,hist:[],board:null,rank:null,mats:[],lead:null,marks:[],tutDone:false,loadTxt:''};
-const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const RM=false; /* a térképmozgások mindig animáltak (repülés, nem ugrás); a kártya-animációkat a CSS média-lekérdezés kezeli */
 let map=null,mapReady=false,gTick=null;
 let D=null,E=null,RG=null,DEM=null,MODE='',WEEK=[],MAXPTS=0,SCN=null;
 function fmtTime(s){const m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0');}
@@ -374,7 +378,11 @@ function buildWeek(){
   while(picked.length<3&&leaves.length>picked.length){const l=leaves[Math.floor(rnd()*leaves.length)];if(!picked.includes(l))picked.push(l);}
   S.net=[];picked.forEach(l=>{const p=RG.path(cn,l.n);if(p)S.net.push({pts:p.pts,leaf:l.n,wd:woodD([l.n.x,l.n.y])});});
   if(!S.net.length)return null;
-  S.net.sort((a,b)=>a.wd-b.wd);S.branches=S.net.slice(0,2).map(b=>{const L=plen(b.pts);const t0=Math.max(0,1-280/L);return{pts:subLine(b.pts,t0,1),wd:b.wd,names:nameAt(along(b.pts,Math.max(0,1-140/L))[0],along(b.pts,Math.max(0,1-140/L))[1],16)};});
+  S.net.sort((a,b)=>a.wd-b.wd);
+  const brOf=b=>{const L=plen(b.pts);const t0=Math.max(0,1-280/L);const m=along(b.pts,Math.max(0,1-140/L));return{pts:subLine(b.pts,t0,1),wd:b.wd,names:nameAt(m[0],m[1],16)};};
+  /* két külső szakasz: lehetőleg két különböző nevű utcán */
+  const first=brOf(S.net[0]);let second=null;for(let i=1;i<S.net.length;i++){const c=brOf(S.net[i]);if((c.names[0]||'')!==(first.names[0]||'')){second=c;break;}}
+  if(!second&&S.net.length>1)second=brOf(S.net[1]);S.branches=second?[first,second]:[first];
   S.out=[];S.branches.forEach((b,k)=>{const n=k?7:12;for(let i=0;i<n;i++){const p=sideAt(b.pts,i/(n-1),(i%2?7:-7)+(rnd()-0.5)*8);S.out.push([p[0],p[1],0.6+rnd()*0.4]);}});
   for(let i=0;i<3;i++){const p=sideAt(S.main.line,0.25+0.25*i,i%2?7:-7);S.out.push([p[0],p[1],0.4]);}
   S.storm=S.branches.map(b=>{const pts=[];b.pts.forEach(p=>{pts.push(p);for(let a=0;a<6;a++)pts.push([p[0]+Math.cos(a)*90,p[1]+Math.sin(a)*90]);});return zone(pts,30)||circle(b.pts[0][0],b.pts[0][1],120);});
@@ -388,7 +396,10 @@ function buildWeek(){
   const care=D.pois.filter(p=>/^(nursing_home|social_facility|doctors|clinic|hospital)$/.test(p.k)&&Math.abs(p.x)<RAD&&Math.abs(p.y)<RAD);
   if(care.length){const nc=care.slice().sort((a,b)=>Math.hypot(a.x-S.hot[0],a.y-S.hot[1])-Math.hypot(b.x-S.hot[0],b.y-S.hot[1]))[0];if(Math.hypot(nc.x-S.hot[0],nc.y-S.hot[1])>200)S.old.push(circle(nc.x,nc.y,130));}
   S.care=care.length?care.map(p=>({x:p.x,y:p.y,ic:p.ic||'🏥',n:p.n})):[{x:S.hot[0]+70,y:S.hot[1]-50,ic:'🏥',n:'Háziorvosi rendelő'},{x:S.hot[0]-90,y:S.hot[1]+60,ic:'👵',n:'Idősek klubja'}];
-  S.heatPts=GVMAP.heatGrid(E,RAD,30).features.map(f=>{const xy=GVMAP.toXY(f.geometry.coordinates[0],f.geometry.coordinates[1]);return[xy[0],xy[1],f.properties.w];});
+  /* hőtérkép: a település saját skáláján (a felső 40 % világít) — zöld faluban is látszik a hősziget */
+  S.heatPts=(()=>{const v=[];for(let x=-RAD;x<=RAD;x+=30)for(let y=-RAD;y<=RAD;y+=30){if(E.inWater(x,y)||E.roadDist(x,y)>110)continue;v.push([x,y,E.heat(x,y)]);}
+    if(!v.length)return[];const hs=v.map(q=>q[2]).sort((a,b)=>a-b);const q=hs[Math.floor(hs.length*0.6)],mx=hs[hs.length-1];const span=Math.max(0.08,mx-q);
+    return v.filter(p=>p[2]>q).map(p=>[p[0],p[1],+Math.min(1,(p[2]-q)/span).toFixed(2)]);})();
   const hn=RG.nearest(S.hot[0],S.hot[1]);S.hotIso=reach(hn,400,800).lines;
   /* péntek */
   S.zones=[{poly:S.flood,c:S.floodC,n:S.slope.name+' alja'},{poly:smooth(circle(S.junc[0],S.junc[1],130),1),c:S.junc,n:S.juncNames.length?S.juncNames.join(' × '):'a csomópont'},{poly:S.old[0],c:S.hot,n:S.hotName||'a hőgóc'}];
@@ -397,7 +408,8 @@ function buildWeek(){
   const main=S.main.name,sq=S.square.name;
   const hu=GVMAP.hu;const sqRa=S.square.generic?'a központba':'a '+hu(sq,'ra');
   const jn=S.juncNames.length===2?S.juncNames.join(' × '):S.juncNames.length===1?S.juncNames[0]+'i':'';
-  const b1=S.branches[0].names[0]||'külső szakasz',b2=S.branches[1]?(S.branches[1].names[0]||'második külső szakasz'):'második szakasz';
+  const n1=S.branches[0].names[0]||'',n2=S.branches[1]?(S.branches[1].names[0]||''):'';
+  const stormWhere=(n1&&n2&&n1!==n2)?'a viharzóna két szakaszán: '+n1+' és '+n2:(n1?'a '+n1+' két külső szakaszán':'a két külső szakaszon');
   return[
    {ic:'💧',disc:'Vízgazdálkodás',best:'R',pts:100,bonus:50,t:'Villámárvíz után',setup:'Három utca ázott el. Egy beavatkozásra van pénz.',
     chips:[['💬','A '+main+' lakói gátat követelnek'],['📋','A biztosítói jelentés még sehol']],
@@ -406,22 +418,27 @@ function buildWeek(){
       {ic:'⛰️',n:'Lejtő',type:'slope',line:S.slope.line,top:S.slope.top,bottom:S.slope.bottom,drop:S.slope.drop,name:S.slope.name}],
     call:'A károk a '+S.slope.name+' lejtőjén sorakoznak'+(S.slope.drop?' ('+Math.round(S.slope.drop)+' m szintkülönbség)':'')+' — fent van a baj.',
     why:'A gát a tünetet kezeli, a tisztítás az okot.',
-    focus:{pts:S.slope.line.concat(S.flood),spot:S.slope.bottom,tag:'ide folyik · '+S.dmg.length+' kár',bearing:-20}},
+    focus:{pts:S.slope.line.concat(S.flood),spot:S.slope.bottom,tag:'ide folyik · '+S.dmg.length+' kár',bearing:-20},
+    pre:{pts:S.flood.concat([S.mainPt]),spot:S.floodC,tag:'három utca ázott el',poly:S.flood,bearing:-20}},
    {ic:'🚌',disc:'Mobilitás',best:'L',pts:100,bonus:50,t:'Iskolai biztonság',setup:'Egy helyszínre jut forgalombiztonsági keret.',
     chips:[['💬','400 aláírás: zebrát az '+(S.schoolKind==='iskola'?'iskola':'óvoda')+' elé!'],['🚓','A rendőrség máshova mutat']],
     L:{ic:'🚧',t:'Csillapítás a csomópontban'+(jn?' ('+jn+')':''),cell:S.junc},R:{ic:'🚸',t:'Zebra az '+(S.schoolKind==='iskola'?'iskolához':'óvodához'),cell:S.schoolPt},
     layers:[{ic:'📍',n:'Balesetek',type:'pts',c:C_HEAT,pts:S.acc},{ic:'⏱',n:'Gyaloglás',type:'iso',c:C_TEAL,lines:S.schoolIso},
-      {ic:'🎒',n:S.schoolKind==='iskola'?'Iskolautak':'Óvodautak',type:'line',c:C_GOLD,lines:S.routes,markers:[{x:S.school.x,y:S.school.y,ic:S.schoolKind==='iskola'?'🏫':'🧒',n:S.school.n||(S.schoolKind==='iskola'?'Iskola':'Óvoda')}]}],
+      {ic:'🎒',n:S.schoolKind==='iskola'?'Iskolautak':'Óvodautak',type:'line',c:C_GOLD,lines:S.routes}],
+    markers:[{x:S.school.x,y:S.school.y,ic:S.schoolKind==='iskola'?'🏫':'🧒',c:C_GOLD,n:S.school.n||(S.schoolKind==='iskola'?'Iskola':'Óvoda'),
+      info:'<b>'+esc(S.school.n||(S.schoolKind==='iskola'?'Az iskola':'Az óvoda'))+'</b><br>'+(S.schoolKind==='iskola'?'Általános iskola':'Óvoda')+' · 400 aláírás: zebrát a kapu elé<br>A legközelebbi főúti csomópont '+S.juncD+' méterre.'}],
     call:'A balesetek 70%-a a '+(jn?jn+' ':'')+'kereszteződésben, '+S.juncD+' méterre — az '+(S.schoolKind==='iskola'?'iskolánál':'óvodánál')+' már van lámpa.',
     why:'Oda kell, ahol a kockázat mérhető — nem ahol a hang nagy.',
-    focus:{pts:[S.junc,S.schoolPt,[S.school.x,S.school.y]],spot:S.junc,tag:'balesetgóc · '+S.juncD+' m',bearing:10}},
+    focus:{pts:[S.junc,S.schoolPt,[S.school.x,S.school.y]],spot:S.junc,tag:'balesetgóc · '+S.juncD+' m',bearing:10},
+    pre:{pts:[S.junc,S.schoolPt,[S.school.x,S.school.y]],spot:[S.school.x,S.school.y],tag:(S.schoolKind==='iskola'?'az iskola':'az óvoda')+' · 400 aláírás',bearing:10}},
    {ic:'⚡',disc:'Energetika',best:'R',pts:100,bonus:50,t:'Vihar után sötét',setup:'Órákig nem volt áram. Egy szakaszra van keret.',
     chips:[['💬','A boltok földkábelt követelnek a '+hu(main,'ra')],['📋','A hibalista még feldolgozás alatt']],
     L:{ic:'🔌',t:'Földkábel a '+hu(main,'n'),cell:along(S.main.line,0.5)},R:{ic:'🌲',t:'A két hibás külső szakasz megerősítése',cell:S.branchMid},
-    layers:[{ic:'📍',n:'Kimaradások',type:'pts',c:C_HEAT,pts:S.out},{ic:'⚡',n:'Hálózat',type:'line',c:C_GOLD,lines:S.net.map(b=>b.pts),dash:[3,2]},{ic:'🌪️',n:'Viharzóna',type:'poly',c:C_VULN,polys:S.storm,op:0.3}],
-    call:'A kimaradások 85%-a a viharzóna két szakaszán: '+b1+(S.branches[1]?' és '+b2:'')+' — az erdőszél fái a vezeték fölött.',
+    layers:[{ic:'📍',n:'Áramkimaradások',type:'pts',c:C_HEAT,pts:S.out},{ic:'⚡',n:'Hálózat',type:'line',c:C_GOLD,lines:S.net.map(b=>b.pts),dash:[3,2]},{ic:'🌪️',n:'Viharzóna',type:'poly',c:C_VULN,polys:S.storm,op:0.3}],
+    call:'Az áramkimaradások 85%-a '+stormWhere+' — az erdőszél fái a vezeték fölött.',
     why:'A gócszakasz erősítése az egész hálózatot stabilizálja.',
-    focus:{pts:S.branches.reduce((a,b)=>a.concat(b.pts),[]).concat(S.storm.reduce((a,b)=>a.concat(b),[])),spot:S.branchMid,tag:'viharzóna · '+S.out.length+' hiba',bearing:-35}},
+    focus:{pts:S.branches.reduce((a,b)=>a.concat(b.pts),[]).concat(S.storm.reduce((a,b)=>a.concat(b),[])),spot:S.branchMid,tag:'viharzóna · '+S.out.length+' hiba',bearing:-35},
+    pre:{pts:S.out.map(p=>[p[0],p[1]]).concat([along(S.main.line,0.5)]),spot:S.branchMid,tag:'órákig nem volt áram',poly:zone(S.out.map(p=>[p[0],p[1]]),40),bearing:-35}},
    {ic:'🌡️',disc:'Klíma × Egészség',best:'L',pts:150,bonus:50,t:'Hőhullám jön',setup:'Két hét múlva hőség. Egy csomagra futja.',
     chips:[['💬','A '+sq+' árnyékolása régi ígéret'],['🩺','A háziorvosok idős rosszulléteket jeleznek']],
     L:{ic:'🧊',t:'Hűsítő pontok a hőszigeten'+(S.hotName?' ('+S.hotName+')':''),cell:S.hot},R:{ic:'⛱️',t:'Árnyékolás '+sqRa,cell:S.square.pt},
@@ -429,9 +446,10 @@ function buildWeek(){
       {ic:'🏥',n:'Gondozók',type:'markers',c:C_VULN,markers:S.care},{ic:'⏱',n:'Elérés',type:'iso',c:C_TEAL,lines:S.hotIso}],
     call:'A hőgóc és az idősek ugyanott'+(S.hotName?' ('+S.hotName+')':'')+' — a '+sq+' kívül esik.',
     why:'Ott ment életet, ahol hő, kor és elérés metszi egymást.',
-    focus:{pts:S.old[0].concat([S.square.pt]),spot:S.hot,tag:'hőgóc · idősek',bearing:25}},
+    focus:{pts:S.old[0].concat([S.square.pt]),spot:S.hot,tag:'hőgóc · idősek',bearing:25},
+    pre:{pts:S.old[0].concat([S.square.pt]),spot:null,bearing:25}},
    {ic:'💰',disc:'Víz × Mobilitás × Pénzügy',best:'R',pts:250,bonus:75,t:'A nagy klímacsomag',setup:'A testület ma dönt a teljes keretről.',
-    chips:[['💬','A mérnökök terve: egy nagy tározó'],['🤝','Az egyenlő osztás ellen senki se szólna']],
+    chips:[['💬','A mérnökök terve: egy nagy tározó'],['🤝','Az egyenlő osztás ellen senki sem szólna']],
     L:{ic:'🏗️',t:'Minden a tározóra',cell:S.tank},R:{ic:'🎯',t:'Csomag a top-3 zónára',cell:S.hot},
     layers:[{ic:'🟥',n:'Kockázat',type:'poly',c:C_HEAT,polys:S.zones.map(z=>z.poly),ops:[0.4,0.34,0.3]},
       {ic:'🔥',n:'Incidensek',type:'heat',pts:S.dmg.concat(S.acc,S.out.slice(0,10))},
@@ -440,7 +458,8 @@ function buildWeek(){
       {ic:'⏱',n:'Elérés',type:'iso',c:C_TEAL,lines:reach(RG.nearest(0,0),500,1000).lines}],
     call:'Három szakág — ugyanaz a 3 zóna: '+S.zones.map(z=>z.n).join(', ')+'.',
     why:'A tározó egy kockázat — a csomag a metszetre költ.',
-    focus:{pts:S.zones.reduce((a,z)=>a.concat(z.poly),[]),spot:S.hot,tag:'a 3 zóna metszete',bearing:-15}}
+    focus:{pts:S.zones.reduce((a,z)=>a.concat(z.poly),[]),spot:S.hot,tag:'a 3 zóna metszete',bearing:-15},
+    pre:{pts:S.zones.reduce((a,z)=>a.concat(z.poly),[]),spot:null,bearing:-15}}
   ];
 }
 
@@ -459,23 +478,24 @@ function legacyWeek(){
    {ic:'💧',disc:'Vízgazdálkodás',best:'R',pts:100,bonus:50,t:'Villámárvíz után',setup:'Három utca ázott el. Egy beavatkozásra van pénz.',
     chips:[['💬','A Fő utca lakói gátat követelnek'],['📋','A biztosítói jelentés még sehol']],L:{ic:'🧱',t:'Mobil gát a Fő utcára',cell:cell(0.5,-0.55)},R:{ic:'🧹',t:'Árkok, átereszek tisztítása',cell:cell(-1.2,1.0)},
     layers:[{ic:'🌊',n:'Elöntés',type:'poly',c:C_WATER,polys:P([[0.3,-0.5,0.8,11],[1.1,-0.9,0.6,12]]),op:0.33},{ic:'📍',n:'Károk',type:'pts',c:C_HEAT,pts:pts([[0.6,-0.7,12,0.4],[-0.5,0.35,5,0.3],[-1.1,0.85,4,0.25]],13)}],
-    call:'A károk a lejtő vonalán sorakoznak — fent van a baj.',why:'A gát a tünetet kezeli, a tisztítás az okot.',focus:{pts:[cell(-1.5,1.2),cell(1.5,-1.2)],spot:cell(0.6,-0.7),tag:'ide folyik',bearing:-20}},
+    call:'A károk a lejtő vonalán sorakoznak — fent van a baj.',why:'A gát a tünetet kezeli, a tisztítás az okot.',focus:{pts:[cell(-1.5,1.2),cell(1.5,-1.2)],spot:cell(0.6,-0.7),tag:'ide folyik',bearing:-20},pre:{pts:[cell(-0.5,0.3),cell(1.6,-1.4)],spot:cell(0.6,-0.7),tag:'három utca ázott el',bearing:-20}},
    {ic:'🚌',disc:'Mobilitás',best:'L',pts:100,bonus:50,t:'Iskolai biztonság',setup:'Egy helyszínre jut forgalombiztonsági keret.',
     chips:[['💬','400 aláírás: zebrát az iskola elé!'],['🚓','A rendőrség máshova mutat']],L:{ic:'🚧',t:'Csillapítás a csomópontban',cell:cell(1.2,-0.8)},R:{ic:'🚸',t:'Zebra az iskolához',cell:cell(-0.75,0.28)},
     layers:[{ic:'📍',n:'Balesetek',type:'pts',c:C_HEAT,pts:pts([[1.2,-0.8,14,0.35],[0,0,4,1.2]],21)},{ic:'⏱',n:'Gyaloglás',type:'isopoly',c:C_TEAL,rings:iso(-0.6,0.4,[0.8,1.6],22)},{ic:'🎒',n:'Iskolautak',type:'line',c:C_GOLD,lines:path([[[2.4,-1.4],[1.2,-0.8],[0.2,0],[-0.6,0.4]],[[2.2,0.8],[1.2,-0.8]]],23)}],
-    call:'A balesetek 70%-a a csomópontban — az iskolánál már van lámpa.',why:'Oda kell, ahol a kockázat mérhető — nem ahol a hang nagy.',focus:{pts:[cell(-1,1),cell(2.6,-1.6)],spot:cell(1.2,-0.8),tag:'balesetgóc',bearing:10}},
+    call:'A balesetek 70%-a a csomópontban — az iskolánál már van lámpa.',why:'Oda kell, ahol a kockázat mérhető — nem ahol a hang nagy.',focus:{pts:[cell(-1,1),cell(2.6,-1.6)],spot:cell(1.2,-0.8),tag:'balesetgóc',bearing:10},pre:{pts:[cell(-1,1),cell(2.6,-1.6)],spot:cell(-0.75,0.28),tag:'az iskola · 400 aláírás',bearing:10},
+    markers:[{x:cell(-0.75,0.28)[0],y:cell(-0.75,0.28)[1],ic:'🏫',c:C_GOLD,n:'Iskola',info:'<b>Az iskola</b><br>400 aláírás: zebrát a kapu elé'}]},
    {ic:'⚡',disc:'Energetika',best:'R',pts:100,bonus:50,t:'Vihar után sötét',setup:'Órákig nem volt áram. Egy szakaszra van keret.',
     chips:[['💬','A boltok földkábelt követelnek a főutcára'],['📋','A hibalista még feldolgozás alatt']],L:{ic:'🔌',t:'Földkábel a főutcán',cell:cell(0.2,0)},R:{ic:'🌲',t:'A két hibás külső szakasz megerősítése',cell:cell(-1.6,0.9)},
-    layers:[{ic:'📍',n:'Kimaradások',type:'pts',c:C_HEAT,pts:pts([[-1.6,0.9,12,0.4],[-1.0,1.4,6,0.3],[0.3,0,3,0.8]],101)},{ic:'⚡',n:'Hálózat',type:'line',c:C_GOLD,lines:path([[[-2.4,1.6],[-1.6,0.9],[-0.6,0.3],[0.2,0],[1.4,-0.4]]],102),dash:[3,2]},{ic:'🌪️',n:'Viharzóna',type:'poly',c:C_VULN,polys:P([[-1.6,0.9,0.7,103],[-1.0,1.4,0.5,104]]),op:0.3}],
-    call:'A kimaradások 85%-a a viharzóna két szakaszán keletkezik.',why:'A gócszakasz erősítése az egész hálózatot stabilizálja.',focus:{pts:[cell(-2.6,1.8),cell(1.6,-0.6)],spot:cell(-1.6,0.9),tag:'viharzóna',bearing:-35}},
+    layers:[{ic:'📍',n:'Áramkimaradások',type:'pts',c:C_HEAT,pts:pts([[-1.6,0.9,12,0.4],[-1.0,1.4,6,0.3],[0.3,0,3,0.8]],101)},{ic:'⚡',n:'Hálózat',type:'line',c:C_GOLD,lines:path([[[-2.4,1.6],[-1.6,0.9],[-0.6,0.3],[0.2,0],[1.4,-0.4]]],102),dash:[3,2]},{ic:'🌪️',n:'Viharzóna',type:'poly',c:C_VULN,polys:P([[-1.6,0.9,0.7,103],[-1.0,1.4,0.5,104]]),op:0.3}],
+    call:'Az áramkimaradások 85%-a a viharzóna két szakaszán keletkezik.',why:'A gócszakasz erősítése az egész hálózatot stabilizálja.',focus:{pts:[cell(-2.6,1.8),cell(1.6,-0.6)],spot:cell(-1.6,0.9),tag:'viharzóna',bearing:-35},pre:{pts:[cell(-2.6,1.8),cell(1.6,-0.6)],spot:cell(-1.6,0.9),tag:'órákig nem volt áram',bearing:-35}},
    {ic:'🌡️',disc:'Klíma × Egészség',best:'L',pts:150,bonus:50,t:'Hőhullám jön',setup:'Két hét múlva hőség. Egy csomagra futja.',
     chips:[['💬','A tér árnyékolása régi ígéret'],['🩺','A háziorvosok idős rosszulléteket jeleznek']],L:{ic:'🧊',t:'Hűsítő pontok a hőszigeten',cell:cell(2.1,0.55)},R:{ic:'⛱️',t:'Árnyékolás a főtérre',cell:cell(0,0)},
     layers:[{ic:'🔥',n:'Hőtérkép',type:'heat',pts:pts([[2.2,0.6,40,0.7],[0.9,1.4,12,0.5]],31)},{ic:'👵',n:'75+ lakók',type:'poly',c:C_VULN,polys:P([[2.2,0.55,0.75,32],[2.0,1.2,0.5,33],[0.6,-1.1,0.45,34]]),op:0.3},{ic:'🏥',n:'Gondozók',type:'pts',c:C_VULN,pts:pts([[2.15,0.5,3,0.25]],35),big:true},{ic:'⏱',n:'Elérés',type:'isopoly',c:C_TEAL,rings:iso(2.0,0.5,[0.7,1.4],36)}],
-    call:'A hőgóc és az idősek ugyanott — a tér kívül esik.',why:'Ott ment életet, ahol hő, kor és elérés metszi egymást.',focus:{pts:[cell(-0.5,-0.5),cell(3,1.6)],spot:cell(2.1,0.55),tag:'hőgóc',bearing:25}},
+    call:'A hőgóc és az idősek ugyanott — a tér kívül esik.',why:'Ott ment életet, ahol hő, kor és elérés metszi egymást.',focus:{pts:[cell(-0.5,-0.5),cell(3,1.6)],spot:cell(2.1,0.55),tag:'hőgóc',bearing:25},pre:{pts:[cell(-0.5,-0.5),cell(3,1.6)],spot:null,bearing:25}},
    {ic:'💰',disc:'Víz × Mobilitás × Pénzügy',best:'R',pts:250,bonus:75,t:'A nagy klímacsomag',setup:'A testület ma dönt a teljes keretről.',
-    chips:[['💬','A mérnökök terve: egy nagy tározó'],['🤝','Az egyenlő osztás ellen senki se szólna']],L:{ic:'🏗️',t:'Minden a tározóra',cell:cell(0.4,-0.6)},R:{ic:'🎯',t:'Csomag a top-3 zónára',cell:cell(2.2,0.6)},
+    chips:[['💬','A mérnökök terve: egy nagy tározó'],['🤝','Az egyenlő osztás ellen senki sem szólna']],L:{ic:'🏗️',t:'Minden a tározóra',cell:cell(0.4,-0.6)},R:{ic:'🎯',t:'Csomag a top-3 zónára',cell:cell(2.2,0.6)},
     layers:[{ic:'🟥',n:'Kockázat',type:'poly',c:C_HEAT,polys:P([[2.2,0.6,0.8,41],[1.2,-0.8,0.6,42],[0.4,-0.6,0.55,43],[-1.4,0.8,0.45,44]]),ops:[0.42,0.34,0.26,0.14]},{ic:'🔥',n:'Incidensek',type:'heat',pts:pts([[2.2,0.6,30,0.6],[1.2,-0.8,22,0.45],[0.5,-0.6,16,0.4]],45)},{ic:'🚌',n:'Kritikus utak',type:'line',c:C_GOLD,lines:path([[[2.6,1.2],[2.2,0.6],[1.2,-0.8],[0,0]],[[-1.8,-0.6],[0,0],[1.2,-0.8]]],46)},{ic:'🌱',n:'Helyszínek',type:'pts',c:C_GREEN,pts:pts([[2.2,0.6,3,0.3],[1.2,-0.8,2,0.2],[0.4,-0.6,2,0.2]],47),big:true},{ic:'⏱',n:'Elérés',type:'isopoly',c:C_TEAL,rings:iso(0.1,0.05,[1.0,1.9],48)}],
-    call:'Három szakág — ugyanaz a 3 zóna.',why:'A tározó egy kockázat — a csomag a metszetre költ.',focus:{pts:[cell(-2,-1.5),cell(3,1.8)],spot:cell(2.2,0.6),tag:'a 3 zóna',bearing:-15}}
+    call:'Három szakág — ugyanaz a 3 zóna.',why:'A tározó egy kockázat — a csomag a metszetre költ.',focus:{pts:[cell(-2,-1.5),cell(3,1.8)],spot:cell(2.2,0.6),tag:'a 3 zóna',bearing:-15},pre:{pts:[cell(-2,-1.5),cell(3,1.8)],spot:null,bearing:-15}}
   ];
 }
 
@@ -495,23 +515,26 @@ async function pickTown(T){
   for(const tw of order){
     G.town={name:tw[0],ll:[tw[1],tw[2]]};setLoad(tw[0]+' térképének betöltése…');
     if(!map||!mapReady){await new Promise(r=>setTimeout(r,800));if(!map||!mapReady)break;}
+    GVMAP.setCenter(G.town.ll);
+    const demP=GVMAP.demLoad(G.town.ll,RAD,14).catch(()=>({ok:false,at:()=>null})); /* a domborzat a repülés alatt töltődik */
     const c={center:G.town.ll,zoom:14.4,pitch:0,bearing:0};
-    if(RM)map.jumpTo(c);else map.flyTo(Object.assign({duration:tried.length?1800:3000,essential:true},c));
-    await onceMoveEnd();await GVMAP.whenIdle(map,8000);
-    GVMAP.setCenter(G.town.ll);D=GVMAP.fromTiles(map);
-    const why=validateBase(D);if(why){tried.push(tw[0]+': '+why);setLoad(tw[0]+': '+why+' — másik település…');await new Promise(r=>setTimeout(r,600));continue;}
+    map.flyTo(Object.assign({duration:tried.length?1400:2200,essential:true},c));
+    await onceMoveEnd();await GVMAP.whenIdle(map,5000);
+    D=GVMAP.fromTiles(map);
+    const why=validateBase(D);if(why){tried.push(tw[0]+': '+why);setLoad(tw[0]+': '+why+' — másik település…');await new Promise(r=>setTimeout(r,500));continue;}
     setLoad('Domborzat: '+tw[0]);
-    try{DEM=await GVMAP.demLoad(G.town.ll,RAD,14);}catch(e){DEM={ok:false,at:()=>null};}
+    DEM=await demP;
     E=GVMAP.evaluators(D);RG=GVMAP.roadGraph(D,{half:RAD});
     let w=null;try{w=buildWeek();}catch(e){console.warn('buildWeek',e);w=null;}
     if(!w){tried.push(tw[0]+': sík vagy hiányos');setLoad(tw[0]+': nincs lejtő vagy intézmény — másik település…');await new Promise(r=>setTimeout(r,600));continue;}
     WEEK=w;MODE='osm';break;
   }
   if(MODE!=='osm'){G.town={name:order[0][0],ll:[order[0][1],order[0][2]]};GVMAP.setCenter(G.town.ll);WEEK=legacyWeek();MODE='legacy';
-    if(map&&mapReady){const c={center:G.town.ll,zoom:14.4,pitch:0,bearing:0};RM?map.jumpTo(c):map.flyTo(Object.assign({duration:1500,essential:true},c));}}
+    if(map&&mapReady){const c={center:G.town.ll,zoom:14.4,pitch:0,bearing:0};map.flyTo(Object.assign({duration:1500,essential:true},c));}}
+  /* a helyes válasz oldala napról napra véletlen — ne lehessen a mintát megtanulni */
+  WEEK.forEach(r=>{if(Math.random()<0.5){const t=r.L;r.L=r.R;r.R=t;r.best=r.best==='L'?'R':'L';}});
   G.tried=tried;MAXPTS=WEEK.reduce((a,r)=>a+r.pts+r.bonus,0);
-  if(map&&mapReady){const c={center:G.town.ll,zoom:15.0,pitch:58,bearing:-17};RM?map.jumpTo(c):map.easeTo(Object.assign({duration:1800,essential:true},c));}
-  G.st='town';render();
+  G.st='town';render(); /* a kamera marad, ahol a betöltés történt — a döntött nézetbe a hétfő indításakor repül */
 }
 
 /* ---- forduló-rétegek az állandó térképen (méter → földrajzi koordináta itt) ---- */
@@ -555,18 +578,33 @@ function removeRoundLayers(r){
   r.layers.forEach((_,i)=>{['gf'+i,'gl'+i,'gp'+i,'gh'+i].forEach(id=>{if(map.getLayer(id))map.removeLayer(id);});if(map.getSource('gs'+i))map.removeSource('gs'+i);(LYM[i]||[]).forEach(m=>{try{m.remove();}catch(e){}});});
   LYM=[];clearPulse();
 }
-/* probléma-kiemelés: a kamera odarepül, a hely pulzál */
+/* probléma-kiemelés: a kamera odarepül (mindig repül, sosem ugrik), a hely pulzál */
 let PULSE=null;
 function clearPulse(){if(PULSE){try{PULSE.remove();}catch(e){}PULSE=null;}}
-function focusRound(r,close){
-  if(!mapReady||!r.focus)return;const f=r.focus;
-  if(close){map.flyTo({center:LL(f.spot),zoom:Math.min(16.8,Math.max(map.getZoom()+0.6,16)),pitch:55,bearing:f.bearing||-15,offset:[0,-Math.round(Math.min(window.innerHeight*0.17,150))],duration:RM?0:1700,essential:true});return;}
-  const b=bbox(f.pts.concat([f.spot]));const pad=70;
+function focusTo(f,close){
+  if(!mapReady||!f)return;
+  if(close&&f.spot){map.flyTo({center:LL(f.spot),zoom:Math.min(16.8,Math.max(map.getZoom()+0.6,16)),pitch:55,bearing:f.bearing||-15,offset:[0,-Math.round(Math.min(window.innerHeight*0.17,150))],duration:1700,essential:true});return;}
+  const b=bbox(f.pts.concat(f.spot?[f.spot]:[]));const pad=70;
   const sw=LL([b[0]-pad,b[1]-pad]),ne=LL([b[2]+pad,b[3]+pad]);
-  let cam=null;try{cam=map.cameraForBounds([sw,ne],{padding:{top:150,bottom:Math.min(window.innerHeight*0.46,340),left:30,right:30},bearing:f.bearing||-15,maxZoom:17});}catch(e){}
-  if(cam){const o={center:cam.center,zoom:Math.max(13.8,cam.zoom-0.15),bearing:cam.bearing,pitch:50,duration:RM?0:2200,essential:true};RM?map.jumpTo(o):map.flyTo(o);}
-  clearPulse();PULSE=marker('pulse','<span class="tag">'+esc(f.tag||'itt')+'</span>',f.spot).addTo(map);
+  let cam=null;try{cam=map.cameraForBounds([sw,ne],{padding:{top:90,bottom:Math.min(window.innerHeight*0.5,380),left:30,right:30},bearing:f.bearing||-15,maxZoom:17});}catch(e){}
+  if(cam)map.flyTo({center:cam.center,zoom:Math.max(13.8,cam.zoom-0.15),bearing:cam.bearing,pitch:50,duration:2000,essential:true});
+  clearPulse();if(f.spot&&f.tag)PULSE=marker('pulse','<span class="tag">'+esc(f.tag)+'</span>',f.spot).addTo(map);
 }
+function focusRound(r,close){focusTo(r.focus,close);}
+/* 1. fázis: csak a problémás terület látszik (szaggatott körvonal + jelölő), adatréteg nélkül; a nap jelölői (pl. iskola) végig */
+let DAYM=[];
+function addPre(r){
+  if(!mapReady)return;removePre();
+  if(r.pre&&r.pre.poly){map.addSource('pre',{type:'geojson',data:FC([polyF(r.pre.poly)])});
+    map.addLayer({id:'pre-f',type:'fill',source:'pre',paint:{'fill-color':C_HEAT,'fill-opacity':0.08}});
+    map.addLayer({id:'pre-l',type:'line',source:'pre',paint:{'line-color':C_HEAT,'line-width':2,'line-dasharray':[2,1.5],'line-opacity':.9}});}
+  (r.markers||[]).forEach(mk=>{const m=marker('micon act',mk.ic,[mk.x,mk.y]);const el=m.getElement();el.style.setProperty('--c',mk.c||C_GOLD);el.title=mk.n||'';
+    if(mk.info){el.addEventListener('click',ev=>{ev.stopPropagation();new maplibregl.Popup({offset:20,closeButton:true}).setLngLat(LL([mk.x,mk.y])).setHTML(mk.info).addTo(map);});}
+    m.addTo(map);DAYM.push(m);});
+}
+function removePre(){if(!mapReady)return;['pre-l','pre-f'].forEach(id=>{if(map.getLayer(id))map.removeLayer(id);});if(map.getSource('pre'))map.removeSource('pre');}
+function removeDayMarkers(){DAYM.forEach(m=>{try{m.remove();}catch(e){}});DAYM=[];document.querySelectorAll('.maplibregl-popup').forEach(p=>p.remove());}
+function showMarks(v){G.marks.forEach(m=>{try{v?m.addTo(map):m.remove();}catch(e){}});}
 /* következmény-jel: a döntés nyomot hagy a városon */
 function addMark(cell,ok){
   const el=document.createElement('div');el.className='cq '+(ok?'ok':'bad');el.textContent=ok?'✓':'✗';
@@ -579,8 +617,10 @@ function gSelType(k){G.type=k;const T=TYPES.find(x=>x.k===k);G.st='load';render(
 function gStart(){
   G.i=0;G.sc=0;G.hist=[];G.ph=1;G.p1=null;clearMarks();
   G.t0=Date.now();G.time=null;gStartTimer();
-  G.st='q';render();
+  G.st='q';render();startDay();
 }
+/* egy nap kezdete: a problémás terület jelölése, a kamera odarepül */
+function startDay(){const r=WEEK[G.i];addPre(r);focusTo(r.pre||r.focus,false);}
 function commitSwipe(dir){
   G.tutDone=true;
   if(navigator.vibrate)try{navigator.vibrate(12);}catch(e){}
@@ -588,7 +628,7 @@ function commitSwipe(dir){
   if(G.ph===1){
     G.p1=dir;G.ph=2;
     G.ly=r.layers.map(()=>false);G.seen=r.layers.map(()=>false);
-    render();addRoundLayers(r);focusRound(r,false);
+    render();removePre();addRoundLayers(r);focusRound(r,false);
   }else{
     const ok=dir===r.best;
     const bonus=(ok&&G.p1===r.best)?r.bonus:0;
@@ -596,7 +636,7 @@ function commitSwipe(dir){
     G.hist.push({day:DAYS_HU[G.i],ic:r.ic,earn:G.earn,max:r.pts+r.bonus,bonus,pick:dir,ok});
     removeRoundLayers(r);
     addMark(r[dir].cell,ok);if(!ok)addMark(r[r.best].cell,true);
-    if(mapReady)map.flyTo({center:LL(r[r.best].cell),zoom:Math.min(16.5,Math.max(15,map.getZoom())),pitch:55,offset:[0,-Math.round(Math.min(window.innerHeight*0.12,110))],duration:RM?0:1500,essential:true});
+    if(mapReady)map.flyTo({center:LL(r[r.best].cell),zoom:Math.min(16.5,Math.max(15,map.getZoom())),pitch:55,offset:[0,-Math.round(Math.min(window.innerHeight*0.12,110))],duration:1500,essential:true});
     G.st='rev';G.lastOk=ok;render();
   }
   tickUI();
@@ -606,19 +646,19 @@ function gNext(){
   clearTimeout(G.stampTO);clearTimeout(G.stampTO2);
   const rs=document.getElementById('revstamp');const s=rs&&rs.querySelector('.st');
   if(s){s.classList.add('out');G.stampTO2=setTimeout(()=>{rs.hidden=true;},900);}else if(rs)rs.hidden=true;
-  if(G.i+1<WEEK.length){G.i++;G.ph=1;G.p1=null;G.st='q';render();
-    if(map&&mapReady&&!RM)map.easeTo({center:G.town.ll,zoom:15.0,pitch:58,bearing:-17+G.i*6,duration:1600});}
+  removeDayMarkers();showMarks(false); /* a ✓/✗ jelek csak a hét végi nézetben látszanak */
+  if(G.i+1<WEEK.length){G.i++;G.ph=1;G.p1=null;G.st='q';render();startDay();}
   else{
     G.time=gElapsed();clearInterval(gTick);
-    if(map&&mapReady&&!RM)map.flyTo({zoom:13.8,pitch:45,bearing:-10,center:G.town.ll,duration:2800,essential:true});
-    G.st='legacy';render();
+    if(map&&mapReady)map.flyTo({zoom:13.8,pitch:45,bearing:-10,center:G.town.ll,duration:2800,essential:true});
+    showMarks(true);G.st='legacy';render();
   }
   tickUI();
 }
 function gReplay(){
   clearTimeout(G.stampTO);clearTimeout(G.stampTO2);
   document.getElementById('revstamp').hidden=true;
-  clearMarks();clearPulse();
+  clearMarks();clearPulse();removePre();removeDayMarkers();
   if(G.st==='q'&&G.ph===2)removeRoundLayers(WEEK[G.i]);
   G.st='type';G.type=null;G.town=null;G.sc=0;G.hist=[];G.t0=null;G.time=null;G.i=0;G.ph=1;
   G.lead=null;G.board=null;G.rank=null;G.offline=false;WEEK=[];MODE='';SCN=null;
@@ -673,8 +713,8 @@ function srcNote(){
   return 'Illusztratív minta-rétegek — a térképadat most nem volt elérhető'+(G.tried&&G.tried.length?' ('+esc(G.tried[0])+')':'')+'.';
 }
 function render(){
-  const sheet=document.getElementById('sheet');const lybar=document.getElementById('lybar');const topbar=document.getElementById('topbar');
-  lybar.hidden=true;topbar.hidden=(G.st==='type'||G.st==='town'||G.st==='load');
+  const sheet=document.getElementById('sheet');const topbar=document.getElementById('topbar');
+  topbar.hidden=(G.st==='type'||G.st==='town'||G.st==='load');
   if(G.st==='type'){
     sheet.innerHTML=`<div class="panel g-center"><h2>Krízishét 🗓️</h2><p class="sub">5 nap, 5 döntés. Válassz települést:</p>
       <div class="g-types">${TYPES.map(x=>`<button onclick="gSelType('${x.k}')"><span class="ic">${x.ic}</span><b>${x.n}</b><span>${x.s}</span></button>`).join('')}</div></div>`;
@@ -688,9 +728,8 @@ function render(){
   }
   if(G.st==='town'){const T=TYPES.find(x=>x.k===G.type);
     sheet.innerHTML=`<div class="panel g-center"><div style="font-size:46px;margin-bottom:4px">${T.ic}</div><h2>${esc(G.town.name)}</h2>
-      ${MODE==='osm'&&SCN?`<p class="g-town-sub">${esc(SCN.main.name)} · ${esc(SCN.school.n||(SCN.schoolKind==='iskola'?'iskola':'óvoda'))} · ${esc(SCN.square.name)}</p>`:''}
       <p class="sub" style="margin:6px 0 18px">Te vagy a polgármester. Jön egy nehéz hét.</p>
-      <button class="btn btn-wide" onclick="gStart()">Kezdjük a hétfőt →</button><p class="g-src">${srcNote()}</p></div>`;
+      <button class="btn btn-wide" onclick="gStart()">Kezdjük a hétfőt →</button>${MODE==='legacy'?`<p class="g-src">Illusztratív minta — a térképadat most nem volt elérhető.</p>`:''}</div>`;
     return;
   }
   if(G.st==='q'){
@@ -703,13 +742,13 @@ function render(){
         <div class="sc-hint">← húzd el a kártyát →</div></div></div>`;
       bindSwipe('scard',commitSwipe);
     }else{
-      lybar.hidden=false;mountLayerBar(r);const n=r.layers.length;
-      sheet.innerHTML=`<div class="swipewrap"><div class="scard minicard" id="scard">${stamps(r)}
+      const n=r.layers.length;
+      sheet.innerHTML=`<div id="lybar"></div><div class="swipewrap"><div class="scard minicard" id="scard">${stamps(r)}
         <div class="chevs"><span class="chev cL">‹</span><span class="chev cR">›</span></div>
         <div class="g-call pending" id="gCall"><span class="ic">🔒</span><span>Kapcsold be mindet (0/${n})</span></div>
         <div class="sc-title">${r.ic} Végleges döntés?</div>${optRow(r)}
         <div class="sc-hint">nézd a térképet · kapcsolgasd a rétegeket · aztán húzd</div></div></div>`;
-      bindSwipe('scard',commitSwipe);
+      mountLayerBar(r);bindSwipe('scard',commitSwipe);
     }
     return;
   }

@@ -176,7 +176,10 @@ out geom;`;}
     const off=best.road.major?9:7;return{x:best.x+nx*off*side,y:best.y+ny*off*side,d:best.d,road:best.road};}
 
   /* ---------- rétegek GeoJSON-ba ---------- */
-  function heatGrid(E,half,step){const f=[];for(let x=-half;x<=half;x+=step)for(let y=-half*0.85;y<=half*0.85;y+=step){if(E.inWater(x,y)||E.roadDist(x,y)>110)continue;const w=E.heat(x,y);if(w>0.55){f.push({type:'Feature',properties:{w:+Math.min(1,(w-0.55)/0.4).toFixed(2)},geometry:{type:'Point',coordinates:toLL(x,y)}});}}return{type:'FeatureCollection',features:f};}
+  /* hőrács: a település saját skáláján — a küszöb a mintavett értékek 60. percentilise (de legfeljebb 0,55), így zöld faluban is látszik a hősziget */
+  function heatGrid(E,half,step){const v=[];for(let x=-half;x<=half;x+=step)for(let y=-half*0.85;y<=half*0.85;y+=step){if(E.inWater(x,y)||E.roadDist(x,y)>110)continue;v.push([x,y,E.heat(x,y)]);}
+    if(!v.length)return{type:'FeatureCollection',features:[]};const hs=v.map(q=>q[2]).sort((a,b)=>a-b);const thr=Math.min(0.55,hs[Math.floor(hs.length*0.6)]),mx=hs[hs.length-1],span=Math.max(0.15,mx-thr);
+    const f=v.filter(q=>q[2]>thr).map(q=>({type:'Feature',properties:{w:+Math.min(1,(q[2]-thr)/span).toFixed(2)},geometry:{type:'Point',coordinates:toLL(q[0],q[1])}}));return{type:'FeatureCollection',features:f};}
   function polysFC(polys){return{type:'FeatureCollection',features:polys.filter(p=>p.length>3).map(p=>({type:'Feature',properties:{},geometry:{type:'Polygon',coordinates:[p.map(q=>toLL(q[0],q[1]))]}}))};}
   function circleFC(pts,r){return{type:'FeatureCollection',features:pts.map(p=>{const ring=[];for(let i=0;i<=24;i++){const a=i/24*Math.PI*2;ring.push(toLL(p.x+Math.cos(a)*r*(p.w||1),p.y+Math.sin(a)*r*(p.w||1)));}return{type:'Feature',properties:{w:p.w||1},geometry:{type:'Polygon',coordinates:[ring]}};})};}
   function pointsFC(pts){return{type:'FeatureCollection',features:pts.map(p=>({type:'Feature',properties:{},geometry:{type:'Point',coordinates:toLL(p.x,p.y)}}))};}
@@ -285,7 +288,7 @@ out geom;`;}
       return{ok:true,at,min:mn,max:mx,tiles:got.length};});}
   /* domborzat-árnyékolás az alaptérképre (a lejtő látszik) */
   function addHillshade(map,opts){opts=opts||{};if(map.getSource('gv-dem'))return;
-    try{map.addSource('gv-dem',{type:'raster-dem',tiles:[DEM_URL],encoding:'terrarium',tileSize:256,maxzoom:15,attribution:'Terrain: Mapzen/AWS'});
+    try{map.addSource('gv-dem',{type:'raster-dem',tiles:[DEM_URL],encoding:'terrarium',tileSize:256,maxzoom:14,attribution:'Terrain: Mapzen/AWS'}); /* maxzoom 14: ugyanazok a csempék, mint a demLoad-é → böngésző-cache */
       const layers=map.getStyle().layers||[];let before=null;for(const l of layers){if(l.type==='line'||l.type==='symbol'){before=l.id;break;}}
       map.addLayer({id:'gv-hillshade',type:'hillshade',source:'gv-dem',paint:{'hillshade-exaggeration':opts.exaggeration||0.55,'hillshade-shadow-color':'#000000','hillshade-highlight-color':opts.highlight||'#6a8f9e','hillshade-accent-color':'#102a35','hillshade-illumination-direction':335}},before||undefined);}catch(e){}}
 

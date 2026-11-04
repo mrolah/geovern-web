@@ -4,7 +4,7 @@
    · névtelen munkamenet-azonosító
    · eredmények mentése: localStorage (mindig) + opcionális webhook (config.js)
    · CSV-export az összes helyben mentett eredményről
-   · közös záró-panel: „Változott a véleményed?”, megosztás, következő játék
+   · közös záró-panel: „Változott a véleményed?” + a következő játék gombja (megosztás egyelőre kikapcsolva)
    · rétegkapcsoló chip-sor (layerControl): jelmagyarázat és be/ki kapcsoló egyben — minden játékban ugyanaz (v3.4)
    A fájl nem függ semmitől; a config.js előtte töltődik be (ha hiányzik, üres config).
    ===================================================================== */
@@ -114,7 +114,9 @@
     {id:'ugymenet',file:'jatekok/ugymenet.html',n:'Ügymenet',min:'3–4 perc'}
   ];
   const inSub=/\/jatekok\//.test(location.pathname);
-  function qs(){return TOWN.name?('?telepules='+encodeURIComponent(TOWN.name)):'';}
+  /* a játékok közti linkek verziószámot kapnak (?v=…), hogy a GitHub Pages 10 perces gyorsítótára ne a régi HTML-t adja */
+  const VER='8';
+  function qs(){return '?'+(TOWN.name?'telepules='+encodeURIComponent(TOWN.name)+'&':'')+'v='+VER;}
   function urlFor(file){return (inSub?'../':'')+file+qs();}
   function hubUrl(){return (inSub?'../':'')+'jatekok.html'+qs();}
   function nextGame(id){const i=GAMES.findIndex(g=>g.id===id);return GAMES[(i+1)%GAMES.length];}
@@ -131,12 +133,7 @@
         <button type="button" onclick="GV.opinion(this,'reszben')">Részben</button>
         <button type="button" onclick="GV.opinion(this,'nem')">Nem, eddig is így gondoltam</button>
       </div>
-      <div class="gv-end-row">
-        <button type="button" class="gv-share" onclick="GV.share(${JSON.stringify(opts.share||'')})">Megosztom</button>
-        <a class="gv-next" href="${esc(urlFor(nx.file))}">Következő: ${esc(nx.n)} →</a>
-      </div>
-      <a class="gv-hub" href="${esc(hubUrl())}">← Vissza a játékokhoz</a>
-      <div class="gv-note">Névtelen játék. Az eredmény a te böngésződben mentődik${CFG.WEBHOOK?' és névtelenül a kiadóhoz is eljut':''}.</div>
+      <div class="gv-end-next"><a class="gv-next" href="${esc(urlFor(nx.file))}">Következő: ${esc(nx.n)} →</a></div>
     </div>`;
   }
   function opinion(btn,v){const box=btn.closest('.gv-end');box.querySelectorAll('.gv-end-ops button').forEach(b=>b.classList.toggle('on',b===btn));
@@ -154,11 +151,10 @@
   .gv-end-ops button{font:600 13px/1.2 inherit;padding:9px 12px;border-radius:100px;border:1.5px solid var(--gv-line,rgba(128,128,128,.4));
     background:transparent;color:inherit;cursor:pointer}
   .gv-end-ops button.on{background:var(--gv-accent,#2AD1B5);color:var(--gv-accent-ink,#04211d);border-color:var(--gv-accent,#2AD1B5)}
-  .gv-end-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
-  .gv-share{font:700 14px inherit;padding:11px 16px;border-radius:12px;border:none;cursor:pointer;background:var(--gv-accent,#2AD1B5);color:var(--gv-accent-ink,#04211d)}
-  .gv-next{font:700 14px inherit;padding:11px 14px;border-radius:12px;border:1.5px solid var(--gv-line,rgba(128,128,128,.4));color:inherit;text-decoration:none}
-  .gv-hub{display:inline-block;font:500 13px inherit;color:inherit;opacity:.75;text-decoration:none;margin-top:2px}
-  .gv-note{font-size:11.5px;opacity:.6;margin-top:10px;line-height:1.4}
+  /* a következő játék gombja külön blokkban, jól elválasztva (megosztás egyelőre nincs) */
+  .gv-end-next{margin-top:22px;padding-top:16px;border-top:1px solid var(--gv-line,rgba(128,128,128,.35))}
+  .gv-next{display:flex;align-items:center;justify-content:center;min-height:50px;font:700 16px inherit;padding:12px 18px;border-radius:14px;border:none;background:var(--gv-accent,#2AD1B5);color:var(--gv-accent-ink,#04211d);text-decoration:none}
+  .gv-share{display:none}
   .gv-town{font-weight:700}`;
   const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
 
@@ -220,7 +216,7 @@
     document.querySelectorAll('[data-town-hide]').forEach(el=>{if(!TOWN.name)el.style.display='none';});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fillTown);else fillTown();
 
-  window.GV={CFG,TOWN,GAMES,sid,record,results,clearResults,exportCSV,toCSV,urlFor,hubUrl,nextGame,endPanel,opinion,share,esc,fillTown,clearTown,forgetTown,layerControl,
+  window.GV={CFG,TOWN,VER,GAMES,sid,record,results,clearResults,exportCSV,toCSV,urlFor,hubUrl,nextGame,endPanel,opinion,share,esc,fillTown,clearTown,forgetTown,layerControl,
     rng(seed){let t=0;for(let i=0;i<seed.length;i++)t=(t*31+seed.charCodeAt(i))>>>0;return()=>{t+=0x6D2B79F5;let r=Math.imul(t^t>>>15,1|t);
       r^=r+Math.imul(r^r>>>7,61|r);return((r^r>>>14)>>>0)/4294967296;};},
     fmtFt(m){return (m>=1000?(m/1000).toFixed(m%1000?1:0).replace('.',',')+' Mrd':m+' M')+' Ft';}

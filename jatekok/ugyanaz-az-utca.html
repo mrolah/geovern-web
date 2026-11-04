@@ -12,9 +12,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="config.js?v=7"></script>
-<script src="gv.js?v=7"></script>
-<script src="gvmap.js?v=7"></script>
+<script src="config.js?v=8"></script>
+<script src="gv.js?v=8"></script>
+<script src="gvmap.js?v=8"></script>
 <style>
 :root{--bg:#050f14;--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b4a;--blue:#4aa8ff;--text:#EAF4F4;--muted:#9BB7BC;--faint:#5E7A80;
   --card:rgba(6,17,22,.9);--line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
@@ -142,10 +142,10 @@ function initMap(){map=GVMAP.createMap({container:'map',center,zoom:14.8,pitch:5
     GVMAP.whenIdle(m,7000).then(()=>GVMAP.loadData(m,T,center,850)).then(d=>{D=d;
       if(D.ok&&!D.water.some(p=>GVMAP.pointInPoly(0,0,p))){E=GVMAP.evaluators(D);MODE='osm';}else MODE='proc';
       buildZones();if(S.st==='loading')S.st='intro';render();addZones();fitAll(true);});},()=>document.body.classList.add('maperr'));}
+/* a keret illesztése ugrás nélkül: a célkamerát kiszámoljuk, és egy mozdulattal odaúszunk (nincs közbenső pitch 0 ugrás) */
 function fitAll(anim){if(!mapReady)return;const sheet=document.querySelector('.panel');const bottom=Math.min(window.innerHeight*0.5,(sheet?sheet.offsetHeight:260)+30);
-  map.setPadding({top:60,bottom,left:0,right:0});map.jumpTo({pitch:0,bearing:0});
-  map.fitBounds([GVMAP.toLL(-560,-540),GVMAP.toLL(560,540)],{padding:{top:10,bottom:10,left:14,right:14},duration:0,maxZoom:16.5});
-  map.easeTo({pitch:48,bearing:-15,zoom:map.getZoom()+0.45,center:GVMAP.toLL(0,60),duration:anim?600:0});}
+  let cam=null;try{cam=map.cameraForBounds([GVMAP.toLL(-560,-540),GVMAP.toLL(560,540)],{padding:{top:70,bottom:bottom+10,left:14,right:14},maxZoom:16.5});}catch(e){}
+  if(!cam)return;map.easeTo({center:cam.center,zoom:cam.zoom+0.45,pitch:48,bearing:-15,duration:anim?900:0,essential:true});}
 window.addEventListener('resize',()=>fitAll(true));
 let zonesAdded=false;
 function addZones(){if(zonesAdded||!mapReady||!Z.length)return;zonesAdded=true;
