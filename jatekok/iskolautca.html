@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
-<script src="config.js?v=4"></script>
-<script src="gv.js?v=4"></script>
+<script src="config.js?v=6"></script>
+<script src="gv.js?v=6"></script>
 <style>
 :root{--sun:#050f14;--navy:#EAF4F4;--coral:#FF9F45;--cream:rgba(15,74,87,.2);--mint:#2AD1B5;--line:rgba(42,209,181,.25);--card:rgba(6,17,22,.85);--muted:#9BB7BC;
   --font:'Roboto',system-ui,sans-serif;--disp:'Roboto',system-ui,sans-serif;--gv-accent:var(--mint);--gv-accent-ink:#04211d;--gv-line:var(--line)}
@@ -51,14 +51,15 @@ p{font-size:15.5px;color:var(--muted)}p+p{margin-top:8px}
 .mapbox{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#0b1c22;margin-top:12px}
 .mapbox svg{display:block;width:100%;height:auto}
 .hot{cursor:pointer}
-.hot circle.r{fill:#0b1c22;stroke:#8FB0B5;stroke-width:1.5}
-.hot circle.p{fill:#FF9F45}
-.hot text{font:700 12px var(--font);fill:#EAF4F4;pointer-events:none}
-.hot.pick circle.r{fill:#FF9F45;stroke:#FF9F45;stroke-width:2}.hot.pick text{fill:#2b1400}
+.hot circle.r{fill:rgba(11,28,34,.92);stroke:#EAF4F4;stroke-width:4}
+.hot circle.p{fill:#FF9F45;stroke:#2b1400;stroke-width:3}
+.hot line.ln{stroke:#EAF4F4;stroke-width:4;opacity:.85}
+.hot text{font:700 46px var(--font);fill:#EAF4F4;pointer-events:none}
+.hot.pick circle.r{fill:#FF9F45;stroke:#FF9F45;stroke-width:4}.hot.pick text{fill:#2b1400}
 .rev .hot:not(.pick){opacity:.45}
+.fear{fill:#FF9F45;opacity:.3}.acc{fill:#ff5c5c;stroke:#fff;stroke-width:3}
 .ml{font:700 11px var(--font);fill:#8FB0B5;letter-spacing:.06em}
 .ml.p{font:900 13px var(--font);fill:#EAF4F4}
-.fear{fill:#FF9F45;opacity:.28}.acc{fill:#ff5c5c;stroke:#fff;stroke-width:1}
 .leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);margin-top:8px}
 .leg i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 .big{font:900 56px/1 var(--disp);color:var(--mint)}
@@ -73,16 +74,17 @@ footer{max-width:680px;margin:0 auto;padding:0 16px 30px;font-size:12px;color:va
 <body>
 <header><a class="home" id="homelink" href="../jatekok.html">← JÁTÉKOK</a><div class="prog" id="prog"></div></header>
 <main id="main"></main>
-<footer>A számok mért értékelésekből származnak: New York SRTS (Pediatrics, 2013), Barcelona (AJPH, 2023), London 20 mph (BMJ, 2009), Bécs és Salzburg iskolautca-értékelések, CROSS (166 iskola, 2025), holland táblakísérlet (SWOV, 2017), Koppenhága iskolaút-felmérés (2020). A vázlat-térkép kitalált település.</footer>
+<footer>A számok mért értékelésekből származnak: New York SRTS (Pediatrics, 2013), Barcelona (AJPH, 2023), London 20 mph (BMJ, 2009), Bécs és Salzburg iskolautca-értékelések, CROSS (166 iskola, 2025), holland táblakísérlet (SWOV, 2017), Koppenhága iskolaút-felmérés (2020). A madártávlati kép kitalált iskolakörnyék (illusztráció).</footer>
 <script>
 /* =====================================================================
    ISKOLAUTCA — 5 jelenet: hol félsz? · mit teszel? · hová tűnnek az autók? · mit javít? · támogatnád?
    ===================================================================== */
 document.getElementById('homelink').href=GV.hubUrl();
 const townTxt=GV.TOWN.name?GV.esc(GV.TOWN.name):'a település';
+/* A pontok a háttérkép (img/iskolautca-terkep.jpg, 1200×900) koordinátáiban: iskola bal fent, főút lent, körforgalom jobbra, bringaút a jobb szélen. */
 const HOT=[
- {id:1,x:118,y:128,dx:-22,dy:-16,n:'Az iskolakapu'},{id:2,x:160,y:164,dx:-20,dy:14,n:'Zebra a kapu előtt'},{id:3,x:300,y:198,dx:-26,dy:-20,n:'A kereszteződés 300 méterre'},
- {id:4,x:62,y:200,dx:22,dy:14,n:'Buszmegálló'},{id:5,x:232,y:98,dx:-16,dy:-18,n:'Szülői „kitétel” a parkolónál'},{id:6,x:300,y:60,dx:-24,dy:0,n:'Kerékpárút torkolata'}];
+ {id:1,x:398,y:392,dx:-78,dy:-70,n:'Az iskolakapu'},{id:2,x:539,y:632,dx:-80,dy:62,n:'Zebra a kapu előtt'},{id:3,x:953,y:613,dx:-82,dy:-80,n:'A kereszteződés 300 méterre'},
+ {id:4,x:211,y:551,dx:72,dy:56,n:'Buszmegálló'},{id:5,x:812,y:331,dx:-82,dy:-64,n:'Szülői „kitétel” a parkolónál'},{id:6,x:1069,y:476,dx:-84,dy:-20,n:'Kerékpárút torkolata'}];
 const Q2=[
  {l:'A',t:'„Vigyázz, gyerekek!” tábla és villogó a kapu elé',s:'Olcsó, látványos, a szülők kérik',pts:10,
   r:'<b>Két hét múlva nulla.</b> A holland „gyerekes” táblák 478 ezer mérésben az első napokban −0,75 km/h-t hoztak, két hét után semmit. Torontóban a villogó iskolazóna-tábla mellett a sofőrök 85%-a továbbra is 47 km/h-val ment.'},
@@ -105,31 +107,15 @@ let S={st:'intro',step:0,fear:null,a2:null,a3:null,a4:null,support:null,meas:[],
 const main=document.getElementById('main');
 function prog(n){document.getElementById('prog').innerHTML=Array.from({length:5},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('');}
 
+/* rendőrségi balesetpontok (tanítási idő): a körforgalomban sűrűsödnek, egy-egy a buszmegállónál, a zebránál, a parkoló kijáratánál */
+const ACC=[[935,585],[975,590],[920,622],[985,632],[950,652],[905,600],[1000,606],[950,606],[930,640],[1006,642],[215,577],[560,656],[870,384]];
 function sketch(reveal){
-  return `<div class="mapbox ${reveal?'rev':''}"><svg viewBox="0 0 360 270" aria-label="Vázlat az iskola környékéről">
-   <rect width="360" height="270" fill="#0b1c22"/>
-   <!-- utcák -->
-   <rect x="0" y="178" width="360" height="40" fill="#263238"/><rect x="280" y="0" width="40" height="270" fill="#263238"/>
-   <rect x="90" y="130" width="190" height="22" fill="#2f3f47"/><rect x="210" y="60" width="22" height="118" fill="#2f3f47"/>
-   <g stroke="#9BB7BC" stroke-width="1.5" stroke-dasharray="8 8" opacity=".6"><line x1="0" y1="198" x2="360" y2="198"/><line x1="300" y1="0" x2="300" y2="270"/></g>
-   <!-- zebrák -->
-   <g fill="#cfd8dc">${[0,1,2,3,4].map(i=>`<rect x="${150+i*5}" y="150" width="3" height="28"/>`).join('')}${[0,1,2,3,4,5].map(i=>`<rect x="${285+i*5}" y="178" width="3" height="40"/>`).join('')}</g>
-   <!-- iskola -->
-   <rect x="40" y="40" width="150" height="80" rx="4" fill="#0f2a33" stroke="#2AD1B5" stroke-width="1.5"/>
-   <text x="115" y="86" text-anchor="middle" class="ml" font-size="14" fill="#EAF4F4">ISKOLA</text>
-   <rect x="108" y="120" width="20" height="10" fill="#2AD1B5"/>
-   <!-- parkolók -->
-   <rect x="236" y="68" width="40" height="56" rx="3" fill="#1b2a31" stroke="#8FB0B5" stroke-width="1" stroke-dasharray="3 2"/><text x="256" y="100" text-anchor="middle" class="ml p">P</text><text x="256" y="112" text-anchor="middle" class="ml" font-size="8">SZÜLŐI</text>
-   <rect x="8" y="138" width="60" height="30" rx="3" fill="#1b2a31" stroke="#8FB0B5" stroke-width="1" stroke-dasharray="3 2"/><text x="38" y="158" text-anchor="middle" class="ml p">P</text>
-   <!-- park, buszmegálló, bringaút -->
-   <rect x="20" y="226" width="120" height="30" rx="6" fill="#1f6b43"/><text x="80" y="245" text-anchor="middle" class="ml" fill="#EAF4F4">PARK</text>
-   <rect x="46" y="184" width="30" height="10" fill="#EAF4F4"/><text x="61" y="176" text-anchor="middle" class="ml">BUSZ</text>
-   <path d="M330 20 V 240" stroke="#2AD1B5" stroke-width="3" stroke-dasharray="6 4" fill="none"/><text x="326" y="254" class="ml" fill="#2AD1B5" text-anchor="end">BRINGAÚT</text>
-   <text x="300" y="16" class="ml" text-anchor="middle">FŐÚT</text>
-   ${reveal?`<g><circle class="fear" cx="118" cy="128" r="34"/><circle class="fear" cx="160" cy="164" r="26"/><circle class="fear" cx="256" cy="98" r="18"/>
-     ${[[296,190],[304,206],[290,200],[310,195],[298,214],[286,186],[306,186],[300,200],[292,208],[312,208],[68,204],[160,206],[232,70]].map(p=>`<circle class="acc" cx="${p[0]}" cy="${p[1]}" r="4"/>`).join('')}</g>`:''}
-   <!-- pontok: kis jel a helyen + szám-címke mellette -->
-   ${HOT.map(h=>`<g class="hot ${S.fear===h.id?'pick':''}" onclick="pickFear(${h.id})"><circle class="p" cx="${h.x}" cy="${h.y}" r="3.5"/><circle class="r" cx="${h.x+h.dx}" cy="${h.y+h.dy}" r="11"/><text x="${h.x+h.dx}" y="${h.y+h.dy+4}" text-anchor="middle">${h.id}</text></g>`).join('')}
+  return `<div class="mapbox ${reveal?'rev':''}"><svg viewBox="0 0 1200 900" aria-label="Madártávlati kép az iskola környékéről">
+   <image href="img/iskolautca-terkep.jpg" x="0" y="0" width="1200" height="900" preserveAspectRatio="xMidYMid slice"/>
+   ${reveal?`<g><circle class="fear" cx="398" cy="392" r="82"/><circle class="fear" cx="539" cy="632" r="62"/><circle class="fear" cx="812" cy="331" r="52"/>
+     ${ACC.map(p=>`<circle class="acc" cx="${p[0]}" cy="${p[1]}" r="11"/>`).join('')}</g>`:''}
+   <!-- pontok: kis jel a helyen + szám-címke mellette (vonallal összekötve) -->
+   ${HOT.map(h=>`<g class="hot ${S.fear===h.id?'pick':''}" onclick="pickFear(${h.id})"><line class="ln" x1="${h.x}" y1="${h.y}" x2="${h.x+h.dx}" y2="${h.y+h.dy}"/><circle class="p" cx="${h.x}" cy="${h.y}" r="12"/><circle class="r" cx="${h.x+h.dx}" cy="${h.y+h.dy}" r="42"/><text x="${h.x+h.dx}" y="${h.y+h.dy+16}" text-anchor="middle">${h.id}</text></g>`).join('')}
   </svg></div>`;
 }
 function optList(qs,picked,revealed,fn){return `<div class="opts">${qs.map((o,i)=>`<button class="opt ${picked===i?'pick':''} ${revealed?(o.pts>=100?'best':picked===i?'':'bad'):''}" ${revealed?'disabled':''} onclick="${fn}(${i})"><span class="l">${o.l}</span><span><b>${o.t}</b>${o.s?`<small>${o.s}</small>`:''}</span></button>`).join('')}</div>`;}
@@ -142,8 +128,8 @@ function render(){
    <p>Öt gyors kérdés — mindegyikre mért válasz van, Bécstől New Yorkig. Nézzük, hol hallgat a megérzés a hangerőre.</p>
    <div class="row"><button class="btn" onclick="go('fear')">Indítás</button></div></div>`;return;}
   if(T==='fear'){prog(1);const rv=S.fearRevealed;main.innerHTML=`<div class="card"><span class="eyebrow">1 / 5 · Észlelt veszély</span>
-   <h2>Hol a legveszélyesebb pont a gyerekeknek?</h2><p>Koppints a számra a vázlaton. A kis narancs pont a hely, a szám a címkéje.</p>${sketch(rv)}
-   ${rv?`<div class="leg"><span><i style="background:#FF9F45;opacity:.5"></i>Ahol a szülők félnek</span><span><i style="background:#ff5c5c"></i>Rendőrségi balesetek (tanítási idő)</span><span><i style="background:#1b2a31;border:1px dashed #8FB0B5"></i>P = parkoló</span></div>
+   <h2>Hol a legveszélyesebb pont a gyerekeknek?</h2><p>Koppints a számra a képen. A narancs pont a hely, a szám a címkéje.</p>${sketch(rv)}
+   ${rv?`<div class="leg"><span><i style="background:#FF9F45;opacity:.5"></i>Ahol a szülők félnek</span><span><i style="background:#ff5c5c"></i>Rendőrségi balesetek (tanítási idő)</span></div>
    <div class="reveal"><b>${S.fear===3?'Te a balesettérképre mutattál — ritka.':'A legtöbben a kapura mutatnak. A baleset nem ott van.'}</b>Koppenhága 13 691 szülői pontot gyűjtött arról, hol félnek — a rendőrségi balesethelyek „csak ritkán” estek ezekre. Torontóban a gyerekbalesetek 62%-a iskolaidőn kívül történt. Két réteg kell: a félelem térképe és a baleseteké — és a döntésnek mindkettőt látnia kell.</div>
    <div class="row"><button class="btn" onclick="go('q2')">Tovább</button></div>`:`<div class="row"><button class="btn" onclick="revealFear()" ${S.fear?'':'disabled'}>Mutasd a két réteget</button></div>`}</div>`;return;}
   if(T==='q2'){prog(2);const rv=S.a2!=null;main.innerHTML=`<div class="card"><span class="eyebrow">2 / 5 · A döntés</span>

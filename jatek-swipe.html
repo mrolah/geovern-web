@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GEOVERN — Krízishét</title>
-<meta name="description" content="Krízishét — mobil döntésjáték: 5 nap, 5 balra-jobbra húzós polgármesteri döntés, élő 3D várostérképen.">
+<meta name="description" content="Krízishét — mobil döntésjáték: 5 nap, 5 balra-jobbra húzós polgármesteri döntés, a település valódi utcáin, iskolájánál, lejtőin (OpenStreetMap + domborzat).">
 <meta name="theme-color" content="#050f14">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,6 +12,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="jatekok/config.js?v=6"></script>
+<script src="jatekok/gvmap.js?v=6"></script>
 <style>
 :root{
   --bg:#050f14; --teal:#2AD1B5; --amber:#FF9F45; --red:#ff8a7a;
@@ -188,6 +190,27 @@ h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
   .sheet{bottom:24px}
   h2{font-size:27px}
 }
+/* a hidden attribútum a display:flex szabályokkal szemben is érvényesüljön (rétegsáv, állapotsáv) */
+.lybar[hidden],.topbar[hidden],.revstamp[hidden]{display:none!important}
+/* v2 (OSM): betöltés, probléma-kiemelés a térképen, lejtő-címkék */
+.g-load{display:flex;align-items:center;gap:12px;justify-content:center;color:var(--muted);font-size:15px;margin-top:6px;min-height:24px}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--faint);border-top-color:var(--teal);border-radius:50%;animation:sp .8s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+.g-src{font:500 11.5px var(--mono);color:var(--faint);margin-top:10px;line-height:1.5}
+.g-town-sub{font:500 12.5px var(--mono);color:var(--faint);margin-top:-10px;margin-bottom:14px}
+/* pulzáló „itt a baj” jel */
+.pulse{position:relative;width:26px;height:26px}
+.pulse::before,.pulse::after{content:'';position:absolute;inset:0;border-radius:50%;border:2.5px solid var(--amber)}
+.pulse::before{animation:pulse 1.8s ease-out infinite}
+.pulse::after{background:rgba(255,159,69,.35)}
+@keyframes pulse{0%{transform:scale(.6);opacity:1}100%{transform:scale(2.6);opacity:0}}
+.pulse .tag{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);white-space:nowrap;font:700 12.5px var(--font);color:#fff;background:rgba(6,17,22,.9);border:1.5px solid var(--amber);border-radius:100px;padding:5px 10px;box-shadow:0 4px 14px rgba(0,0,0,.6)}
+.pulse.ok::before,.pulse.ok::after,.pulse.ok .tag{border-color:var(--teal)}.pulse.ok::after{background:rgba(42,209,181,.3)}
+/* címkék a térképen (lejtő teteje/alja, iskola, csomópont…) */
+.mlab{font:700 12px var(--font);color:#fff;background:rgba(6,17,22,.88);border:1.5px solid var(--c,#8FB0B5);border-radius:100px;padding:4px 9px;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.55);pointer-events:none}
+.mlab b{color:var(--c,#8FB0B5)}
+.micon{width:30px;height:30px;border-radius:50%;background:rgba(6,17,22,.88);border:1.5px solid var(--c,#c77bff);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 3px 10px rgba(0,0,0,.55);pointer-events:none}
+@media(prefers-reduced-motion:reduce){.pulse::before{animation:none;opacity:.6}}
 </style>
 </head>
 <body>
@@ -205,239 +228,387 @@ h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
 
 <script>
 /* =====================================================
-   KRÍZISHÉT — swipe-döntésjáték (elszeparált teszt)
-   Balra/jobbra húzás · egyetlen állandó 3D térkép ·
-   a döntések nyomot hagynak a városon
+   KRÍZISHÉT v2 — swipe-döntésjáték VALÓS adaton
+   · a település utcái, iskolája, főtere, patakja és domborzata a térkép
+     vektorcsempéiből (OpenStreetMap) és a Terrarium-domborzatcsempékből jön
+   · minden nap forgatókönyve a valós helyekre épül: a Fő utca a tényleges
+     főutca nevét viseli, a károk a valódi lejtőn sorakoznak, a balesetgóc az
+     iskolához legközelebbi főúti csomópont, a vezeték az utcák mentén fut
+   · a probléma felvetésekor a kamera odarepül, és a hely pulzáló jelet kap
+   · ha egy sorsolt település adata nem elég (nincs lejtő, iskola…), a játék
+     másikat sorsol a típus listájából; ha a csempék sem jönnek: illusztratív minta
    ===================================================== */
 /* Google Apps Script webhook — a Krízishét eredményei Google Sheetbe
    (beüzemelés: google-sheets-setup.md, „Krízishét" szakasz; üresen helyi rangsor fut) */
 const SHEET_WEBHOOK='https://script.google.com/macros/s/AKfycbx7Lq52ZcTT4ymVIErqxAgnADyNcStpUlG0Z0pt-07C2qzP4jlR1IeY24HjXI_FZv8C/exec';
 const SHOW_TIME=true;
 const DAYS_HU=['Hétfő','Kedd','Szerda','Csütörtök','Péntek'];
+/* Településlista típusonként: domborzatos, patakos, jó OSM-lefedettségű helyek — a játék induláskor ellenőrzi
+   (utcák, nevesített főutca, iskola, lejtő), és ha valami hiányzik, a lista következő tagját sorsolja. */
 const TYPES=[
- {k:'k',ic:'🏡',n:'Község',s:'5 ezer alatt',towns:[['Alsómocsolád',18.243,46.312],['Tihany',17.889,46.913],['Hollókő',19.586,48.089]]},
- {k:'v',ic:'🏘️',n:'Kisváros',s:'5–20 ezer',towns:[['Balatonfüred',17.889,46.958],['Kőszeg',16.541,47.389],['Tata',18.323,47.653]]},
- {k:'m',ic:'🏙️',n:'Középváros',s:'20–60 ezer',towns:[['Budaörs',18.959,47.461],['Gödöllő',19.360,47.596],['Vác',19.134,47.776]]},
- {k:'n',ic:'🌆',n:'Nagyváros',s:'60 ezer felett',towns:[['Debrecen',21.627,47.532],['Szeged',20.148,46.253],['Győr',17.635,47.684]]}
+ {k:'k',ic:'🏡',n:'Község',s:'5 ezer alatt',towns:[['Tihany',17.889,46.913],['Nagymaros',18.956,47.792],['Zebegény',18.908,47.797],['Pilisborosjenő',18.995,47.607]]},
+ {k:'v',ic:'🏘️',n:'Kisváros',s:'5–20 ezer',towns:[['Kőszeg',16.541,47.389],['Zirc',17.872,47.264],['Pilisvörösvár',18.910,47.620],['Budakeszi',18.930,47.511]]},
+ {k:'m',ic:'🏙️',n:'Középváros',s:'20–60 ezer',towns:[['Veszprém',17.910,47.093],['Eger',20.377,47.902],['Szentendre',19.076,47.669],['Budaörs',18.959,47.461]]},
+ {k:'n',ic:'🌆',n:'Nagyváros',s:'60 ezer felett',towns:[['Pécs',18.228,46.076],['Miskolc',20.781,48.103],['Sopron',16.592,47.685],['Kaposvár',17.796,46.360]]}
 ];
 const C_HEAT='#ff6b4a',C_WATER='#4aa8ff',C_VULN='#c77bff',C_GREEN='#3ddc97',C_GOLD='#ffd166',C_TEAL='#2AD1B5';
-
-/* ---- geometria (~120 m-es egység) ---- */
-function grng(seed){let t=seed;return()=>{t+=0x6D2B79F5;let r=Math.imul(t^t>>>15,1|t);
-  r^=r+Math.imul(r^r>>>7,61|r);return((r^r>>>14)>>>0)/4294967296;}}
-const DU=0.0016,DV=0.00105;
-let ORIGIN=[19.04,47.5];
-const GP=(u,v)=>[ORIGIN[0]+u*DU,ORIGIN[1]+v*DV];
-function blob(cu,cv,r,seed,irr){irr=irr||0.35;const rnd=grng(seed),n=16,rad=[];
-  for(let i=0;i<n;i++)rad.push(r*(1+(rnd()*2-1)*irr));
-  for(let i=0;i<n;i++)rad[i]=(rad[i]+rad[(i+1)%n]+rad[(i+n-1)%n])/3;
-  const ring=[];for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,rr=rad[i%n];
-    ring.push(GP(cu+Math.cos(a)*rr,cv+Math.sin(a)*rr*0.75));}return ring;}
-function polyFC(defs){return{type:'FeatureCollection',features:defs.map(d=>({type:'Feature',
-  properties:{op:d[4]!==undefined?d[4]:0.35},geometry:{type:'Polygon',coordinates:[blob(d[0],d[1],d[2],d[3])]}}))};}
-function ptsFC(clusters,seed){const rnd=grng(seed),f=[];
-  clusters.forEach(c=>{for(let i=0;i<c[2];i++){
-    const u=c[0]+((rnd()+rnd())-1)*c[3],v=c[1]+((rnd()+rnd())-1)*c[3]*0.8;
-    f.push({type:'Feature',properties:{w:0.4+rnd()*0.6},geometry:{type:'Point',coordinates:GP(u,v)}});}});
-  return{type:'FeatureCollection',features:f};}
-function pathFC(sets,seed){const rnd=grng(seed);
-  return{type:'FeatureCollection',features:sets.map(w=>{const c=[];
-    for(let i=0;i<w.length-1;i++){const [u1,v1]=w[i],[u2,v2]=w[i+1];
-      c.push(GP(u1,v1));c.push(GP((u1+u2)/2+(rnd()-0.5)*0.2,(v1+v2)/2+(rnd()-0.5)*0.2));}
-    c.push(GP(...w[w.length-1]));
-    return{type:'Feature',properties:{},geometry:{type:'LineString',coordinates:c}};})};}
-function isoFC(cu,cv,radii,seed){const rnd=grng(seed),n=16,base=[];
-  for(let i=0;i<n;i++)base.push(1+(rnd()*2-1)*0.3);
-  for(let i=0;i<n;i++)base[i]=(base[i]+base[(i+1)%n]+base[(i+n-1)%n])/3;
-  return{type:'FeatureCollection',features:radii.map((r,li)=>{const ring=[];
-    for(let i=0;i<=n;i++){const a=i/n*Math.PI*2;
-      ring.push(GP(cu+Math.cos(a)*r*base[i%n],cv+Math.sin(a)*r*base[i%n]*0.75));}
-    return{type:'Feature',properties:{lvl:li},geometry:{type:'Polygon',coordinates:[ring]}};}).reverse()};}
-
-/* ---- 5 NAP — bináris (bal/jobb) döntések ---- */
-/* L = balra húzás, R = jobbra húzás; best = a helyes irány */
-const WEEK=[
- {ic:'💧',disc:'Vízgazdálkodás',best:'R',pts:100,bonus:50,
-  t:'Villámárvíz után',setup:'Három utca ázott el. Egy beavatkozásra van pénz.',
-  chips:[['💬','A Fő utca lakói gátat követelnek'],['📋','A biztosítói jelentés még sehol']],
-  L:{ic:'🧱',t:'Mobil gát a Fő utcára',cell:[0.5,-0.55]},
-  R:{ic:'🧹',t:'Árkok, átereszek tisztítása',cell:[-1.2,1.0]},
-  layers:[
-   {ic:'🌊',n:'Elöntés',type:'poly',c:C_WATER,defs:[[0.3,-0.5,0.8,11,0.35],[1.1,-0.9,0.6,12,0.3]]},
-   {ic:'📍',n:'Károk',type:'pts',c:C_HEAT,clusters:[[0.6,-0.7,12,0.4],[-0.5,0.35,5,0.3],[-1.1,0.85,4,0.25]],seed:13}],
-  call:'A károk a lejtő vonalán sorakoznak — fent van a baj.',
-  why:'A gát a tünetet kezeli, a tisztítás az okot.'},
- {ic:'🚌',disc:'Mobilitás',best:'L',pts:100,bonus:50,
-  t:'Iskolai biztonság',setup:'Egy helyszínre jut forgalombiztonsági keret.',
-  chips:[['💬','400 aláírás: zebrát az iskola elé!'],['🚓','A rendőrség máshova mutat']],
-  L:{ic:'🚧',t:'Csillapítás a csomópontban',cell:[1.2,-0.8]},
-  R:{ic:'🚸',t:'Zebra az iskolához',cell:[-0.75,0.28]},
-  layers:[
-   {ic:'📍',n:'Balesetek',type:'pts',c:C_HEAT,clusters:[[1.2,-0.8,14,0.35],[0,0,4,1.2]],seed:21},
-   {ic:'⏱',n:'Gyaloglás',type:'iso',c:C_TEAL,center:[-0.6,0.4],radii:[0.8,1.6],seed:22},
-   {ic:'🎒',n:'Iskolautak',type:'line',c:C_GOLD,paths:[[[2.4,-1.4],[1.2,-0.8],[0.2,0],[-0.6,0.4]],[[2.2,0.8],[1.2,-0.8]]],seed:23}],
-  call:'A balesetek 70%-a a csomópontban — az iskolánál már van lámpa.',
-  why:'Oda kell, ahol a kockázat mérhető — nem ahol a hang nagy.'},
- {ic:'⚡',disc:'Energetika',best:'R',pts:100,bonus:50,
-  t:'Vihar után sötét',setup:'Órákig nem volt áram. Egy szakaszra van keret.',
-  chips:[['💬','A boltok földkábelt követelnek a főutcára'],['📋','A hibalista még feldolgozás alatt']],
-  L:{ic:'🔌',t:'Földkábel a főutcán',cell:[0.2,0]},
-  R:{ic:'🌲',t:'A két hibás külső szakasz megerősítése',cell:[-1.6,0.9]},
-  layers:[
-   {ic:'📍',n:'Kimaradások',type:'pts',c:C_HEAT,clusters:[[-1.6,0.9,12,0.4],[-1.0,1.4,6,0.3],[0.3,0,3,0.8]],seed:101},
-   {ic:'⚡',n:'Hálózat',type:'line',c:C_GOLD,paths:[[[-2.4,1.6],[-1.6,0.9],[-0.6,0.3],[0.2,0],[1.4,-0.4]]],seed:102,dash:[3,2]},
-   {ic:'🌪️',n:'Viharzóna',type:'poly',c:C_VULN,defs:[[-1.6,0.9,0.7,103,0.35],[-1.0,1.4,0.5,104,0.25]]}],
-  call:'A kimaradások 85%-a a viharzóna két szakaszán keletkezik.',
-  why:'A gócszakasz erősítése az egész hálózatot stabilizálja.'},
- {ic:'🌡️',disc:'Klíma × Egészség',best:'L',pts:150,bonus:50,
-  t:'Hőhullám jön',setup:'Két hét múlva hőség. Egy csomagra futja.',
-  chips:[['💬','A tér árnyékolása régi ígéret'],['🩺','A háziorvosok idős rosszulléteket jeleznek']],
-  L:{ic:'🧊',t:'Hűsítő pontok a hőszigeten',cell:[2.1,0.55]},
-  R:{ic:'⛱️',t:'Árnyékolás a főtérre',cell:[0,0]},
-  layers:[
-   {ic:'🔥',n:'Hőtérkép',type:'heat',clusters:[[2.2,0.6,40,0.7],[0.9,1.4,12,0.5]],seed:31},
-   {ic:'👵',n:'75+ lakók',type:'poly',c:C_VULN,defs:[[2.2,0.55,0.75,32,0.4],[2.0,1.2,0.5,33,0.25],[0.6,-1.1,0.45,34,0.15]]},
-   {ic:'🏥',n:'Gondozók',type:'pts',c:C_VULN,clusters:[[2.15,0.5,3,0.25]],seed:35,big:true},
-   {ic:'⏱',n:'Elérés',type:'iso',c:C_TEAL,center:[2.0,0.5],radii:[0.7,1.4],seed:36}],
-  call:'A hőgóc és az idősek ugyanott — a tér kívül esik.',
-  why:'Ott ment életet, ahol hő, kor és elérés metszi egymást.'},
- {ic:'💰',disc:'Víz × Mobilitás × Pénzügy',best:'R',pts:250,bonus:75,
-  t:'A nagy klímacsomag',setup:'A testület ma dönt a teljes keretről.',
-  chips:[['💬','A mérnökök terve: egy nagy tározó'],['🤝','Az egyenlő osztás ellen senki se szólna']],
-  L:{ic:'🏗️',t:'Minden a tározóra',cell:[0.4,-0.6]},
-  R:{ic:'🎯',t:'Csomag a top-3 zónára',cell:[2.2,0.6]},
-  layers:[
-   {ic:'🟥',n:'Kockázat',type:'poly',c:C_HEAT,defs:[[2.2,0.6,0.8,41,0.42],[1.2,-0.8,0.6,42,0.34],[0.4,-0.6,0.55,43,0.26],[-1.4,0.8,0.45,44,0.14]]},
-   {ic:'🔥',n:'Incidensek',type:'heat',clusters:[[2.2,0.6,30,0.6],[1.2,-0.8,22,0.45],[0.5,-0.6,16,0.4]],seed:45},
-   {ic:'🚌',n:'Kritikus utak',type:'line',c:C_GOLD,paths:[[[2.6,1.2],[2.2,0.6],[1.2,-0.8],[0,0]],[[-1.8,-0.6],[0,0],[1.2,-0.8]]],seed:46},
-   {ic:'🌱',n:'Helyszínek',type:'pts',c:C_GREEN,clusters:[[2.2,0.6,3,0.3],[1.2,-0.8,2,0.2],[0.4,-0.6,2,0.2]],seed:47,big:true},
-   {ic:'⏱',n:'Elérés',type:'iso',c:C_TEAL,center:[0.1,0.05],radii:[1.0,1.9],seed:48}],
-  call:'Három szakág — ugyanaz a 3 zóna.',
-  why:'A tározó egy kockázat — a csomag a metszetre költ.'}
-];
-const MAXPTS=WEEK.reduce((a,r)=>a+r.pts+r.bonus,0);
+const RAD=1100; /* a játéktér fél-oldala méterben */
+const HOME_VIEW={center:[19.3,47.2],zoom:5.6,pitch:45,bearing:-15};
 
 /* ---- állapot ---- */
 let G={st:'type',type:null,town:null,i:0,sc:0,ph:1,p1:null,earn:0,ly:[],seen:[],
-  t0:null,time:null,hist:[],board:null,rank:null,mats:[],lead:null,marks:[],tutDone:false};
-const RM=matchMedia('(prefers-reduced-motion: reduce)').matches; /* csak a térképmozgáshoz — a kéz ettől függetlenül látszik */
+  t0:null,time:null,hist:[],board:null,rank:null,mats:[],lead:null,marks:[],tutDone:false,loadTxt:''};
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let map=null,mapReady=false,gTick=null;
+let D=null,E=null,RG=null,DEM=null,MODE='',WEEK=[],MAXPTS=0,SCN=null;
 function fmtTime(s){const m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0');}
 function gElapsed(){return G.t0?Math.round((Date.now()-G.t0)/1000):0;}
 function tickUI(){
   const t=document.getElementById('gTimer');if(t&&G.t0)t.textContent='⏱ '+fmtTime(gElapsed());
   const s=document.getElementById('gScore');if(s)s.textContent=G.sc;
   const d=document.getElementById('days');
-  if(d)d.innerHTML=WEEK.map((_,i)=>`<i class="${i<G.i?'done':i===G.i&&G.st!=='type'&&G.st!=='town'?'cur':''}"></i>`).join('');
+  if(d)d.innerHTML=WEEK.map((_,i)=>`<i class="${i<G.i?'done':i===G.i&&G.st!=='type'&&G.st!=='town'&&G.st!=='load'?'cur':''}"></i>`).join('');
 }
 function gStartTimer(){clearInterval(gTick);gTick=setInterval(tickUI,1000);}
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---- geometria méterben (x kelet, y észak, a település középpontjától) ---- */
+const LL=(p)=>GVMAP.toLL(p[0],p[1]);
+function grng(seed){let t=seed;return()=>{t+=0x6D2B79F5;let r=Math.imul(t^t>>>15,1|t);r^=r+Math.imul(r^r>>>7,61|r);return((r^r>>>14)>>>0)/4294967296;}}
+const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+function plen(pts){let L=0;for(let i=0;i<pts.length-1;i++)L+=dist(pts[i],pts[i+1]);return L;}
+function along(pts,t){const L=plen(pts);let d=Math.max(0,Math.min(1,t))*L;for(let i=0;i<pts.length-1;i++){const s=dist(pts[i],pts[i+1]);if(d<=s||i===pts.length-2){const u=s?Math.min(1,d/s):0;return[pts[i][0]+(pts[i+1][0]-pts[i][0])*u,pts[i][1]+(pts[i+1][1]-pts[i][1])*u];}d-=s;}return pts[pts.length-1];}
+function sideAt(pts,t,off){const p=along(pts,t),q=along(pts,Math.min(1,t+0.03));let dx=q[0]-p[0],dy=q[1]-p[1];const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;return[p[0]-dy*off,p[1]+dx*off];}
+function subLine(pts,t0,t1){const L=plen(pts);const out=[along(pts,t0)];let acc=0;for(let i=0;i<pts.length-1;i++){const s=dist(pts[i],pts[i+1]);const f=(acc+s)/L;if(f>t0&&f<t1)out.push(pts[i+1]);acc+=s;}out.push(along(pts,t1));return out;}
+function distToLine(pts,x,y){let m=1e9;for(let i=0;i<pts.length-1;i++){const d=GVMAP.distSeg(x,y,pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1]).d;if(d<m)m=d;}return m;}
+function circle(cx,cy,r,n){n=n||28;const ring=[];for(let i=0;i<=n;i++){const a=i/n*Math.PI*2;ring.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]);}return ring;}
+function hull(pts){const p=pts.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);if(p.length<3)return null;const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+  const lo=[];for(const q of p){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],q)<=0)lo.pop();lo.push(q);}
+  const up=[];for(let i=p.length-1;i>=0;i--){const q=p[i];while(up.length>=2&&cr(up[up.length-2],up[up.length-1],q)<=0)up.pop();up.push(q);}
+  const h=lo.slice(0,-1).concat(up.slice(0,-1));if(h.length<3)return null;h.push(h[0]);return h;}
+function expand(ring,m){const c=GVMAP.centroid(ring.slice(0,-1));return ring.map(p=>{const dx=p[0]-c[0],dy=p[1]-c[1];const L=Math.hypot(dx,dy)||1;return[p[0]+dx/L*m,p[1]+dy/L*m];});}
+function smooth(ring,it){it=it||2;let r=ring.slice(0,-1);for(let k=0;k<it;k++){const o=[];for(let i=0;i<r.length;i++){const a=r[i],b=r[(i+1)%r.length];o.push([a[0]*.75+b[0]*.25,a[1]*.75+b[1]*.25]);o.push([a[0]*.25+b[0]*.75,a[1]*.25+b[1]*.75]);}r=o;}r.push(r[0]);return r;}
+function zone(pts,pad){const h=hull(pts);if(!h)return null;return smooth(expand(h,pad||40),2);}
+function bbox(list){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;list.forEach(p=>{if(p[0]<x0)x0=p[0];if(p[0]>x1)x1=p[0];if(p[1]<y0)y0=p[1];if(p[1]>y1)y1=p[1];});return[x0,y0,x1,y1];}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+/* ---- utcák névvel (a csempék több darabját egy vonallá fűzve) ---- */
+function chain(parts){parts=parts.slice().sort((a,b)=>plen(b)-plen(a));let line=parts.shift().slice();let changed=true;
+  while(changed&&parts.length){changed=false;for(let i=0;i<parts.length;i++){const p=parts[i];const h=line[0],t=line[line.length-1],ph=p[0],pt=p[p.length-1];
+    if(dist(t,ph)<4)line=line.concat(p.slice(1));else if(dist(t,pt)<4)line=line.concat(p.slice().reverse().slice(1));
+    else if(dist(h,pt)<4)line=p.slice(0,-1).concat(line);else if(dist(h,ph)<4)line=p.slice().reverse().slice(0,-1).concat(line);else continue;
+    parts.splice(i,1);changed=true;break;}}
+  return line;}
+function streetList(){const m=new Map();
+  D.named.forEach(n=>{if(n.pts.length<2)return;const k=n.name;if(!m.has(k))m.set(k,{name:k,parts:[],keys:new Set(),major:false,cls:n.cls});const s=m.get(k);
+    const key=Math.round(n.pts[0][0])+','+Math.round(n.pts[0][1])+'|'+Math.round(n.pts[n.pts.length-1][0])+','+Math.round(n.pts[n.pts.length-1][1]);if(s.keys.has(key))return;s.keys.add(key);
+    s.parts.push(n.pts);s.major=s.major||n.major;});
+  const out=[];m.forEach(s=>{s.line=chain(s.parts);s.len=plen(s.line);s.dc=distToLine(s.line,0,0);
+    const inside=s.line.filter(p=>Math.abs(p[0])<=RAD&&Math.abs(p[1])<=RAD).length/s.line.length;if(inside<0.3||s.len<80)return;
+    s.shops=D.shops.filter(q=>distToLine(s.line,q.x,q.y)<40).length;out.push(s);});
+  return out;}
+function nameAt(x,y,maxD){const c=[];D.named.forEach(n=>{const d=distToLine(n.pts,x,y);if(d<=maxD&&!c.some(q=>q.name===n.name))c.push({name:n.name,d});});c.sort((a,b)=>a.d-b.d);return c.map(q=>q.name);}
+function profile(line,step){const L=plen(line);const n=Math.max(2,Math.round(L/(step||30)));const pr=[];for(let i=0;i<=n;i++){const p=along(line,i/n);const e=DEM.at(p[0],p[1]);pr.push({t:i/n,p,e});}return pr;}
+
+/* ---- forgatókönyv-építés valós adatból ---- */
+function buildWeek(){
+  const S={};const rnd=grng(7);
+  const streets=streetList();if(streets.length<4)return null;
+  /* főutca: boltok, rang, hossz, középponthoz közelség */
+  const streetsOnly=streets.filter(s=>!/\btér$/i.test(s.name)&&s.cls!=='pedestrian');
+  const majorNamed=streetsOnly.filter(s=>s.major);
+  const pool=majorNamed.length?majorNamed:(streetsOnly.length?streetsOnly:streets);
+  pool.forEach(s=>{s.score=s.shops*3+(s.major?2:0)+Math.min(s.len,900)/300-s.dc/250;});
+  S.main=pool.slice().sort((a,b)=>b.score-a.score)[0];
+  /* főtér: „… tér” nevű hely a központhoz legközelebb; különben a településpont */
+  const squares=streets.filter(s=>/\btér$/i.test(s.name)||/főtér/i.test(s.name)).sort((a,b)=>a.dc-b.dc);
+  const place=D.places.filter(p=>/^(city|town|village)$/.test(p.cls)).sort((a,b)=>Math.hypot(a.x,a.y)-Math.hypot(b.x,b.y))[0];
+  if(squares.length){S.square={name:squares[0].name,pt:along(squares[0].line,0.5)};}
+  else if(place){S.square={name:(place.name||G.town.name)+' központja',pt:[place.x,place.y],generic:true};}
+  else S.square={name:'főtér',pt:[0,0],generic:true};
+  /* iskola */
+  const schools=D.pois.filter(p=>p.k==='school'&&Math.hypot(p.x,p.y)<1000).sort((a,b)=>Math.hypot(a.x,a.y)-Math.hypot(b.x,b.y));
+  const kinders=D.pois.filter(p=>/^(kindergarten|childcare)$/.test(p.k)&&Math.hypot(p.x,p.y)<1000).sort((a,b)=>Math.hypot(a.x,a.y)-Math.hypot(b.x,b.y));
+  S.school=schools[0]||kinders[0]||null;if(!S.school)return null;S.schoolKind=schools[0]?'iskola':'óvoda';
+  /* lejtő: a legnagyobb, egyirányú szintkülönbségű utca */
+  S.slope=null;
+  if(DEM&&DEM.ok){let best=null;
+    streets.forEach(s=>{if(s.len<220)return;const pr=profile(s.line,30).filter(q=>q.e!=null);if(pr.length<5)return;
+      const es=pr.map(q=>q.e);const mx=Math.max(...es),mn=Math.min(...es);const drop=mx-mn;if(drop<6)return;
+      const n=pr.length;const mt=(n-1)/2,me=es.reduce((a,b)=>a+b,0)/n;let sxy=0,sxx=0,syy=0;pr.forEach((q,i)=>{sxy+=(i-mt)*(q.e-me);sxx+=(i-mt)**2;syy+=(q.e-me)**2;});
+      const corr=sxx&&syy?sxy/Math.sqrt(sxx*syy):0;if(Math.abs(corr)<0.6)return;
+      const sc=drop*corr*corr*Math.min(1,s.len/400)*(s.dc<700?1:0.6);if(!best||sc>best.sc){best={s,sc,corr,drop,pr};}});
+    if(best){let line=best.s.line.slice();if(best.corr>0)line.reverse(); /* fentről lefelé */
+      S.slope={name:best.s.name,line,drop:best.drop,top:line[0],bottom:line[line.length-1],topE:DEM.at(line[0][0],line[0][1]),botE:DEM.at(line[line.length-1][0],line[line.length-1][1])};}}
+  if(!S.slope){ /* nincs domborzat-adat: a patakhoz legközelebb érő, hosszabb utca a „lejtő” */
+    if(DEM&&DEM.ok)return null; /* van domborzat, de sík: ez a település nem jó a hétfői naphoz */
+    let best=null;streets.forEach(s=>{if(s.len<220)return;let d=1e9;D.streams.forEach(w=>{const q=distToLine(w.pts,s.line[s.line.length-1][0],s.line[s.line.length-1][1]);const q2=distToLine(w.pts,s.line[0][0],s.line[0][1]);d=Math.min(d,q,q2);});
+      const sc=(d<1e8?1/(1+d/100):0.2)*Math.min(1,s.len/400)*(s.dc<700?1:0.6);if(!best||sc>best.sc)best={s,sc,d};});
+    if(!best)return null;let line=best.s.line.slice();let d0=1e9,d1=1e9;D.streams.forEach(w=>{d0=Math.min(d0,distToLine(w.pts,line[0][0],line[0][1]));d1=Math.min(d1,distToLine(w.pts,line[line.length-1][0],line[line.length-1][1]));});if(d0<d1)line.reverse();
+    S.slope={name:best.s.name,line,drop:null,top:line[0],bottom:line[line.length-1]};}
+  /* elöntés: a lejtő aljának mélyfekvésű utcapontjai + a patak közeli pontjai */
+  const bot=S.slope.bottom;const low=[];
+  RG.nodes.forEach(n=>{const d=Math.hypot(n.x-bot[0],n.y-bot[1]);if(d>240)return;if(DEM&&DEM.ok&&S.slope.botE!=null){const e=DEM.at(n.x,n.y);if(e!=null&&e>S.slope.botE+3)return;}low.push([n.x,n.y]);});
+  D.streams.forEach(w=>w.pts.forEach(p=>{if(Math.hypot(p[0]-bot[0],p[1]-bot[1])<200)low.push(p);}));
+  low.push(bot);S.flood=(low.length>=4?zone(low,45):null)||circle(bot[0],bot[1],120);
+  S.floodC=GVMAP.centroid(S.flood.slice(0,-1));
+  /* károk a lejtő alsó felén (ház felőli oldalon), néhány az elöntésben és a főutcán */
+  S.dmg=[];for(let i=0;i<12;i++){const t=0.42+0.58*(i/11);const off=(i%2?9:-9)+(rnd()-0.5)*6;const p=sideAt(S.slope.line,t,off);S.dmg.push([p[0],p[1],0.5+0.5*t]);}
+  for(let i=0;i<4;i++){const a=rnd()*Math.PI*2,r=20+rnd()*70;S.dmg.push([S.floodC[0]+Math.cos(a)*r,S.floodC[1]+Math.sin(a)*r,0.9]);}
+  if(distToLine(S.main.line,S.floodC[0],S.floodC[1])<350){for(let i=0;i<3;i++){const p=sideAt(S.main.line,0.3+0.2*i,i%2?8:-8);S.dmg.push([p[0],p[1],0.5]);}}
+  S.mainPt=(()=>{let b=null,bd=1e9;for(let t=0;t<=1;t+=0.05){const p=along(S.main.line,t);const d=Math.hypot(p[0]-S.floodC[0],p[1]-S.floodC[1]);if(d<bd){bd=d;b=p;}}return b;})();
+  /* kedd: csomópont az iskolától 150–600 m-re a hálózaton, főút mentén */
+  const sn=RG.nearest(S.school.x,S.school.y);const dj=RG.dijkstra(sn,1400);
+  let junc=null,jsc=1e9;RG.nodes.forEach(n=>{const dd=dj.dist.get(n);if(dd==null||dd<150||dd>650)return;const deg=n.adj.length;if(deg<3)return;const maj=n.adj.filter(e=>e.r.major).length;if(!maj&&deg<4)return;
+    const sc=Math.abs(dd-300)-maj*60-(deg>=4?40:0);if(sc<jsc){jsc=sc;junc=n;}});
+  if(!junc){RG.nodes.forEach(n=>{const dd=dj.dist.get(n);if(dd==null||dd<120||dd>800)return;if(n.adj.length<3)return;const sc=Math.abs(dd-300)-n.adj.length*20;if(sc<jsc){jsc=sc;junc=n;}});}
+  if(!junc)junc=sn.adj.length?sn.adj[0].n:sn;
+  S.junc=[junc.x,junc.y];S.juncD=Math.round((dj.dist.get(junc)||300)/10)*10;S.juncNames=nameAt(junc.x,junc.y,16).slice(0,2);
+  S.acc=[];junc.adj.forEach((e,k)=>{for(let i=0;i<4;i++){const t=Math.min(1,(8+i*13)/Math.max(1,e.L));const p=[junc.x+(e.n.x-junc.x)*t+(rnd()-0.5)*5,junc.y+(e.n.y-junc.y)*t+(rnd()-0.5)*5];S.acc.push([p[0],p[1],0.6+rnd()*0.4]);if(S.acc.length>=11)break;}});
+  while(S.acc.length<12){const a=rnd()*Math.PI*2;S.acc.push([junc.x+Math.cos(a)*18,junc.y+Math.sin(a)*18,0.8]);}
+  for(let i=0;i<3;i++){const p=sideAt(S.main.line,0.2+0.3*i,i%2?6:-6);S.acc.push([p[0],p[1],0.5]);}
+  S.acc.push([sn.x+(rnd()-0.5)*20,sn.y+(rnd()-0.5)*20,0.5]);
+  S.schoolPt=[sn.x,sn.y];
+  const reach=(src,d1,d2)=>{const r=RG.dijkstra(src,d2);const lines=[];const seen=new Set();r.dist.forEach((dd,n)=>{n.adj.forEach(e=>{const d2n=r.dist.get(e.n);if(d2n==null)return;const k=n.id<e.n.id?n.id+'-'+e.n.id:e.n.id+'-'+n.id;if(seen.has(k))return;seen.add(k);
+      const lvl=(dd<=d1&&d2n<=d1)?0:1;lines.push({pts:[[n.x,n.y],[e.n.x,e.n.y]],lvl});});});return{lines,r};};
+  const sr=reach(sn,400,800);S.schoolIso=sr.lines;
+  /* iskolautak: 3 távoli pont különböző irányból → út az iskolához */
+  S.routes=[];const far=[];sr.r.dist.forEach((dd,n)=>{if(dd>=600&&dd<=800)far.push(n);});
+  const sectors=[[],[],[]];far.forEach(n=>{const a=Math.atan2(n.y-sn.y,n.x-sn.x);sectors[Math.floor(((a+Math.PI)/(2*Math.PI))*3)%3].push(n);});
+  sectors.forEach(sec=>{if(!sec.length)return;const n=sec[Math.floor(rnd()*sec.length)];const p=RG.path(n,sn);if(p)S.routes.push(p.pts);});
+  if(!S.routes.length){const n=far[0]||RG.nearest(S.junc[0],S.junc[1]);const p=RG.path(n,sn);if(p)S.routes.push(p.pts);}
+  /* szerda: légvezeték az utcák mentén a központból kifelé, a viharzóna az erdőhöz közeli két külső szakasz */
+  const cn=RG.nearest(S.main.line[Math.floor(S.main.line.length/2)][0],S.main.line[Math.floor(S.main.line.length/2)][1]);
+  const net=RG.dijkstra(cn,1000);const leaves=[];net.dist.forEach((dd,n)=>{if(dd>=600&&dd<=1000&&Math.abs(n.x)<RAD&&Math.abs(n.y)<RAD)leaves.push({n,dd});});
+  const woodD=p=>{let m=1e9;(D.wood.length?D.wood:D.green).forEach(w=>{const d=GVMAP.distToPoly(p[0],p[1],w);if(d<m)m=d;});return m;};
+  const sec4=[[],[],[],[]];leaves.forEach(l=>{const a=Math.atan2(l.n.y-cn.y,l.n.x-cn.x);sec4[Math.floor(((a+Math.PI)/(2*Math.PI))*4)%4].push(l);});
+  const picked=[];sec4.forEach(sec=>{if(!sec.length)return;sec.sort((a,b)=>woodD([a.n.x,a.n.y])-woodD([b.n.x,b.n.y]));picked.push(sec[0]);});
+  while(picked.length<3&&leaves.length>picked.length){const l=leaves[Math.floor(rnd()*leaves.length)];if(!picked.includes(l))picked.push(l);}
+  S.net=[];picked.forEach(l=>{const p=RG.path(cn,l.n);if(p)S.net.push({pts:p.pts,leaf:l.n,wd:woodD([l.n.x,l.n.y])});});
+  if(!S.net.length)return null;
+  S.net.sort((a,b)=>a.wd-b.wd);S.branches=S.net.slice(0,2).map(b=>{const L=plen(b.pts);const t0=Math.max(0,1-280/L);return{pts:subLine(b.pts,t0,1),wd:b.wd,names:nameAt(along(b.pts,Math.max(0,1-140/L))[0],along(b.pts,Math.max(0,1-140/L))[1],16)};});
+  S.out=[];S.branches.forEach((b,k)=>{const n=k?7:12;for(let i=0;i<n;i++){const p=sideAt(b.pts,i/(n-1),(i%2?7:-7)+(rnd()-0.5)*8);S.out.push([p[0],p[1],0.6+rnd()*0.4]);}});
+  for(let i=0;i<3;i++){const p=sideAt(S.main.line,0.25+0.25*i,i%2?7:-7);S.out.push([p[0],p[1],0.4]);}
+  S.storm=S.branches.map(b=>{const pts=[];b.pts.forEach(p=>{pts.push(p);for(let a=0;a<6;a++)pts.push([p[0]+Math.cos(a)*90,p[1]+Math.sin(a)*90]);});return zone(pts,30)||circle(b.pts[0][0],b.pts[0][1],120);});
+  S.branchMid=along(S.branches[0].pts,0.5);
+  /* csütörtök: hőgóc (burkolt, zöld nélküli, sok épület), legalább 250 m-re a főtértől; 75+: magas házak csoportja */
+  let hot=null,hsc=-1;for(let x=-900;x<=900;x+=60)for(let y=-900;y<=900;y+=60){if(E.inWater(x,y)||E.roadDist(x,y)>120)continue;const h=E.heat(x,y);let b=0,tall=0;D.bld.forEach(q=>{const d=(q.x-x)**2+(q.y-y)**2;if(d<160*160){b++;if(q.h>=12)tall++;}});
+    const dsq=Math.hypot(x-S.square.pt[0],y-S.square.pt[1]);const sc=h*(1+Math.min(1,b/40)+Math.min(1,tall/6))*(dsq>250?1:0.25)*(Math.hypot(x,y)<900?1:0.5);if(sc>hsc){hsc=sc;hot=[x,y];}}
+  S.hot=hot||[300,200];S.hotName=nameAt(S.hot[0],S.hot[1],60)[0]||null;
+  const tall=D.bld.filter(q=>q.h>=12&&Math.hypot(q.x-S.hot[0],q.y-S.hot[1])<380).map(q=>[q.x,q.y]);
+  S.old=[(tall.length>=4?zone(tall,40):null)||circle(S.hot[0],S.hot[1],170)];
+  const care=D.pois.filter(p=>/^(nursing_home|social_facility|doctors|clinic|hospital)$/.test(p.k)&&Math.abs(p.x)<RAD&&Math.abs(p.y)<RAD);
+  if(care.length){const nc=care.slice().sort((a,b)=>Math.hypot(a.x-S.hot[0],a.y-S.hot[1])-Math.hypot(b.x-S.hot[0],b.y-S.hot[1]))[0];if(Math.hypot(nc.x-S.hot[0],nc.y-S.hot[1])>200)S.old.push(circle(nc.x,nc.y,130));}
+  S.care=care.length?care.map(p=>({x:p.x,y:p.y,ic:p.ic||'🏥',n:p.n})):[{x:S.hot[0]+70,y:S.hot[1]-50,ic:'🏥',n:'Háziorvosi rendelő'},{x:S.hot[0]-90,y:S.hot[1]+60,ic:'👵',n:'Idősek klubja'}];
+  S.heatPts=GVMAP.heatGrid(E,RAD,30).features.map(f=>{const xy=GVMAP.toXY(f.geometry.coordinates[0],f.geometry.coordinates[1]);return[xy[0],xy[1],f.properties.w];});
+  const hn=RG.nearest(S.hot[0],S.hot[1]);S.hotIso=reach(hn,400,800).lines;
+  /* péntek */
+  S.zones=[{poly:S.flood,c:S.floodC,n:S.slope.name+' alja'},{poly:smooth(circle(S.junc[0],S.junc[1],130),1),c:S.junc,n:S.juncNames.length?S.juncNames.join(' × '):'a csomópont'},{poly:S.old[0],c:S.hot,n:S.hotName||'a hőgóc'}];
+  S.tank=(()=>{let b=null,bd=1e9;D.streams.forEach(w=>w.pts.forEach(p=>{const d=Math.hypot(p[0]-S.floodC[0],p[1]-S.floodC[1]);if(d<bd){bd=d;b=p;}}));return b||S.floodC;})();
+  SCN=S;
+  const main=S.main.name,sq=S.square.name;
+  const hu=GVMAP.hu;const sqRa=S.square.generic?'a központba':'a '+hu(sq,'ra');
+  const jn=S.juncNames.length===2?S.juncNames.join(' × '):S.juncNames.length===1?S.juncNames[0]+'i':'';
+  const b1=S.branches[0].names[0]||'külső szakasz',b2=S.branches[1]?(S.branches[1].names[0]||'második külső szakasz'):'második szakasz';
+  return[
+   {ic:'💧',disc:'Vízgazdálkodás',best:'R',pts:100,bonus:50,t:'Villámárvíz után',setup:'Három utca ázott el. Egy beavatkozásra van pénz.',
+    chips:[['💬','A '+main+' lakói gátat követelnek'],['📋','A biztosítói jelentés még sehol']],
+    L:{ic:'🧱',t:'Mobil gát a '+hu(main,'ra'),cell:S.mainPt},R:{ic:'🧹',t:'Árkok, átereszek tisztítása a lejtő tetején',cell:S.slope.top},
+    layers:[{ic:'🌊',n:'Elöntés',type:'poly',c:C_WATER,polys:[S.flood],op:0.35},{ic:'📍',n:'Károk',type:'pts',c:C_HEAT,pts:S.dmg},
+      {ic:'⛰️',n:'Lejtő',type:'slope',line:S.slope.line,top:S.slope.top,bottom:S.slope.bottom,drop:S.slope.drop,name:S.slope.name}],
+    call:'A károk a '+S.slope.name+' lejtőjén sorakoznak'+(S.slope.drop?' ('+Math.round(S.slope.drop)+' m szintkülönbség)':'')+' — fent van a baj.',
+    why:'A gát a tünetet kezeli, a tisztítás az okot.',
+    focus:{pts:S.slope.line.concat(S.flood),spot:S.slope.bottom,tag:'ide folyik · '+S.dmg.length+' kár',bearing:-20}},
+   {ic:'🚌',disc:'Mobilitás',best:'L',pts:100,bonus:50,t:'Iskolai biztonság',setup:'Egy helyszínre jut forgalombiztonsági keret.',
+    chips:[['💬','400 aláírás: zebrát az '+(S.schoolKind==='iskola'?'iskola':'óvoda')+' elé!'],['🚓','A rendőrség máshova mutat']],
+    L:{ic:'🚧',t:'Csillapítás a csomópontban'+(jn?' ('+jn+')':''),cell:S.junc},R:{ic:'🚸',t:'Zebra az '+(S.schoolKind==='iskola'?'iskolához':'óvodához'),cell:S.schoolPt},
+    layers:[{ic:'📍',n:'Balesetek',type:'pts',c:C_HEAT,pts:S.acc},{ic:'⏱',n:'Gyaloglás',type:'iso',c:C_TEAL,lines:S.schoolIso},
+      {ic:'🎒',n:S.schoolKind==='iskola'?'Iskolautak':'Óvodautak',type:'line',c:C_GOLD,lines:S.routes,markers:[{x:S.school.x,y:S.school.y,ic:S.schoolKind==='iskola'?'🏫':'🧒',n:S.school.n||(S.schoolKind==='iskola'?'Iskola':'Óvoda')}]}],
+    call:'A balesetek 70%-a a '+(jn?jn+' ':'')+'kereszteződésben, '+S.juncD+' méterre — az '+(S.schoolKind==='iskola'?'iskolánál':'óvodánál')+' már van lámpa.',
+    why:'Oda kell, ahol a kockázat mérhető — nem ahol a hang nagy.',
+    focus:{pts:[S.junc,S.schoolPt,[S.school.x,S.school.y]],spot:S.junc,tag:'balesetgóc · '+S.juncD+' m',bearing:10}},
+   {ic:'⚡',disc:'Energetika',best:'R',pts:100,bonus:50,t:'Vihar után sötét',setup:'Órákig nem volt áram. Egy szakaszra van keret.',
+    chips:[['💬','A boltok földkábelt követelnek a '+hu(main,'ra')],['📋','A hibalista még feldolgozás alatt']],
+    L:{ic:'🔌',t:'Földkábel a '+hu(main,'n'),cell:along(S.main.line,0.5)},R:{ic:'🌲',t:'A két hibás külső szakasz megerősítése',cell:S.branchMid},
+    layers:[{ic:'📍',n:'Kimaradások',type:'pts',c:C_HEAT,pts:S.out},{ic:'⚡',n:'Hálózat',type:'line',c:C_GOLD,lines:S.net.map(b=>b.pts),dash:[3,2]},{ic:'🌪️',n:'Viharzóna',type:'poly',c:C_VULN,polys:S.storm,op:0.3}],
+    call:'A kimaradások 85%-a a viharzóna két szakaszán: '+b1+(S.branches[1]?' és '+b2:'')+' — az erdőszél fái a vezeték fölött.',
+    why:'A gócszakasz erősítése az egész hálózatot stabilizálja.',
+    focus:{pts:S.branches.reduce((a,b)=>a.concat(b.pts),[]).concat(S.storm.reduce((a,b)=>a.concat(b),[])),spot:S.branchMid,tag:'viharzóna · '+S.out.length+' hiba',bearing:-35}},
+   {ic:'🌡️',disc:'Klíma × Egészség',best:'L',pts:150,bonus:50,t:'Hőhullám jön',setup:'Két hét múlva hőség. Egy csomagra futja.',
+    chips:[['💬','A '+sq+' árnyékolása régi ígéret'],['🩺','A háziorvosok idős rosszulléteket jeleznek']],
+    L:{ic:'🧊',t:'Hűsítő pontok a hőszigeten'+(S.hotName?' ('+S.hotName+')':''),cell:S.hot},R:{ic:'⛱️',t:'Árnyékolás '+sqRa,cell:S.square.pt},
+    layers:[{ic:'🔥',n:'Hőtérkép',type:'heat',pts:S.heatPts},{ic:'👵',n:'75+ lakók',type:'poly',c:C_VULN,polys:S.old,op:0.3},
+      {ic:'🏥',n:'Gondozók',type:'markers',c:C_VULN,markers:S.care},{ic:'⏱',n:'Elérés',type:'iso',c:C_TEAL,lines:S.hotIso}],
+    call:'A hőgóc és az idősek ugyanott'+(S.hotName?' ('+S.hotName+')':'')+' — a '+sq+' kívül esik.',
+    why:'Ott ment életet, ahol hő, kor és elérés metszi egymást.',
+    focus:{pts:S.old[0].concat([S.square.pt]),spot:S.hot,tag:'hőgóc · idősek',bearing:25}},
+   {ic:'💰',disc:'Víz × Mobilitás × Pénzügy',best:'R',pts:250,bonus:75,t:'A nagy klímacsomag',setup:'A testület ma dönt a teljes keretről.',
+    chips:[['💬','A mérnökök terve: egy nagy tározó'],['🤝','Az egyenlő osztás ellen senki se szólna']],
+    L:{ic:'🏗️',t:'Minden a tározóra',cell:S.tank},R:{ic:'🎯',t:'Csomag a top-3 zónára',cell:S.hot},
+    layers:[{ic:'🟥',n:'Kockázat',type:'poly',c:C_HEAT,polys:S.zones.map(z=>z.poly),ops:[0.4,0.34,0.3]},
+      {ic:'🔥',n:'Incidensek',type:'heat',pts:S.dmg.concat(S.acc,S.out.slice(0,10))},
+      {ic:'🚌',n:'Kritikus utak',type:'line',c:C_GOLD,lines:[S.main.line,S.slope.line]},
+      {ic:'🌱',n:'Helyszínek',type:'pts',c:C_GREEN,pts:S.zones.map(z=>[z.c[0],z.c[1],1]),big:true},
+      {ic:'⏱',n:'Elérés',type:'iso',c:C_TEAL,lines:reach(RG.nearest(0,0),500,1000).lines}],
+    call:'Három szakág — ugyanaz a 3 zóna: '+S.zones.map(z=>z.n).join(', ')+'.',
+    why:'A tározó egy kockázat — a csomag a metszetre költ.',
+    focus:{pts:S.zones.reduce((a,z)=>a.concat(z.poly),[]),spot:S.hot,tag:'a 3 zóna metszete',bearing:-15}}
+  ];
+}
+
+/* ---- tartalék: illusztratív minta (a korábbi, rács-alapú forgatókönyv), méterbe váltva ---- */
+function legacyWeek(){
+  const DU=0.0016,DV=0.00105,O=G.town.ll;const toM=(u,v)=>GVMAP.toXY(O[0]+u*DU,O[1]+v*DV);
+  const blob=(cu,cv,r,seed,irr)=>{irr=irr||0.35;const rnd=grng(seed),n=16,rad=[];for(let i=0;i<n;i++)rad.push(r*(1+(rnd()*2-1)*irr));for(let i=0;i<n;i++)rad[i]=(rad[i]+rad[(i+1)%n]+rad[(i+n-1)%n])/3;
+    const ring=[];for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,rr=rad[i%n];ring.push(toM(cu+Math.cos(a)*rr,cv+Math.sin(a)*rr*0.75));}return ring;};
+  const pts=(clusters,seed)=>{const rnd=grng(seed),f=[];clusters.forEach(c=>{for(let i=0;i<c[2];i++){const u=c[0]+((rnd()+rnd())-1)*c[3],v=c[1]+((rnd()+rnd())-1)*c[3]*0.8;const p=toM(u,v);f.push([p[0],p[1],0.4+rnd()*0.6]);}});return f;};
+  const path=(sets,seed)=>{const rnd=grng(seed);return sets.map(w=>{const c=[];for(let i=0;i<w.length-1;i++){const [u1,v1]=w[i],[u2,v2]=w[i+1];c.push(toM(u1,v1));c.push(toM((u1+u2)/2+(rnd()-0.5)*0.2,(v1+v2)/2+(rnd()-0.5)*0.2));}c.push(toM(...w[w.length-1]));return c;});};
+  const iso=(cu,cv,radii,seed)=>{const rnd=grng(seed),n=16,base=[];for(let i=0;i<n;i++)base.push(1+(rnd()*2-1)*0.3);for(let i=0;i<n;i++)base[i]=(base[i]+base[(i+1)%n]+base[(i+n-1)%n])/3;
+    return radii.map((r,li)=>{const ring=[];for(let i=0;i<=n;i++){const a=i/n*Math.PI*2;ring.push(toM(cu+Math.cos(a)*r*base[i%n],cv+Math.sin(a)*r*base[i%n]*0.75));}return{ring,lvl:li};}).reverse();};
+  const P=(defs)=>defs.map(d=>blob(d[0],d[1],d[2],d[3]));
+  const cell=(u,v)=>toM(u,v);
+  return[
+   {ic:'💧',disc:'Vízgazdálkodás',best:'R',pts:100,bonus:50,t:'Villámárvíz után',setup:'Három utca ázott el. Egy beavatkozásra van pénz.',
+    chips:[['💬','A Fő utca lakói gátat követelnek'],['📋','A biztosítói jelentés még sehol']],L:{ic:'🧱',t:'Mobil gát a Fő utcára',cell:cell(0.5,-0.55)},R:{ic:'🧹',t:'Árkok, átereszek tisztítása',cell:cell(-1.2,1.0)},
+    layers:[{ic:'🌊',n:'Elöntés',type:'poly',c:C_WATER,polys:P([[0.3,-0.5,0.8,11],[1.1,-0.9,0.6,12]]),op:0.33},{ic:'📍',n:'Károk',type:'pts',c:C_HEAT,pts:pts([[0.6,-0.7,12,0.4],[-0.5,0.35,5,0.3],[-1.1,0.85,4,0.25]],13)}],
+    call:'A károk a lejtő vonalán sorakoznak — fent van a baj.',why:'A gát a tünetet kezeli, a tisztítás az okot.',focus:{pts:[cell(-1.5,1.2),cell(1.5,-1.2)],spot:cell(0.6,-0.7),tag:'ide folyik',bearing:-20}},
+   {ic:'🚌',disc:'Mobilitás',best:'L',pts:100,bonus:50,t:'Iskolai biztonság',setup:'Egy helyszínre jut forgalombiztonsági keret.',
+    chips:[['💬','400 aláírás: zebrát az iskola elé!'],['🚓','A rendőrség máshova mutat']],L:{ic:'🚧',t:'Csillapítás a csomópontban',cell:cell(1.2,-0.8)},R:{ic:'🚸',t:'Zebra az iskolához',cell:cell(-0.75,0.28)},
+    layers:[{ic:'📍',n:'Balesetek',type:'pts',c:C_HEAT,pts:pts([[1.2,-0.8,14,0.35],[0,0,4,1.2]],21)},{ic:'⏱',n:'Gyaloglás',type:'isopoly',c:C_TEAL,rings:iso(-0.6,0.4,[0.8,1.6],22)},{ic:'🎒',n:'Iskolautak',type:'line',c:C_GOLD,lines:path([[[2.4,-1.4],[1.2,-0.8],[0.2,0],[-0.6,0.4]],[[2.2,0.8],[1.2,-0.8]]],23)}],
+    call:'A balesetek 70%-a a csomópontban — az iskolánál már van lámpa.',why:'Oda kell, ahol a kockázat mérhető — nem ahol a hang nagy.',focus:{pts:[cell(-1,1),cell(2.6,-1.6)],spot:cell(1.2,-0.8),tag:'balesetgóc',bearing:10}},
+   {ic:'⚡',disc:'Energetika',best:'R',pts:100,bonus:50,t:'Vihar után sötét',setup:'Órákig nem volt áram. Egy szakaszra van keret.',
+    chips:[['💬','A boltok földkábelt követelnek a főutcára'],['📋','A hibalista még feldolgozás alatt']],L:{ic:'🔌',t:'Földkábel a főutcán',cell:cell(0.2,0)},R:{ic:'🌲',t:'A két hibás külső szakasz megerősítése',cell:cell(-1.6,0.9)},
+    layers:[{ic:'📍',n:'Kimaradások',type:'pts',c:C_HEAT,pts:pts([[-1.6,0.9,12,0.4],[-1.0,1.4,6,0.3],[0.3,0,3,0.8]],101)},{ic:'⚡',n:'Hálózat',type:'line',c:C_GOLD,lines:path([[[-2.4,1.6],[-1.6,0.9],[-0.6,0.3],[0.2,0],[1.4,-0.4]]],102),dash:[3,2]},{ic:'🌪️',n:'Viharzóna',type:'poly',c:C_VULN,polys:P([[-1.6,0.9,0.7,103],[-1.0,1.4,0.5,104]]),op:0.3}],
+    call:'A kimaradások 85%-a a viharzóna két szakaszán keletkezik.',why:'A gócszakasz erősítése az egész hálózatot stabilizálja.',focus:{pts:[cell(-2.6,1.8),cell(1.6,-0.6)],spot:cell(-1.6,0.9),tag:'viharzóna',bearing:-35}},
+   {ic:'🌡️',disc:'Klíma × Egészség',best:'L',pts:150,bonus:50,t:'Hőhullám jön',setup:'Két hét múlva hőség. Egy csomagra futja.',
+    chips:[['💬','A tér árnyékolása régi ígéret'],['🩺','A háziorvosok idős rosszulléteket jeleznek']],L:{ic:'🧊',t:'Hűsítő pontok a hőszigeten',cell:cell(2.1,0.55)},R:{ic:'⛱️',t:'Árnyékolás a főtérre',cell:cell(0,0)},
+    layers:[{ic:'🔥',n:'Hőtérkép',type:'heat',pts:pts([[2.2,0.6,40,0.7],[0.9,1.4,12,0.5]],31)},{ic:'👵',n:'75+ lakók',type:'poly',c:C_VULN,polys:P([[2.2,0.55,0.75,32],[2.0,1.2,0.5,33],[0.6,-1.1,0.45,34]]),op:0.3},{ic:'🏥',n:'Gondozók',type:'pts',c:C_VULN,pts:pts([[2.15,0.5,3,0.25]],35),big:true},{ic:'⏱',n:'Elérés',type:'isopoly',c:C_TEAL,rings:iso(2.0,0.5,[0.7,1.4],36)}],
+    call:'A hőgóc és az idősek ugyanott — a tér kívül esik.',why:'Ott ment életet, ahol hő, kor és elérés metszi egymást.',focus:{pts:[cell(-0.5,-0.5),cell(3,1.6)],spot:cell(2.1,0.55),tag:'hőgóc',bearing:25}},
+   {ic:'💰',disc:'Víz × Mobilitás × Pénzügy',best:'R',pts:250,bonus:75,t:'A nagy klímacsomag',setup:'A testület ma dönt a teljes keretről.',
+    chips:[['💬','A mérnökök terve: egy nagy tározó'],['🤝','Az egyenlő osztás ellen senki se szólna']],L:{ic:'🏗️',t:'Minden a tározóra',cell:cell(0.4,-0.6)},R:{ic:'🎯',t:'Csomag a top-3 zónára',cell:cell(2.2,0.6)},
+    layers:[{ic:'🟥',n:'Kockázat',type:'poly',c:C_HEAT,polys:P([[2.2,0.6,0.8,41],[1.2,-0.8,0.6,42],[0.4,-0.6,0.55,43],[-1.4,0.8,0.45,44]]),ops:[0.42,0.34,0.26,0.14]},{ic:'🔥',n:'Incidensek',type:'heat',pts:pts([[2.2,0.6,30,0.6],[1.2,-0.8,22,0.45],[0.5,-0.6,16,0.4]],45)},{ic:'🚌',n:'Kritikus utak',type:'line',c:C_GOLD,lines:path([[[2.6,1.2],[2.2,0.6],[1.2,-0.8],[0,0]],[[-1.8,-0.6],[0,0],[1.2,-0.8]]],46)},{ic:'🌱',n:'Helyszínek',type:'pts',c:C_GREEN,pts:pts([[2.2,0.6,3,0.3],[1.2,-0.8,2,0.2],[0.4,-0.6,2,0.2]],47),big:true},{ic:'⏱',n:'Elérés',type:'isopoly',c:C_TEAL,rings:iso(0.1,0.05,[1.0,1.9],48)}],
+    call:'Három szakág — ugyanaz a 3 zóna.',why:'A tározó egy kockázat — a csomag a metszetre költ.',focus:{pts:[cell(-2,-1.5),cell(3,1.8)],spot:cell(2.2,0.6),tag:'a 3 zóna',bearing:-15}}
+  ];
+}
 
 /* ---- egyetlen állandó térkép ---- */
 function initMap(){
-  if(typeof maplibregl==='undefined'){document.body.classList.add('maperr');return;}
-  try{
-    map=new maplibregl.Map({container:'map',
-      style:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-      center:[19.3,47.2],zoom:5.6,pitch:45,bearing:-15,
-      attributionControl:{compact:true},interactive:true});
-  }catch(e){document.body.classList.add('maperr');return;}
-  map.on('load',()=>{
-    mapReady=true;
-    /* 3D épületek — végig élnek */
-    map.addLayer({id:'b3d',type:'fill-extrusion',source:'carto','source-layer':'building',minzoom:13,
-      filter:['!=',['get','hide_3d'],true],
-      paint:{'fill-extrusion-color':'#16323e',
-        'fill-extrusion-height':['max',5,['coalesce',['get','render_height'],0]],
-        'fill-extrusion-base':['coalesce',['get','render_min_height'],0],
-        'fill-extrusion-opacity':0.9}});
-  });
+  if(typeof maplibregl==='undefined'||typeof GVMAP==='undefined'){document.body.classList.add('maperr');return;}
+  map=GVMAP.createMap(Object.assign({container:'map',interactive:true},HOME_VIEW),m=>{mapReady=true;GVMAP.add3D(m);GVMAP.addHillshade(m,{exaggeration:0.5});},()=>document.body.classList.add('maperr'));
+  if(!map)document.body.classList.add('maperr');
 }
-/* forduló-rétegek fel/le az állandó térképen */
+const onceMoveEnd=()=>new Promise(res=>{if(!map)return res();let done=false;const f=()=>{if(!done){done=true;res();}};map.once('moveend',f);setTimeout(f,5000);});
+function setLoad(t){G.loadTxt=t;const el=document.getElementById('gLoad');if(el)el.innerHTML='<span class="spin"></span><span>'+esc(t)+'</span>';}
+function validateBase(d){if(!d.ok||d.roads.length<40)return 'kevés utca a csempékből';if(d.named.length<6)return 'nincs elég utcanév';
+  if(!d.pois.some(p=>/^(school|kindergarten|childcare)$/.test(p.k)&&Math.hypot(p.x,p.y)<1000))return 'nincs iskola a központ közelében';return '';}
+/* település sorsolása + adatbetöltés + ellenőrzés; ha nem jó, a következő jön */
+async function pickTown(T){
+  const order=shuffle(T.towns.slice());MODE='';const tried=[];
+  for(const tw of order){
+    G.town={name:tw[0],ll:[tw[1],tw[2]]};setLoad(tw[0]+' térképének betöltése…');
+    if(!map||!mapReady){await new Promise(r=>setTimeout(r,800));if(!map||!mapReady)break;}
+    const c={center:G.town.ll,zoom:14.4,pitch:0,bearing:0};
+    if(RM)map.jumpTo(c);else map.flyTo(Object.assign({duration:tried.length?1800:3000,essential:true},c));
+    await onceMoveEnd();await GVMAP.whenIdle(map,8000);
+    GVMAP.setCenter(G.town.ll);D=GVMAP.fromTiles(map);
+    const why=validateBase(D);if(why){tried.push(tw[0]+': '+why);setLoad(tw[0]+': '+why+' — másik település…');await new Promise(r=>setTimeout(r,600));continue;}
+    setLoad('Domborzat: '+tw[0]);
+    try{DEM=await GVMAP.demLoad(G.town.ll,RAD,14);}catch(e){DEM={ok:false,at:()=>null};}
+    E=GVMAP.evaluators(D);RG=GVMAP.roadGraph(D,{half:RAD});
+    let w=null;try{w=buildWeek();}catch(e){console.warn('buildWeek',e);w=null;}
+    if(!w){tried.push(tw[0]+': sík vagy hiányos');setLoad(tw[0]+': nincs lejtő vagy intézmény — másik település…');await new Promise(r=>setTimeout(r,600));continue;}
+    WEEK=w;MODE='osm';break;
+  }
+  if(MODE!=='osm'){G.town={name:order[0][0],ll:[order[0][1],order[0][2]]};GVMAP.setCenter(G.town.ll);WEEK=legacyWeek();MODE='legacy';
+    if(map&&mapReady){const c={center:G.town.ll,zoom:14.4,pitch:0,bearing:0};RM?map.jumpTo(c):map.flyTo(Object.assign({duration:1500,essential:true},c));}}
+  G.tried=tried;MAXPTS=WEEK.reduce((a,r)=>a+r.pts+r.bonus,0);
+  if(map&&mapReady){const c={center:G.town.ll,zoom:15.0,pitch:58,bearing:-17};RM?map.jumpTo(c):map.easeTo(Object.assign({duration:1800,essential:true},c));}
+  G.st='town';render();
+}
+
+/* ---- forduló-rétegek az állandó térképen (méter → földrajzi koordináta itt) ---- */
+const FC=f=>({type:'FeatureCollection',features:f});
+function polyF(ring,props){return{type:'Feature',properties:props||{},geometry:{type:'Polygon',coordinates:[ring.map(LL)]}};}
+function lineF(pts,props){return{type:'Feature',properties:props||{},geometry:{type:'LineString',coordinates:pts.map(LL)}};}
+function ptF(p,props){return{type:'Feature',properties:props||{},geometry:{type:'Point',coordinates:LL(p)}};}
+function marker(cls,html,p,anchor){const el=document.createElement('div');el.className=cls;el.innerHTML=html;const mk=new maplibregl.Marker({element:el,anchor:anchor||'center'}).setLngLat(LL(p));return mk;}
+let LYM=[]; /* rétegenkénti DOM-jelölők */
 function addRoundLayers(r){
-  if(!mapReady)return;
+  if(!mapReady)return;LYM=r.layers.map(()=>[]);
   r.layers.forEach((ly,i)=>{
-    const vis=G.ly[i]?'visible':'none';
-    if(ly.type==='poly'){
-      map.addSource('gs'+i,{type:'geojson',data:polyFC(ly.defs)});
-      map.addLayer({id:'gf'+i,type:'fill',source:'gs'+i,layout:{visibility:vis},paint:{'fill-color':ly.c,'fill-opacity':['get','op']}});
-      map.addLayer({id:'gl'+i,type:'line',source:'gs'+i,layout:{visibility:vis},paint:{'line-color':ly.c,'line-opacity':0.85,'line-width':1.5}});
-    }else if(ly.type==='pts'){
-      map.addSource('gs'+i,{type:'geojson',data:ptsFC(ly.clusters,ly.seed)});
-      map.addLayer({id:'gp'+i,type:'circle',source:'gs'+i,layout:{visibility:vis},
-        paint:{'circle-color':ly.c,'circle-opacity':0.9,
-          'circle-radius':ly.big?8:['+',3,['*',4,['get','w']]],
-          'circle-stroke-color':'#081a21','circle-stroke-width':1.4}});
-    }else if(ly.type==='line'){
-      map.addSource('gs'+i,{type:'geojson',data:pathFC(ly.paths,ly.seed)});
-      map.addLayer({id:'gl'+i,type:'line',source:'gs'+i,layout:{visibility:vis},
-        paint:Object.assign({'line-color':ly.c,'line-opacity':0.95,'line-width':3},
-          ly.dash?{'line-dasharray':ly.dash}:{})});
-    }else if(ly.type==='iso'){
-      map.addSource('gs'+i,{type:'geojson',data:isoFC(ly.center[0],ly.center[1],ly.radii,ly.seed)});
-      map.addLayer({id:'gf'+i,type:'fill',source:'gs'+i,layout:{visibility:vis},
-        paint:{'fill-color':ly.c,'fill-opacity':['case',['==',['get','lvl'],0],0.10,0.22]}});
-      map.addLayer({id:'gl'+i,type:'line',source:'gs'+i,layout:{visibility:vis},
-        paint:{'line-color':ly.c,'line-opacity':0.75,'line-width':1.5,'line-dasharray':[2,2]}});
-    }else if(ly.type==='heat'){
-      map.addSource('gs'+i,{type:'geojson',data:ptsFC(ly.clusters,ly.seed)});
-      map.addLayer({id:'gh'+i,type:'heatmap',source:'gs'+i,layout:{visibility:vis},
-        paint:{'heatmap-weight':['get','w'],'heatmap-intensity':1.1,'heatmap-radius':34,'heatmap-opacity':0.75,
-          'heatmap-color':['interpolate',['linear'],['heatmap-density'],
-            0,'rgba(0,0,0,0)',0.25,'rgba(42,209,181,0.35)',0.5,'rgba(255,209,102,0.6)',0.75,'rgba(255,159,69,0.8)',1,'rgba(255,80,60,0.95)']}});
+    const vis=G.ly[i]?'visible':'none';const sid='gs'+i;
+    if(ly.type==='poly'){map.addSource(sid,{type:'geojson',data:FC(ly.polys.map((p,k)=>polyF(p,{op:ly.ops?ly.ops[k]:(ly.op||0.33)})))});
+      map.addLayer({id:'gf'+i,type:'fill',source:sid,layout:{visibility:vis},paint:{'fill-color':ly.c,'fill-opacity':['get','op']}});
+      map.addLayer({id:'gl'+i,type:'line',source:sid,layout:{visibility:vis},paint:{'line-color':ly.c,'line-opacity':0.9,'line-width':1.8}});
+    }else if(ly.type==='pts'){map.addSource(sid,{type:'geojson',data:FC(ly.pts.map(p=>ptF(p,{w:p[2]||1})))});
+      map.addLayer({id:'gp'+i,type:'circle',source:sid,layout:{visibility:vis},paint:{'circle-color':ly.c,'circle-opacity':0.92,'circle-radius':ly.big?8:['+',3.5,['*',4,['get','w']]],'circle-stroke-color':'#081a21','circle-stroke-width':1.4}});
+    }else if(ly.type==='line'){map.addSource(sid,{type:'geojson',data:FC(ly.lines.map(l=>lineF(l)))});
+      map.addLayer({id:'gl'+i,type:'line',source:sid,layout:{visibility:vis,'line-cap':'round','line-join':'round'},paint:Object.assign({'line-color':ly.c,'line-opacity':0.95,'line-width':3.5},ly.dash?{'line-dasharray':ly.dash}:{})});
+    }else if(ly.type==='iso'){map.addSource(sid,{type:'geojson',data:FC(ly.lines.map(l=>lineF(l.pts,{lvl:l.lvl})))});
+      map.addLayer({id:'gl'+i,type:'line',source:sid,layout:{visibility:vis,'line-cap':'round'},paint:{'line-color':ly.c,'line-opacity':['match',['get','lvl'],0,0.85,0.45],'line-width':['match',['get','lvl'],0,5,2.5]}});
+    }else if(ly.type==='isopoly'){map.addSource(sid,{type:'geojson',data:FC(ly.rings.map(q=>polyF(q.ring,{lvl:q.lvl})))});
+      map.addLayer({id:'gf'+i,type:'fill',source:sid,layout:{visibility:vis},paint:{'fill-color':ly.c,'fill-opacity':['case',['==',['get','lvl'],0],0.10,0.22]}});
+      map.addLayer({id:'gl'+i,type:'line',source:sid,layout:{visibility:vis},paint:{'line-color':ly.c,'line-opacity':0.75,'line-width':1.5,'line-dasharray':[2,2]}});
+    }else if(ly.type==='heat'){map.addSource(sid,{type:'geojson',data:FC(ly.pts.map(p=>ptF(p,{w:p[2]||0.6})))});
+      map.addLayer({id:'gh'+i,type:'heatmap',source:sid,layout:{visibility:vis},paint:{'heatmap-weight':['get','w'],'heatmap-intensity':1.1,'heatmap-radius':['interpolate',['linear'],['zoom'],13,14,15,34,16,60,17,100],'heatmap-opacity':0.75,
+        'heatmap-color':['interpolate',['linear'],['heatmap-density'],0,'rgba(0,0,0,0)',0.25,'rgba(42,209,181,0.35)',0.5,'rgba(255,209,102,0.6)',0.75,'rgba(255,159,69,0.8)',1,'rgba(255,80,60,0.95)']}});
+    }else if(ly.type==='slope'){map.addSource(sid,{type:'geojson',lineMetrics:true,data:FC([lineF(ly.line)])});
+      map.addLayer({id:'gl'+i,type:'line',source:sid,layout:{visibility:vis,'line-cap':'round','line-join':'round'},paint:{'line-width':6,'line-opacity':0.95,'line-gradient':['interpolate',['linear'],['line-progress'],0,'#ff9f45',1,'#4aa8ff']}});
+      LYM[i].push(marker('mlab','<b>▲ fent</b>'+(ly.drop?' · +'+Math.round(ly.drop)+' m':''),ly.top,'bottom'),marker('mlab','<b>▼ mélypont</b> · '+esc(ly.name),ly.bottom,'top'));
+      LYM[i].forEach(m=>m.getElement().style.setProperty('--c','#ff9f45'));
     }
+    (ly.markers||[]).forEach(mk=>{const m=marker('micon',mk.ic,[mk.x,mk.y]);m.getElement().style.setProperty('--c',ly.c||C_VULN);m.getElement().title=mk.n||'';LYM[i].push(m);});
+    if(ly.type==='markers'&&!ly.markers)ly.markers=[];
+    if(G.ly[i])LYM[i].forEach(m=>m.addTo(map));
   });
 }
 function removeRoundLayers(r){
   if(!mapReady)return;
-  r.layers.forEach((_,i)=>{
-    ['gf'+i,'gl'+i,'gp'+i,'gh'+i].forEach(id=>{if(map.getLayer(id))map.removeLayer(id);});
-    if(map.getSource('gs'+i))map.removeSource('gs'+i);
-  });
+  r.layers.forEach((_,i)=>{['gf'+i,'gl'+i,'gp'+i,'gh'+i].forEach(id=>{if(map.getLayer(id))map.removeLayer(id);});if(map.getSource('gs'+i))map.removeSource('gs'+i);(LYM[i]||[]).forEach(m=>{try{m.remove();}catch(e){}});});
+  LYM=[];clearPulse();
+}
+/* probléma-kiemelés: a kamera odarepül, a hely pulzál */
+let PULSE=null;
+function clearPulse(){if(PULSE){try{PULSE.remove();}catch(e){}PULSE=null;}}
+function focusRound(r,close){
+  if(!mapReady||!r.focus)return;const f=r.focus;
+  if(close){map.flyTo({center:LL(f.spot),zoom:Math.min(16.8,Math.max(map.getZoom()+0.6,16)),pitch:55,bearing:f.bearing||-15,offset:[0,-Math.round(Math.min(window.innerHeight*0.17,150))],duration:RM?0:1700,essential:true});return;}
+  const b=bbox(f.pts.concat([f.spot]));const pad=70;
+  const sw=LL([b[0]-pad,b[1]-pad]),ne=LL([b[2]+pad,b[3]+pad]);
+  let cam=null;try{cam=map.cameraForBounds([sw,ne],{padding:{top:150,bottom:Math.min(window.innerHeight*0.46,340),left:30,right:30},bearing:f.bearing||-15,maxZoom:17});}catch(e){}
+  if(cam){const o={center:cam.center,zoom:Math.max(13.8,cam.zoom-0.15),bearing:cam.bearing,pitch:50,duration:RM?0:2200,essential:true};RM?map.jumpTo(o):map.flyTo(o);}
+  clearPulse();PULSE=marker('pulse','<span class="tag">'+esc(f.tag||'itt')+'</span>',f.spot).addTo(map);
 }
 /* következmény-jel: a döntés nyomot hagy a városon */
 function addMark(cell,ok){
-  const el=document.createElement('div');
-  el.className='cq '+(ok?'ok':'bad');
-  el.textContent=ok?'✓':'✗';
-  const mk=new maplibregl.Marker({element:el}).setLngLat(GP(cell[0],cell[1]));
-  if(mapReady)mk.addTo(map);
-  G.marks.push(mk);
+  const el=document.createElement('div');el.className='cq '+(ok?'ok':'bad');el.textContent=ok?'✓':'✗';
+  const mk=new maplibregl.Marker({element:el}).setLngLat(LL(cell));if(mapReady)mk.addTo(map);G.marks.push(mk);
 }
 function clearMarks(){G.marks.forEach(m=>{try{m.remove();}catch(e){}});G.marks=[];}
 
 /* ---- játékmenet ---- */
-function gSelType(k){
-  G.type=k;
-  const T=TYPES.find(x=>x.k===k);
-  const tw=T.towns[Math.floor(Math.random()*T.towns.length)];
-  G.town={name:tw[0],ll:[tw[1],tw[2]]};
-  ORIGIN=G.town.ll;
-  if(map&&mapReady){const c={center:G.town.ll,zoom:15.0,pitch:58,bearing:-17};
-    RM?map.jumpTo(c):map.flyTo({...c,duration:3200,essential:true});}
-  G.st='town';render();
-}
+function gSelType(k){G.type=k;const T=TYPES.find(x=>x.k===k);G.st='load';render();pickTown(T);}
 function gStart(){
   G.i=0;G.sc=0;G.hist=[];G.ph=1;G.p1=null;clearMarks();
   G.t0=Date.now();G.time=null;gStartTimer();
   G.st='q';render();
 }
 function commitSwipe(dir){
-  G.tutDone=true; /* az első sikeres húzás után nincs több bemutató */
+  G.tutDone=true;
   if(navigator.vibrate)try{navigator.vibrate(12);}catch(e){}
   const r=WEEK[G.i];
   if(G.ph===1){
     G.p1=dir;G.ph=2;
     G.ly=r.layers.map(()=>false);G.seen=r.layers.map(()=>false);
-    render();
-    addRoundLayers(r);
-    if(map&&mapReady&&!RM)map.easeTo({bearing:map.getBearing()+8,duration:4000});
+    render();addRoundLayers(r);focusRound(r,false);
   }else{
     const ok=dir===r.best;
     const bonus=(ok&&G.p1===r.best)?r.bonus:0;
     G.earn=(ok?r.pts:0)+bonus;G.sc+=G.earn;
     G.hist.push({day:DAYS_HU[G.i],ic:r.ic,earn:G.earn,max:r.pts+r.bonus,bonus,pick:dir,ok});
     removeRoundLayers(r);
-    addMark(r[r.best].cell,ok);
+    addMark(r[dir].cell,ok);if(!ok)addMark(r[r.best].cell,true);
+    if(mapReady)map.flyTo({center:LL(r[r.best].cell),zoom:Math.min(16.5,Math.max(15,map.getZoom())),pitch:55,offset:[0,-Math.round(Math.min(window.innerHeight*0.12,110))],duration:RM?0:1500,essential:true});
     G.st='rev';G.lastOk=ok;render();
   }
   tickUI();
@@ -447,24 +618,22 @@ function gToggleLy(i){
   if(G.ly[i])G.seen[i]=true;
   const r=WEEK[G.i];
   ['gf'+i,'gl'+i,'gp'+i,'gh'+i].forEach(id=>{if(mapReady&&map.getLayer(id))map.setLayoutProperty(id,'visibility',G.ly[i]?'visible':'none');});
-  document.querySelectorAll('#lybar .g-ly[data-i="'+i+'"], #lyrow .g-ly[data-i="'+i+'"]')
-    .forEach(c=>c.classList.toggle('on',G.ly[i]));
+  (LYM[i]||[]).forEach(m=>G.ly[i]?m.addTo(map):m.remove());
+  document.querySelectorAll('#lybar .g-ly[data-i="'+i+'"], #lyrow .g-ly[data-i="'+i+'"]').forEach(c=>c.classList.toggle('on',G.ly[i]));
   const el=document.getElementById('gCall');
   if(el){const n=r.layers.length,s=G.seen.filter(Boolean).length;
-    if(s>=n){el.innerHTML='<span class="ic">💡</span><span>'+r.call+'</span>';el.classList.remove('pending');}
+    if(s>=n){if(el.classList.contains('pending'))focusRound(r,true);el.innerHTML='<span class="ic">💡</span><span>'+esc(r.call)+'</span>';el.classList.remove('pending');}
     else{el.innerHTML='<span class="ic">🔒</span><span>Kapcsold be mindet ('+s+'/'+n+')</span>';el.classList.add('pending');}}
 }
 function gNext(){
   clearTimeout(G.stampTO);clearTimeout(G.stampTO2);
-  /* továbblépéskor a pecsét azonnal elkezd felúszni-eltűnni (nem vár 4,5 mp-et) */
-  const rs=document.getElementById('revstamp');
-  const s=rs&&rs.querySelector('.st');
-  if(s){s.classList.add('out');G.stampTO2=setTimeout(()=>{rs.hidden=true;},900);}
-  else if(rs)rs.hidden=true;
-  if(G.i+1<WEEK.length){G.i++;G.ph=1;G.p1=null;G.st='q';render();}
+  const rs=document.getElementById('revstamp');const s=rs&&rs.querySelector('.st');
+  if(s){s.classList.add('out');G.stampTO2=setTimeout(()=>{rs.hidden=true;},900);}else if(rs)rs.hidden=true;
+  if(G.i+1<WEEK.length){G.i++;G.ph=1;G.p1=null;G.st='q';render();
+    if(map&&mapReady&&!RM)map.easeTo({center:G.town.ll,zoom:15.0,pitch:58,bearing:-17+G.i*6,duration:1600});}
   else{
     G.time=gElapsed();clearInterval(gTick);
-    if(map&&mapReady&&!RM)map.flyTo({zoom:13.6,pitch:45,bearing:-10,center:G.town.ll,duration:2800,essential:true});
+    if(map&&mapReady&&!RM)map.flyTo({zoom:13.8,pitch:45,bearing:-10,center:G.town.ll,duration:2800,essential:true});
     G.st='legacy';render();
   }
   tickUI();
@@ -472,12 +641,12 @@ function gNext(){
 function gReplay(){
   clearTimeout(G.stampTO);clearTimeout(G.stampTO2);
   document.getElementById('revstamp').hidden=true;
-  clearMarks();
+  clearMarks();clearPulse();
   if(G.st==='q'&&G.ph===2)removeRoundLayers(WEEK[G.i]);
   G.st='type';G.type=null;G.town=null;G.sc=0;G.hist=[];G.t0=null;G.time=null;G.i=0;G.ph=1;
-  G.lead=null;G.board=null;G.rank=null;G.offline=false;
+  G.lead=null;G.board=null;G.rank=null;G.offline=false;WEEK=[];MODE='';SCN=null;
   clearInterval(gTick);
-  if(map&&mapReady)map.flyTo({center:[19.3,47.2],zoom:5.6,pitch:45,bearing:-15,duration:2000,essential:true});
+  if(map&&mapReady)map.flyTo(Object.assign({duration:2000,essential:true},HOME_VIEW));
   render();tickUI();
 }
 
@@ -490,163 +659,105 @@ function bindSwipe(cardId,onCommit){
   const set=()=>{
     card.style.transform=`translateX(${dx}px) rotate(${dx*0.05}deg)`;
     const p=Math.min(1,Math.abs(dx)/110);
-    if(dx<0){if(stL)stL.style.opacity=p;if(stR)stR.style.opacity=0;
-      if(optL)optL.classList.add('hotL');if(optR)optR.classList.remove('hotR');}
-    else if(dx>0){if(stR)stR.style.opacity=p;if(stL)stL.style.opacity=0;
-      if(optR)optR.classList.add('hotR');if(optL)optL.classList.remove('hotL');}
+    if(dx<0){if(stL)stL.style.opacity=p;if(stR)stR.style.opacity=0;if(optL)optL.classList.add('hotL');if(optR)optR.classList.remove('hotR');}
+    else if(dx>0){if(stR)stR.style.opacity=p;if(stL)stL.style.opacity=0;if(optR)optR.classList.add('hotR');if(optL)optL.classList.remove('hotL');}
     else{if(stL)stL.style.opacity=0;if(stR)stR.style.opacity=0;}
   };
-  card.addEventListener('pointerdown',e=>{
-    dragging=true;x0=e.clientX;dx=0;w=card.offsetWidth;
-    card.classList.add('drag');card.classList.remove('spring','demo');
-    const hand=card.querySelector('.hand');if(hand)hand.remove();
-    card.setPointerCapture(e.pointerId);
-  });
+  card.addEventListener('pointerdown',e=>{dragging=true;x0=e.clientX;dx=0;w=card.offsetWidth;card.classList.add('drag');card.classList.remove('spring','demo');
+    const hand=card.querySelector('.hand');if(hand)hand.remove();card.setPointerCapture(e.pointerId);});
   card.addEventListener('pointermove',e=>{if(!dragging)return;dx=e.clientX-x0;set();});
-  const finish=()=>{
-    if(!dragging)return;dragging=false;
-    card.classList.remove('drag');
-    if(Math.abs(dx)>Math.max(80,w*0.28)){
-      const dir=dx<0?'L':'R';
-      card.classList.add('fly');
-      card.style.transform=`translateX(${dx<0?-w*1.3:w*1.3}px) rotate(${dx<0?-18:18}deg)`;
-      setTimeout(()=>onCommit(dir),240);
-    }else{
-      card.classList.add('spring');dx=0;set();
-    }
-  };
-  card.addEventListener('pointerup',finish);
-  card.addEventListener('pointercancel',finish);
+  const finish=()=>{if(!dragging)return;dragging=false;card.classList.remove('drag');
+    if(Math.abs(dx)>Math.max(80,w*0.28)){const dir=dx<0?'L':'R';card.classList.add('fly');card.style.transform=`translateX(${dx<0?-w*1.3:w*1.3}px) rotate(${dx<0?-18:18}deg)`;setTimeout(()=>onCommit(dir),240);}
+    else{card.classList.add('spring');dx=0;set();}};
+  card.addEventListener('pointerup',finish);card.addEventListener('pointercancel',finish);
 }
-document.addEventListener('keydown',e=>{
-  if(G.st!=='q')return;
-  if(e.key==='ArrowLeft')commitSwipe('L');
-  if(e.key==='ArrowRight')commitSwipe('R');
-});
+document.addEventListener('keydown',e=>{if(G.st!=='q')return;if(e.key==='ArrowLeft')commitSwipe('L');if(e.key==='ArrowRight')commitSwipe('R');});
 
 /* ---- renderelés ---- */
 function chipsHTML(r){
-  return r.layers.map((ly,i)=>{
-    const col=ly.c||C_HEAT;
-    return `<span class="g-ly${G.ly[i]?' on':''}" data-i="${i}" onclick="gToggleLy(${i})">
-      <span class="d" style="background:${col}66;border-color:${col}"></span><span class="ic">${ly.ic}</span>${ly.n}</span>`;
-  }).join('');
+  return r.layers.map((ly,i)=>{const col=ly.c||C_HEAT;
+    return `<span class="g-ly${G.ly[i]?' on':''}" data-i="${i}" onclick="gToggleLy(${i})"><span class="d" style="background:${col}66;border-color:${col}"></span><span class="ic">${ly.ic}</span>${esc(ly.n)}</span>`;}).join('');
 }
 function optRow(r){
-  return `<div class="sc-opts">
-    <div class="sc-opt oL"><span class="dir">◀ BALRA</span><span class="ic">${r.L.ic}</span><b>${r.L.t}</b></div>
-    <div class="sc-opt oR"><span class="dir">JOBBRA ▶</span><span class="ic">${r.R.ic}</span><b>${r.R.t}</b></div>
-  </div>`;
+  return `<div class="sc-opts"><div class="sc-opt oL"><span class="dir">◀ BALRA</span><span class="ic">${r.L.ic}</span><b>${esc(r.L.t)}</b></div>
+    <div class="sc-opt oR"><span class="dir">JOBBRA ▶</span><span class="ic">${r.R.ic}</span><b>${esc(r.R.t)}</b></div></div>`;
 }
-function stamps(r){
-  return `<div class="stamp stampL">${r.L.ic}</div><div class="stamp stampR">${r.R.ic}</div>`;
+function stamps(r){return `<div class="stamp stampL">${r.L.ic}</div><div class="stamp stampR">${r.R.ic}</div>`;}
+function srcNote(){
+  if(MODE==='osm')return 'Utcák, iskola, főtér, patak: OpenStreetMap (térképcsempék)'+(DEM&&DEM.ok?' · domborzat: Terrain Tiles':' · domborzat nem elérhető')+'.';
+  return 'Illusztratív minta-rétegek — a térképadat most nem volt elérhető'+(G.tried&&G.tried.length?' ('+esc(G.tried[0])+')':'')+'.';
 }
 function render(){
-  const sheet=document.getElementById('sheet');
-  const lybar=document.getElementById('lybar');
-  const topbar=document.getElementById('topbar');
-  lybar.hidden=true;topbar.hidden=(G.st==='type'||G.st==='town');
+  const sheet=document.getElementById('sheet');const lybar=document.getElementById('lybar');const topbar=document.getElementById('topbar');
+  lybar.hidden=true;topbar.hidden=(G.st==='type'||G.st==='town'||G.st==='load');
   if(G.st==='type'){
-    sheet.innerHTML=`<div class="panel g-center"><h2>Krízishét 🗓️</h2>
-      <p class="sub">5 nap, 5 döntés. Válassz települést:</p>
-      <div class="g-types">${TYPES.map(x=>`<button onclick="gSelType('${x.k}')">
-        <span class="ic">${x.ic}</span><b>${x.n}</b><span>${x.s}</span></button>`).join('')}</div></div>`;
+    sheet.innerHTML=`<div class="panel g-center"><h2>Krízishét 🗓️</h2><p class="sub">5 nap, 5 döntés. Válassz települést:</p>
+      <div class="g-types">${TYPES.map(x=>`<button onclick="gSelType('${x.k}')"><span class="ic">${x.ic}</span><b>${x.n}</b><span>${x.s}</span></button>`).join('')}</div></div>`;
     return;
   }
-  if(G.st==='town'){
-    const T=TYPES.find(x=>x.k===G.type);
-    sheet.innerHTML=`<div class="panel g-center">
-      <div style="font-size:46px;margin-bottom:4px">${T.ic}</div>
-      <h2>${G.town.name}</h2>
+  if(G.st==='load'){const T=TYPES.find(x=>x.k===G.type);
+    sheet.innerHTML=`<div class="panel g-center"><div style="font-size:46px;margin-bottom:4px">${T.ic}</div><h2>${esc(G.town?G.town.name:T.n)}</h2>
+      <div class="g-load" id="gLoad"><span class="spin"></span><span>${esc(G.loadTxt||'Település sorsolása…')}</span></div>
+      <p class="g-src">A valódi utcák, az iskola, a főtér és a domborzat betöltése — pár másodperc.</p></div>`;
+    return;
+  }
+  if(G.st==='town'){const T=TYPES.find(x=>x.k===G.type);
+    sheet.innerHTML=`<div class="panel g-center"><div style="font-size:46px;margin-bottom:4px">${T.ic}</div><h2>${esc(G.town.name)}</h2>
+      ${MODE==='osm'&&SCN?`<p class="g-town-sub">${esc(SCN.main.name)} · ${esc(SCN.school.n||(SCN.schoolKind==='iskola'?'iskola':'óvoda'))} · ${esc(SCN.square.name)}</p>`:''}
       <p class="sub" style="margin:6px 0 18px">Te vagy a polgármester. Jön egy nehéz hét.</p>
-      <button class="btn btn-wide" onclick="gStart()">Kezdjük a hétfőt →</button></div>`;
+      <button class="btn btn-wide" onclick="gStart()">Kezdjük a hétfőt →</button><p class="g-src">${srcNote()}</p></div>`;
     return;
   }
   if(G.st==='q'){
     const r=WEEK[G.i];
-    if(G.ph===1){
-      const demo=!G.tutDone; /* a kéz csökkentett animációnál is látszik (statikusan) */
-      sheet.innerHTML=`<div class="swipewrap"><div class="scard${demo?' demo':''}" id="scard">
-        ${stamps(r)}
-        <div class="chevs"><span class="chev cL">‹</span><span class="chev cR">›</span></div>
-        ${demo?'<div class="hand">👆</div>':''}
-        <div class="sc-disc"><span class="ic">${r.ic}</span>${DAYS_HU[G.i]} · ${r.disc}</div>
-        <div class="sc-title">${r.t}</div>
-        <p class="sc-setup">${r.setup}</p>
-        ${r.chips.map(c=>`<div class="sc-chip"><span class="ic">${c[0]}</span>${c[1]}</div>`).join('')}
-        ${optRow(r)}
-        <div class="sc-hint">← húzd el a kártyát →</div>
-      </div></div>`;
+    if(G.ph===1){const demo=!G.tutDone;
+      sheet.innerHTML=`<div class="swipewrap"><div class="scard${demo?' demo':''}" id="scard">${stamps(r)}
+        <div class="chevs"><span class="chev cL">‹</span><span class="chev cR">›</span></div>${demo?'<div class="hand">👆</div>':''}
+        <div class="sc-disc"><span class="ic">${r.ic}</span>${DAYS_HU[G.i]} · ${r.disc}</div><div class="sc-title">${r.t}</div><p class="sc-setup">${r.setup}</p>
+        ${r.chips.map(c=>`<div class="sc-chip"><span class="ic">${c[0]}</span>${esc(c[1])}</div>`).join('')}${optRow(r)}
+        <div class="sc-hint">← húzd el a kártyát →</div></div></div>`;
       bindSwipe('scard',commitSwipe);
     }else{
-      lybar.hidden=false;
-      lybar.innerHTML=chipsHTML(r);
-      const n=r.layers.length;
-      sheet.innerHTML=`<div class="lyrow" id="lyrow">${chipsHTML(r)}</div>
-      <div class="swipewrap"><div class="scard minicard" id="scard">
-        ${stamps(r)}
+      lybar.hidden=false;lybar.innerHTML=chipsHTML(r);const n=r.layers.length;
+      sheet.innerHTML=`<div class="lyrow" id="lyrow">${chipsHTML(r)}</div><div class="swipewrap"><div class="scard minicard" id="scard">${stamps(r)}
         <div class="chevs"><span class="chev cL">‹</span><span class="chev cR">›</span></div>
         <div class="g-call pending" id="gCall"><span class="ic">🔒</span><span>Kapcsold be mindet (0/${n})</span></div>
-        <div class="sc-title">${r.ic} Végleges döntés?</div>
-        ${optRow(r)}
-        <div class="sc-hint">nézd a térképet · kapcsolgasd a rétegeket · aztán húzd</div>
-      </div></div>`;
+        <div class="sc-title">${r.ic} Végleges döntés?</div>${optRow(r)}
+        <div class="sc-hint">nézd a térképet · kapcsolgasd a rétegeket · aztán húzd</div></div></div>`;
       bindSwipe('scard',commitSwipe);
     }
     return;
   }
   if(G.st==='rev'){
-    const r=WEEK[G.i],ok=G.lastOk;
-    const rs=document.getElementById('revstamp');
-    rs.hidden=false;
+    const r=WEEK[G.i],ok=G.lastOk;const rs=document.getElementById('revstamp');rs.hidden=false;
     rs.innerHTML=`<div class="st ${ok?'ok':'no'}">${ok?'Telitalálat':'Mellément'}</div>`;
-    /* a pecsét ~4,5 mp után magától felúszik és eltűnik */
     clearTimeout(G.stampTO);clearTimeout(G.stampTO2);
-    G.stampTO=setTimeout(()=>{
-      const s=rs.querySelector('.st');if(s)s.classList.add('out');
-      G.stampTO2=setTimeout(()=>{rs.hidden=true;},900);
-    },4500);
-    sheet.innerHTML=`<div class="panel g-center">
-      <p class="rev-why">${r.why}</p>
-      <div class="rev-earn">+${G.earn}<i> pont${G.earn>r.pts?' · bónusz ✓':''}</i></div>
+    G.stampTO=setTimeout(()=>{const s=rs.querySelector('.st');if(s)s.classList.add('out');G.stampTO2=setTimeout(()=>{rs.hidden=true;},900);},4500);
+    sheet.innerHTML=`<div class="panel g-center"><p class="rev-why">${r.why}</p><div class="rev-earn">+${G.earn}<i> pont${G.earn>r.pts?' · bónusz ✓':''}</i></div>
       <button class="btn btn-wide" onclick="gNext()">${G.i+1<WEEK.length?DAYS_HU[G.i+1]+' →':'A hét vége →'}</button></div>`;
     return;
   }
   if(G.st==='legacy'){
-    sheet.innerHTML=`<div class="panel g-center">
-      <h2>A hét lenyomata 🗺️</h2>
-      <p class="sub" style="margin-bottom:4px">A döntéseid ott maradtak a városon.</p>
+    sheet.innerHTML=`<div class="panel g-center"><h2>A hét lenyomata 🗺️</h2><p class="sub" style="margin-bottom:4px">A döntéseid ott maradtak a városon.</p>
       <div class="big" style="margin:8px 0 2px">${G.sc}<span style="font-size:18px;color:var(--faint)"> / ${MAXPTS}</span></div>
       ${G.time!=null?`<p class="g-note">⏱ ${fmtTime(G.time)}</p>`:''}
-      <div class="g-sum">${G.hist.map(h=>
-        `<div class="row"><span>${h.ic} ${h.day}${h.bonus?' · bónusz ✓':''}</span><b>${h.earn} / ${h.max}</b></div>`).join('')}</div>
+      <div class="g-sum">${G.hist.map(h=>`<div class="row"><span>${h.ic} ${h.day}${h.bonus?' · bónusz ✓':''}</span><b>${h.earn} / ${h.max}</b></div>`).join('')}</div>
       <button class="btn btn-wide" onclick="G.st='form';render()">Fel a ranglistára! 🏆</button>
       <button class="btn-replay" onclick="gReplay()">Új hét, új település</button></div>`;
     return;
   }
   if(G.st==='form'){
-    sheet.innerHTML=`<div class="panel">
-      <h2 style="text-align:center">Ranglista 🏆</h2>
-      <div class="g-form">
-        <input type="text" id="g-name" placeholder="Név" maxlength="60">
-        <input type="text" id="g-org" placeholder="Szervezet" maxlength="80">
-        <input type="email" id="g-email" placeholder="E-mail" maxlength="80">
+    sheet.innerHTML=`<div class="panel"><h2 style="text-align:center">Ranglista 🏆</h2><div class="g-form">
+        <input type="text" id="g-name" placeholder="Név" maxlength="60"><input type="text" id="g-org" placeholder="Szervezet" maxlength="80"><input type="email" id="g-email" placeholder="E-mail" maxlength="80">
         <label class="g-check"><input type="checkbox" id="g-prezi" checked>Kérem a prezit! 📑</label>
         <label class="g-check"><input type="checkbox" id="g-consent">Hozzájárulok adataim kezeléséhez (kapcsolatfelvétel, anyagküldés) — opcionális.</label>
-        <div class="g-err" id="g-err"></div>
-        <button class="btn btn-wide" id="g-submit" onclick="gSubmit()">Mentés →</button>
-      </div></div>`;
+        <div class="g-err" id="g-err"></div><button class="btn btn-wide" id="g-submit" onclick="gSubmit()">Mentés →</button></div></div>`;
     return;
   }
   if(G.st==='board'){
-    const rows=(G.board||[]).map((b,i)=>{
-      const me=G.lead&&b.nick===G.lead.name&&(b.email==null||b.email===String(G.lead.email||'').trim().toLowerCase());
-      return `<div class="row${me?' me':''}"><span>#${i+1} · ${esc(b.nick)}${b.org?`<i class="borg">${esc(b.org)}</i>`:''}</span><b>${b.score}${(SHOW_TIME&&b.time!=null)?' <em>⏱ '+fmtTime(b.time)+'</em>':''}</b></div>`;
-    }).join('');
-    sheet.innerHTML=`<div class="panel g-center">
-      <h2>Ranglista 🏆</h2>
-      ${G.rank?`<p class="sub">A helyed: <b>#${G.rank}</b></p>`:''}
-      <div class="g-board">${rows}</div>
+    const rows=(G.board||[]).map((b,i)=>{const me=G.lead&&b.nick===G.lead.name&&(b.email==null||b.email===String(G.lead.email||'').trim().toLowerCase());
+      return `<div class="row${me?' me':''}"><span>#${i+1} · ${esc(b.nick)}${b.org?`<i class="borg">${esc(b.org)}</i>`:''}</span><b>${b.score}${(SHOW_TIME&&b.time!=null)?' <em>⏱ '+fmtTime(b.time)+'</em>':''}</b></div>`;}).join('');
+    sheet.innerHTML=`<div class="panel g-center"><h2>Ranglista 🏆</h2>${G.rank?`<p class="sub">A helyed: <b>#${G.rank}</b></p>`:''}<div class="g-board">${rows}</div>
       ${G.offline?`<p class="g-note">Az eredmény most helyben mentődött — a központi ranglista épp nem elérhető.</p>`:''}
       ${(G.lead&&G.lead.prezi)?`<a class="btn btn-wide" style="display:block;text-decoration:none;margin-top:10px" href="anyagok/ETOSZ_2026_eloadas.pdf" download>Prezi letöltése 📑</a><p class="g-note">E-mailben is küldjük.</p>`:''}
       <button class="btn-replay" onclick="gReplay()">Új hét, új település</button></div>`;
@@ -654,52 +765,36 @@ function render(){
   }
 }
 
-/* ---- mentés + helyi ranglista (saját teszt-kulcsok) ---- */
+/* ---- mentés + helyi ranglista ---- */
 function gSubmit(){
-  const name=document.getElementById('g-name').value.trim();
-  const org=document.getElementById('g-org').value.trim();
-  const email=document.getElementById('g-email').value.trim();
-  const prezi=document.getElementById('g-prezi').checked;
-  const cons=document.getElementById('g-consent').checked; /* opcionális */
-  const err=document.getElementById('g-err');
+  const name=document.getElementById('g-name').value.trim();const org=document.getElementById('g-org').value.trim();const email=document.getElementById('g-email').value.trim();
+  const prezi=document.getElementById('g-prezi').checked;const cons=document.getElementById('g-consent').checked;const err=document.getElementById('g-err');
   if(!name){err.textContent='A név megadása kötelező.';return;}
   if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.textContent='Érvényes e-mail cím kell.';return;}
-  /* teljes eredménysor: összpont + idő + körönkénti irány/pont — a Google Sheetbe is ez megy */
-  G.lead={ts:new Date().toISOString(),name,org,email,consent:cons,prezi,
-    score:G.sc,max:MAXPTS,time:G.time,town:G.town?G.town.name:'',type:G.type||'',variant:'krizishet',
+  G.lead={ts:new Date().toISOString(),name,org,email,consent:cons,prezi,score:G.sc,max:MAXPTS,time:G.time,town:G.town?G.town.name:'',type:G.type||'',variant:'krizishet',mode:MODE,
     days:G.hist.map(h=>({day:h.day,pick:h.pick,ok:!!h.ok,earn:h.earn,max:h.max,bonus:!!h.bonus}))};
   try{const a=JSON.parse(localStorage.getItem('gp-sw-leads')||'[]');a.push(G.lead);localStorage.setItem('gp-sw-leads',JSON.stringify(a));}catch(e){}
   const btn=document.getElementById('g-submit');btn.disabled=true;btn.textContent='Mentés…';
   const finish=(board,rank,offline)=>{G.board=board;G.rank=rank;G.offline=offline;G.st='board';render();};
-  if(SHEET_WEBHOOK){
-    const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),8000);
-    fetch(SHEET_WEBHOOK,{method:'POST',body:JSON.stringify(G.lead),signal:ctrl.signal})
-      .then(r=>r.json())
-      .then(j=>{clearTimeout(to);
-        if(j&&j.ok)finish(j.board||[],j.rank,false);
-        else{const lb=localBoard(name,G.sc,G.time,org,email);finish(lb.board,lb.rank,true);}})
+  if(SHEET_WEBHOOK){const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),8000);
+    fetch(SHEET_WEBHOOK,{method:'POST',body:JSON.stringify(G.lead),signal:ctrl.signal}).then(r=>r.json())
+      .then(j=>{clearTimeout(to);if(j&&j.ok)finish(j.board||[],j.rank,false);else{const lb=localBoard(name,G.sc,G.time,org,email);finish(lb.board,lb.rank,true);}})
       .catch(()=>{clearTimeout(to);const lb=localBoard(name,G.sc,G.time,org,email);finish(lb.board,lb.rank,true);});
-  }else{
-    const lb=localBoard(name,G.sc,G.time,org,email);finish(lb.board,lb.rank,true);
-  }
+  }else{const lb=localBoard(name,G.sc,G.time,org,email);finish(lb.board,lb.rank,true);}
 }
-const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function localBoard(nick,score,time,org,email){
-  const em=String(email||'').trim().toLowerCase(); /* név+e-mail együtt azonosít egy játékost */
-  let b=[];try{b=JSON.parse(localStorage.getItem('gp-sw-board')||'null')||[];}catch(e){}
+  const em=String(email||'').trim().toLowerCase();let b=[];try{b=JSON.parse(localStorage.getItem('gp-sw-board')||'null')||[];}catch(e){}
   if(!b.length)b=[{nick:'Térkép Zsófi',org:'Főépítészi iroda',score:800,time:230},{nick:'Polgi Mester',org:'Polgármesteri hivatal',score:650,time:260},{nick:'Geo Róka',org:'Térinformatikai kft.',score:475,time:205}];
   const better=(s1,t1,s2,t2)=>s1>s2||(s1===s2&&(t1==null?1e9:t1)<(t2==null?1e9:t2));
   const me=b.find(x=>x.nick===nick&&String(x.email||'').trim().toLowerCase()===em);
-  if(me){if(better(score,time,me.score,me.time)){me.score=score;me.time=time;me.org=org||me.org;}}
-  else b.push({nick,score,time,org:org||'',email:em});
+  if(me){if(better(score,time,me.score,me.time)){me.score=score;me.time=time;me.org=org||me.org;}}else b.push({nick,score,time,org:org||'',email:em});
   b.sort((x,y)=>y.score-x.score||((x.time==null?1e9:x.time)-(y.time==null?1e9:y.time)));
   try{localStorage.setItem('gp-sw-board',JSON.stringify(b));}catch(e){}
   return{board:b.slice(0,10),rank:b.findIndex(x=>x.nick===nick)+1};
 }
 
 /* ---- init ---- */
-render();tickUI();
-initMap();
+render();tickUI();initMap();
 requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.add('in')));
 </script>
 </body>

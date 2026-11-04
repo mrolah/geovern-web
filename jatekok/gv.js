@@ -103,7 +103,7 @@
 
   /* ---- játéklista (a hub és a „következő játék” gomb ebből él) ---- */
   const GAMES=[
-    {id:'fak',file:'jatekok/fak.html',n:'Hová ültetnél 10 fát?',min:'2–3 perc'},
+    {id:'fak',file:'jatekok/fak.html',n:'Hová ültetnél 5 fát?',min:'2–3 perc'},
     {id:'esokert',file:'jatekok/esokert.html',n:'Esőkert vagy csatorna?',min:'2–3 perc'},
     {id:'iskolautca',file:'jatekok/iskolautca.html',n:'Iskolautca',min:'2–3 perc'},
     {id:'ugyanaz',file:'jatekok/ugyanaz-az-utca.html',n:'Ugyanaz az utca',min:'2 perc'},
