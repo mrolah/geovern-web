@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
-<script src="config.js?v=6"></script>
-<script src="gv.js?v=6"></script>
+<script src="config.js?v=7"></script>
+<script src="gv.js?v=7"></script>
 <style>
 :root{--sun:#050f14;--navy:#EAF4F4;--coral:#FF9F45;--cream:rgba(15,74,87,.2);--mint:#2AD1B5;--line:rgba(42,209,181,.25);--card:rgba(6,17,22,.85);--muted:#9BB7BC;
   --font:'Roboto',system-ui,sans-serif;--disp:'Roboto',system-ui,sans-serif;--gv-accent:var(--mint);--gv-accent-ink:#04211d;--gv-line:var(--line)}
@@ -103,7 +103,7 @@ const Q4=[
  {l:'B',t:'A forgalmat a kapu előtt',pts:100,r:'<b>Igen: −50…−90%</b> a lezárás idején (Bécs, Hackney, Barcelona). Ez a biztos hatás — a többi a részletektől függ.'},
  {l:'C',t:'A balesetszámot',pts:30,r:'<b>Még nincs rá tanulmány.</b> Balesetcsökkenést a mérnöki csomagok mutatnak (sebesség!), az iskolautcát erre még senki nem mérte. Logikus, de nem bizonyított.'}];
 const MEAS=['Forgalom a kapunál (számláló)','Sebesség (radar)','Hogyan jön a gyerek (kézfeltartás)','Levegő (NO₂)','Biztonságérzet (szülői kérdőív)','Hol állnak meg az autók'];
-let S={st:'intro',step:0,fear:null,a2:null,a3:null,a4:null,support:null,meas:[],pts:0};
+let S={st:'intro',step:0,fear:null,a2:null,a3:null,a4:null,support:null,meas:[],pts:0,ly:{fear:true,acc:true,pts:true}};
 const main=document.getElementById('main');
 function prog(n){document.getElementById('prog').innerHTML=Array.from({length:5},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('');}
 
@@ -112,12 +112,17 @@ const ACC=[[935,585],[975,590],[920,622],[985,632],[950,652],[905,600],[1000,606
 function sketch(reveal){
   return `<div class="mapbox ${reveal?'rev':''}"><svg viewBox="0 0 1200 900" aria-label="Madártávlati kép az iskola környékéről">
    <image href="img/iskolautca-terkep.jpg" x="0" y="0" width="1200" height="900" preserveAspectRatio="xMidYMid slice"/>
-   ${reveal?`<g><circle class="fear" cx="398" cy="392" r="82"/><circle class="fear" cx="539" cy="632" r="62"/><circle class="fear" cx="812" cy="331" r="52"/>
-     ${ACC.map(p=>`<circle class="acc" cx="${p[0]}" cy="${p[1]}" r="11"/>`).join('')}</g>`:''}
+   ${reveal?`<g class="lyr" data-ly="fear" style="display:${S.ly.fear?'':'none'}"><circle class="fear" cx="398" cy="392" r="82"/><circle class="fear" cx="539" cy="632" r="62"/><circle class="fear" cx="812" cy="331" r="52"/></g>
+     <g class="lyr" data-ly="acc" style="display:${S.ly.acc?'':'none'}">${ACC.map(p=>`<circle class="acc" cx="${p[0]}" cy="${p[1]}" r="11"/>`).join('')}</g>`:''}
    <!-- pontok: kis jel a helyen + szám-címke mellette (vonallal összekötve) -->
-   ${HOT.map(h=>`<g class="hot ${S.fear===h.id?'pick':''}" onclick="pickFear(${h.id})"><line class="ln" x1="${h.x}" y1="${h.y}" x2="${h.x+h.dx}" y2="${h.y+h.dy}"/><circle class="p" cx="${h.x}" cy="${h.y}" r="12"/><circle class="r" cx="${h.x+h.dx}" cy="${h.y+h.dy}" r="42"/><text x="${h.x+h.dx}" y="${h.y+h.dy+16}" text-anchor="middle">${h.id}</text></g>`).join('')}
+   <g class="lyr" data-ly="pts" style="display:${!reveal||S.ly.pts?'':'none'}">${HOT.map(h=>`<g class="hot ${S.fear===h.id?'pick':''}" onclick="pickFear(${h.id})"><line class="ln" x1="${h.x}" y1="${h.y}" x2="${h.x+h.dx}" y2="${h.y+h.dy}"/><circle class="p" cx="${h.x}" cy="${h.y}" r="12"/><circle class="r" cx="${h.x+h.dx}" cy="${h.y+h.dy}" r="42"/><text x="${h.x+h.dx}" y="${h.y+h.dy+16}" text-anchor="middle">${h.id}</text></g>`).join('')}</g>
   </svg></div>`;
 }
+/* rétegkapcsoló a felfedés után — ugyanaz a chip-sor, mint a fák-játékban és a Krízishétben (GV.layerControl) */
+const LYS=[{id:'fear',label:'Ahol a szülők félnek',icon:'🧡',color:'#FF9F45',title:'Koppenhágai minta: 13 691 szülői pont'},{id:'acc',label:'Rendőrségi balesetek',icon:'🚨',color:'#ff5c5c',title:'Tanítási időben, 250 m-es körzet'},{id:'pts',label:'A hat pont',icon:'🔢',color:'#9BB7BC',title:'A választható helyek'}];
+function mountLayers(){const el=document.getElementById('iskl');if(!el)return;
+  GV.layerControl({container:el,title:'Rétegek',hint:(matchMedia('(hover:hover) and (pointer:fine)').matches?'kattintásra':'koppintásra')+' be / ki',
+    layers:LYS.map(l=>Object.assign({on:S.ly[l.id],apply:on=>{S.ly[l.id]=on;document.querySelectorAll('.lyr[data-ly="'+l.id+'"]').forEach(g=>{g.style.display=on?'':'none';});}},l))});}
 function optList(qs,picked,revealed,fn){return `<div class="opts">${qs.map((o,i)=>`<button class="opt ${picked===i?'pick':''} ${revealed?(o.pts>=100?'best':picked===i?'':'bad'):''}" ${revealed?'disabled':''} onclick="${fn}(${i})"><span class="l">${o.l}</span><span><b>${o.t}</b>${o.s?`<small>${o.s}</small>`:''}</span></button>`).join('')}</div>`;}
 
 function render(){
@@ -128,8 +133,8 @@ function render(){
    <p>Öt gyors kérdés — mindegyikre mért válasz van, Bécstől New Yorkig. Nézzük, hol hallgat a megérzés a hangerőre.</p>
    <div class="row"><button class="btn" onclick="go('fear')">Indítás</button></div></div>`;return;}
   if(T==='fear'){prog(1);const rv=S.fearRevealed;main.innerHTML=`<div class="card"><span class="eyebrow">1 / 5 · Észlelt veszély</span>
-   <h2>Hol a legveszélyesebb pont a gyerekeknek?</h2><p>Koppints a számra a képen. A narancs pont a hely, a szám a címkéje.</p>${sketch(rv)}
-   ${rv?`<div class="leg"><span><i style="background:#FF9F45;opacity:.5"></i>Ahol a szülők félnek</span><span><i style="background:#ff5c5c"></i>Rendőrségi balesetek (tanítási idő)</span></div>
+   <h2>Hol a legveszélyesebb pont a gyerekeknek?</h2><p>${rv?'Két réteg a képen — kapcsold ki-be, és nézd meg, hol találkoznak.':'Koppints a számra a képen. A narancs pont a hely, a szám a címkéje.'}</p>${rv?'<div id="iskl"></div>':''}${sketch(rv)}
+   ${rv?`
    <div class="reveal"><b>${S.fear===3?'Te a balesettérképre mutattál — ritka.':'A legtöbben a kapura mutatnak. A baleset nem ott van.'}</b>Koppenhága 13 691 szülői pontot gyűjtött arról, hol félnek — a rendőrségi balesethelyek „csak ritkán” estek ezekre. Torontóban a gyerekbalesetek 62%-a iskolaidőn kívül történt. Két réteg kell: a félelem térképe és a baleseteké — és a döntésnek mindkettőt látnia kell.</div>
    <div class="row"><button class="btn" onclick="go('q2')">Tovább</button></div>`:`<div class="row"><button class="btn" onclick="revealFear()" ${S.fear?'':'disabled'}>Mutasd a két réteget</button></div>`}</div>`;return;}
   if(T==='q2'){prog(2);const rv=S.a2!=null;main.innerHTML=`<div class="card"><span class="eyebrow">2 / 5 · A döntés</span>
@@ -155,6 +160,7 @@ function render(){
    ${GV.endPanel({game:'iskolautca',share:'Iskolautca-játék: '+p+'/100 — hol a veszély valójában?'})}</div>`;return;}
 }
 function go(st){S.st=st;render();window.scrollTo({top:0,behavior:'smooth'});}
+const _render=render;render=function(){_render();mountLayers();};
 function pickFear(id){if(S.fearRevealed)return;S.fear=id;render();}
 function revealFear(){S.fearRevealed=true;if(S.fear===3)S.pts+=20;else if(S.fear===4||S.fear===5)S.pts+=8;render();}
 function pick2(i){S.a2=i;S.pts+=Q2[i].pts*0.4;render();}

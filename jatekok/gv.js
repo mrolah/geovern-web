@@ -5,6 +5,7 @@
    · eredmények mentése: localStorage (mindig) + opcionális webhook (config.js)
    · CSV-export az összes helyben mentett eredményről
    · közös záró-panel: „Változott a véleményed?”, megosztás, következő játék
+   · rétegkapcsoló chip-sor (layerControl): jelmagyarázat és be/ki kapcsoló egyben — minden játékban ugyanaz (v3.4)
    A fájl nem függ semmitől; a config.js előtte töltődik be (ha hiányzik, üres config).
    ===================================================================== */
 (function(){
@@ -161,12 +162,65 @@
   .gv-town{font-weight:700}`;
   const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
 
+  /* ---------- rétegkapcsoló: chip-sor, ami jelmagyarázat és kapcsoló egyben ----------
+     layerControl({container, title, hint, layers:[{id,label,icon,color,title,on,apply(on)}], onChange(id,on,user)})
+     → {el, set(id,on), get(id), all(), show(bool), refresh()}
+     Minden chip egy role="switch" gomb: bekapcsolva a réteg színével kitöltött, pipás korong + színes keret;
+     kikapcsolva üres karika, szürke ikon. Telefonon vízszintesen görgethető (a szél elhalványul, ha van még chip),
+     szélesebb képernyőn tördelődik. A térképi munkát a réteg apply(on) függvénye végzi. */
+  const LCSS=`.gvl{margin:0 0 10px}
+.gvl-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:0 6px 7px;font:500 11px var(--mono,ui-monospace,monospace);letter-spacing:.14em;text-transform:uppercase;color:var(--muted,#9BB7BC);text-shadow:0 1px 6px rgba(0,0,0,.9)}
+.gvl-head small{font-size:11px;letter-spacing:.02em;text-transform:none;color:var(--faint,#7d979c);white-space:nowrap}
+.gvl-row{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding:2px 2px 4px;-webkit-overflow-scrolling:touch}
+.gvl-row::-webkit-scrollbar{display:none}
+.gvl.fade-r .gvl-row{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
+.gvl.fade-l .gvl-row{-webkit-mask-image:linear-gradient(90deg,transparent,#000 40px);mask-image:linear-gradient(90deg,transparent,#000 40px)}
+.gvl.fade-l.fade-r .gvl-row{-webkit-mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent)}
+@media(min-width:640px){.gvl-row{flex-wrap:wrap;overflow:visible}.gvl.fade-l .gvl-row,.gvl.fade-r .gvl-row,.gvl.fade-l.fade-r .gvl-row{-webkit-mask-image:none;mask-image:none}}
+.gvl-chip{flex:0 0 auto;scroll-snap-align:start;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px 0 9px;border-radius:100px;border:1.5px solid rgba(255,255,255,.16);
+  background:rgba(6,17,22,.86);color:var(--muted,#9BB7BC);font:600 13px/1 var(--font,'Roboto',system-ui,sans-serif);cursor:pointer;white-space:nowrap;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 2px 10px rgba(0,0,0,.35);transition:background .2s,border-color .2s,color .2s,transform .12s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.gvl-chip:active{transform:scale(.96)}
+.gvl-chip:focus-visible{outline:2px solid #fff;outline-offset:2px}
+@media(hover:hover){.gvl-chip:hover{border-color:rgba(255,255,255,.4);color:#fff}.gvl-chip[aria-checked=true]:hover{filter:brightness(1.12)}}
+@media(prefers-reduced-motion:reduce){.gvl-chip,.gvl-sw,.gvl-sw svg,.gvl-ic{transition:none}.gvl-chip.flash{animation:none}}
+.gvl-chip[aria-checked=true]{background:var(--cbg);border-color:var(--c);color:#fff}
+.gvl-sw{width:18px;height:18px;border-radius:50%;border:2px solid var(--c);opacity:.55;display:grid;place-items:center;flex:none;transition:background .2s,opacity .2s}
+.gvl-sw svg{width:11px;height:11px;opacity:0;transition:opacity .15s}
+.gvl-chip[aria-checked=true] .gvl-sw{background:var(--c);opacity:1}
+.gvl-chip[aria-checked=true] .gvl-sw svg{opacity:1}
+.gvl-ic{font-size:15px;line-height:1;filter:grayscale(1);opacity:.6;transition:filter .2s,opacity .2s}
+.gvl-chip[aria-checked=true] .gvl-ic{filter:none;opacity:1}
+.gvl-chip.flash{animation:gvl-flash .55s ease-out}
+@keyframes gvl-flash{0%{box-shadow:0 0 0 0 var(--c)}100%{box-shadow:0 0 0 14px rgba(0,0,0,0)}}`;
+  function hexRGBA(h,a){h=String(h).replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')';}
+  function layerControl(opts){
+    if(!document.getElementById('gvl-css')){const st=document.createElement('style');st.id='gvl-css';st.textContent=LCSS;document.head.appendChild(st);}
+    const root=typeof opts.container==='string'?document.getElementById(opts.container):opts.container;
+    root.innerHTML='';root.classList.add('gvl');root.setAttribute('role','group');root.setAttribute('aria-label',opts.title||'Térképi rétegek');
+    const head=document.createElement('div');head.className='gvl-head';head.innerHTML='<span>'+(opts.title||'Rétegek')+'</span>'+(opts.hint?'<small>'+opts.hint+'</small>':'');root.appendChild(head);
+    const row=document.createElement('div');row.className='gvl-row';root.appendChild(row);
+    const CHECK='<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.5l2.5 2.5 4.5-5" fill="none" stroke="#06111a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const state={},chips={};
+    opts.layers.forEach(l=>{const b=document.createElement('button');b.type='button';b.className='gvl-chip';b.dataset.id=l.id;b.setAttribute('role','switch');b.setAttribute('aria-checked','false');
+      if(l.title)b.title=l.title;b.style.setProperty('--c',l.color);b.style.setProperty('--cbg',hexRGBA(l.color,.22));
+      b.innerHTML='<span class="gvl-sw">'+CHECK+'</span>'+(l.icon?'<span class="gvl-ic" aria-hidden="true">'+l.icon+'</span>':'')+'<span class="gvl-lb">'+l.label+'</span>';
+      b.addEventListener('click',()=>set(l.id,!state[l.id],true));row.appendChild(b);chips[l.id]=b;state[l.id]=false;});
+    function set(id,on,user){const l=opts.layers.find(q=>q.id===id);if(!l)return;on=!!on;const changed=state[id]!==on;state[id]=on;const b=chips[id];b.setAttribute('aria-checked',on?'true':'false');
+      if(changed&&on&&!user){b.classList.remove('flash');void b.offsetWidth;b.classList.add('flash');}
+      if(changed&&l.apply)l.apply(on);if(changed&&opts.onChange)opts.onChange(id,on,!!user);}
+    function fades(){const ov=row.scrollWidth-row.clientWidth>4;root.classList.toggle('fade-l',ov&&row.scrollLeft>4);root.classList.toggle('fade-r',ov&&row.scrollLeft<row.scrollWidth-row.clientWidth-4);}
+    row.addEventListener('scroll',fades,{passive:true});window.addEventListener('resize',fades);
+    const api={el:root,set,get:id=>!!state[id],all:()=>Object.assign({},state),show(v){root.style.display=v===false?'none':'';if(v!==false)requestAnimationFrame(fades);},refresh:fades};
+    opts.layers.forEach(l=>{if(l.on)set(l.id,true);});requestAnimationFrame(fades);return api;
+  }
+
   /* ---- {town} helyettesítés a DOM-ban: <span data-town></span> ---- */
   function fillTown(){const n=TOWN.name||'a település';document.querySelectorAll('[data-town]').forEach(el=>{el.textContent=n;});
     document.querySelectorAll('[data-town-hide]').forEach(el=>{if(!TOWN.name)el.style.display='none';});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fillTown);else fillTown();
 
-  window.GV={CFG,TOWN,GAMES,sid,record,results,clearResults,exportCSV,toCSV,urlFor,hubUrl,nextGame,endPanel,opinion,share,esc,fillTown,clearTown,forgetTown,
+  window.GV={CFG,TOWN,GAMES,sid,record,results,clearResults,exportCSV,toCSV,urlFor,hubUrl,nextGame,endPanel,opinion,share,esc,fillTown,clearTown,forgetTown,layerControl,
     rng(seed){let t=0;for(let i=0;i<seed.length;i++)t=(t*31+seed.charCodeAt(i))>>>0;return()=>{t+=0x6D2B79F5;let r=Math.imul(t^t>>>15,1|t);
       r^=r+Math.imul(r^r>>>7,61|r);return((r^r>>>14)>>>0)/4294967296;};},
     fmtFt(m){return (m>=1000?(m/1000).toFixed(m%1000?1:0).replace('.',',')+' Mrd':m+' M')+' Ft';}

@@ -12,8 +12,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="jatekok/config.js?v=6"></script>
-<script src="jatekok/gvmap.js?v=6"></script>
+<script src="jatekok/config.js?v=7"></script>
+<script src="jatekok/gv.js?v=7"></script>
+<script src="jatekok/gvmap.js?v=7"></script>
 <style>
 :root{
   --bg:#050f14; --teal:#2AD1B5; --amber:#FF9F45; --red:#ff8a7a;
@@ -124,25 +125,10 @@ h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
 }
 /* csökkentett animációnál a kéz statikusan is látszik, csak nem mozog */
 @media(prefers-reduced-motion:reduce){.scard.demo,.hand,.chev{animation:none}.hand{transform:translate(-50%,0)}}
-/* 2. fázis: rétegsáv fent + mini-kártya lent */
-.lybar{position:fixed;top:calc(64px + var(--sat));left:0;right:0;z-index:35;display:flex;gap:10px;
-  overflow-x:auto;padding:6px 14px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-.lybar::-webkit-scrollbar{display:none}
-.g-ly{flex:none;display:inline-flex;align-items:center;gap:8px;font:700 14.5px var(--font);color:var(--text);
-  border:2px solid rgba(143,176,181,.35);border-radius:14px;padding:10px 14px;min-height:46px;
-  cursor:pointer;user-select:none;background:var(--card);backdrop-filter:blur(10px);touch-action:manipulation}
-.g-ly .ic{font-size:19px}
-.g-ly .d{width:19px;height:19px;border-radius:6px;border:2.5px solid;display:flex;align-items:center;justify-content:center;
-  font:700 12px var(--font);color:#fff}
-.g-ly.on .d::after{content:'✓';text-shadow:0 1px 2px rgba(0,0,0,.85)}
-.g-ly:not(.on){opacity:.5}
-.g-ly:not(.on) .d{background:transparent!important}
-/* desktopon a rétegsor a kártyadoboz fölött ül, nem a képernyő tetején */
-.lyrow{display:none}
-@media(min-width:700px){
-  .lybar{display:none!important}
-  .lyrow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0 0 12px}
-}
+/* 2. fázis: rétegsáv fent (a közös GV.layerControl chip-sora, ugyanaz, mint a fák-játékban) + mini-kártya lent */
+.lybar{position:fixed;top:calc(62px + var(--sat));left:50%;transform:translateX(-50%);width:100%;max-width:760px;z-index:35;padding:4px 12px 0}
+.lybar .gvl{margin:0}
+.lybar .gvl-head{padding-bottom:4px}
 .minicard .sc-title{font-size:17px;margin-bottom:2px}
 .g-call{display:flex;gap:9px;align-items:flex-start;font-size:14px;color:var(--amber);margin-bottom:10px;line-height:1.4}
 .g-call .ic{font-size:18px;flex:none}
@@ -190,6 +176,8 @@ h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
   .sheet{bottom:24px}
   h2{font-size:27px}
 }
+/* keskeny képernyőn az állapotsáv jobbra, hogy ne takarja a GEOVERN-gombot */
+@media(max-width:480px){.topbar{left:auto;right:10px;transform:none;gap:10px;padding:8px 14px}}
 /* a hidden attribútum a display:flex szabályokkal szemben is érvényesüljön (rétegsáv, állapotsáv) */
 .lybar[hidden],.topbar[hidden],.revstamp[hidden]{display:none!important}
 /* v2 (OSM): betöltés, probléma-kiemelés a térképen, lejtő-címkék */
@@ -613,18 +601,7 @@ function commitSwipe(dir){
   }
   tickUI();
 }
-function gToggleLy(i){
-  G.ly[i]=!G.ly[i];
-  if(G.ly[i])G.seen[i]=true;
-  const r=WEEK[G.i];
-  ['gf'+i,'gl'+i,'gp'+i,'gh'+i].forEach(id=>{if(mapReady&&map.getLayer(id))map.setLayoutProperty(id,'visibility',G.ly[i]?'visible':'none');});
-  (LYM[i]||[]).forEach(m=>G.ly[i]?m.addTo(map):m.remove());
-  document.querySelectorAll('#lybar .g-ly[data-i="'+i+'"], #lyrow .g-ly[data-i="'+i+'"]').forEach(c=>c.classList.toggle('on',G.ly[i]));
-  const el=document.getElementById('gCall');
-  if(el){const n=r.layers.length,s=G.seen.filter(Boolean).length;
-    if(s>=n){if(el.classList.contains('pending'))focusRound(r,true);el.innerHTML='<span class="ic">💡</span><span>'+esc(r.call)+'</span>';el.classList.remove('pending');}
-    else{el.innerHTML='<span class="ic">🔒</span><span>Kapcsold be mindet ('+s+'/'+n+')</span>';el.classList.add('pending');}}
-}
+function gToggleLy(i){if(LCTL)LCTL.set('l'+i,!G.ly[i],true);}
 function gNext(){
   clearTimeout(G.stampTO);clearTimeout(G.stampTO2);
   const rs=document.getElementById('revstamp');const s=rs&&rs.querySelector('.st');
@@ -674,10 +651,18 @@ function bindSwipe(cardId,onCommit){
 document.addEventListener('keydown',e=>{if(G.st!=='q')return;if(e.key==='ArrowLeft')commitSwipe('L');if(e.key==='ArrowRight')commitSwipe('R');});
 
 /* ---- renderelés ---- */
-function chipsHTML(r){
-  return r.layers.map((ly,i)=>{const col=ly.c||C_HEAT;
-    return `<span class="g-ly${G.ly[i]?' on':''}" data-i="${i}" onclick="gToggleLy(${i})"><span class="d" style="background:${col}66;border-color:${col}"></span><span class="ic">${ly.ic}</span>${esc(ly.n)}</span>`;}).join('');
-}
+/* rétegsáv: a közös chip-sor (jelmagyarázat + kapcsoló egyben) */
+let LCTL=null;
+function mountLayerBar(r){const bar=document.getElementById('lybar');
+  LCTL=GV.layerControl({container:bar,title:'Rétegek',hint:(matchMedia('(hover:hover) and (pointer:fine)').matches?'kattintásra':'koppintásra')+' be / ki',
+    layers:r.layers.map((ly,i)=>({id:'l'+i,label:ly.n,icon:ly.ic,color:ly.c||C_HEAT,on:G.ly[i],apply:on=>setLayerVis(i,on)})),
+    onChange:(id,on)=>{const i=+id.slice(1);if(on)G.seen[i]=true;updateCall(r);}});}
+function setLayerVis(i,on){G.ly[i]=on;
+  ['gf'+i,'gl'+i,'gp'+i,'gh'+i].forEach(id=>{if(mapReady&&map.getLayer(id))map.setLayoutProperty(id,'visibility',on?'visible':'none');});
+  (LYM[i]||[]).forEach(m=>on?m.addTo(map):m.remove());}
+function updateCall(r){const el=document.getElementById('gCall');if(!el)return;const n=r.layers.length,s=G.seen.filter(Boolean).length;
+  if(s>=n){if(el.classList.contains('pending'))focusRound(r,true);el.innerHTML='<span class="ic">💡</span><span>'+esc(r.call)+'</span>';el.classList.remove('pending');}
+  else{el.innerHTML='<span class="ic">🔒</span><span>Kapcsold be mindet ('+s+'/'+n+')</span>';el.classList.add('pending');}}
 function optRow(r){
   return `<div class="sc-opts"><div class="sc-opt oL"><span class="dir">◀ BALRA</span><span class="ic">${r.L.ic}</span><b>${esc(r.L.t)}</b></div>
     <div class="sc-opt oR"><span class="dir">JOBBRA ▶</span><span class="ic">${r.R.ic}</span><b>${esc(r.R.t)}</b></div></div>`;
@@ -718,8 +703,8 @@ function render(){
         <div class="sc-hint">← húzd el a kártyát →</div></div></div>`;
       bindSwipe('scard',commitSwipe);
     }else{
-      lybar.hidden=false;lybar.innerHTML=chipsHTML(r);const n=r.layers.length;
-      sheet.innerHTML=`<div class="lyrow" id="lyrow">${chipsHTML(r)}</div><div class="swipewrap"><div class="scard minicard" id="scard">${stamps(r)}
+      lybar.hidden=false;mountLayerBar(r);const n=r.layers.length;
+      sheet.innerHTML=`<div class="swipewrap"><div class="scard minicard" id="scard">${stamps(r)}
         <div class="chevs"><span class="chev cL">‹</span><span class="chev cR">›</span></div>
         <div class="g-call pending" id="gCall"><span class="ic">🔒</span><span>Kapcsold be mindet (0/${n})</span></div>
         <div class="sc-title">${r.ic} Végleges döntés?</div>${optRow(r)}
