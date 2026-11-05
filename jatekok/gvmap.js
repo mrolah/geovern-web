@@ -345,7 +345,11 @@ out geom;`;}
     if(kind==='ra')return stem+(back?'ra':'re');if(kind==='n')return stem+(endsVowel?'n':(back?'on':(/[öőüű][^aáeéiíoóöőuúüű]*$/.test(last)?'ön':'en')));
     return stem+(back?'ban':'ben');}
 
+  /* névelő: „a Fő utca”, de „az Ország út” (magánhangzóval kezdődő név) */
+  function az(name){return /^[aáeéiíoóöőuúüű]/i.test(String(name||'').trim())?'az':'a';}
+  function azA(name){return az(name)==='az'?'Az':'A';}
+
   /* ---------- rétegkapcsoló: v3.4-től a gv.js-ben él (GV.layerControl); itt alias a kompatibilitás miatt ---------- */
   function layerControl(opts){if(!window.GV||!GV.layerControl)throw new Error('GVMAP.layerControl: a gv.js-t a gvmap.js előtt kell betölteni');return GV.layerControl(opts);}
-  window.GVMAP={STYLE_PRIMARY,STYLE_FALLBACK,setCenter,toXY,toLL,distSeg,pointInPoly,distToPoly,centroid,resolveCenter,loadOSM,parse,fromTiles,loadData,evaluators,treeValue,snapToRoad,heatGrid,polysFC,circleFC,pointsFC,clusterZones,createMap,add3D,whenIdle,layerControl,roadGraph,demLoad,addHillshade,fitPitched,hu,DEM_URL,query,get lastError(){return lastError;}};
+  window.GVMAP={STYLE_PRIMARY,STYLE_FALLBACK,setCenter,toXY,toLL,distSeg,pointInPoly,distToPoly,centroid,resolveCenter,loadOSM,parse,fromTiles,loadData,evaluators,treeValue,snapToRoad,heatGrid,polysFC,circleFC,pointsFC,clusterZones,createMap,add3D,whenIdle,layerControl,roadGraph,demLoad,addHillshade,fitPitched,hu,az,azA,DEM_URL,query,get lastError(){return lastError;}};
 })();

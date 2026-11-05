@@ -12,9 +12,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="jatekok/config.js?v=9"></script>
-<script src="jatekok/gv.js?v=9"></script>
-<script src="jatekok/gvmap.js?v=9"></script>
+<script src="jatekok/config.js?v=10"></script>
+<script src="jatekok/gv.js?v=10"></script>
+<script src="jatekok/gvmap.js?v=10"></script>
 <style>
 :root{
   --bg:#050f14; --teal:#2AD1B5; --amber:#FF9F45; --red:#ff8a7a;
@@ -87,20 +87,18 @@ h2{font-size:24px;font-weight:900;line-height:1.15;margin-bottom:8px}
 .sc-chip .ic{font-size:18px;flex:none}
 /* a kérdés + bal/jobb opciók a kártya alján */
 .sc-q{font-size:16.5px;font-weight:800;text-align:center;margin-top:10px;line-height:1.25}
-/* a két opció egymás alatt, teljes szélességben: cím + keret·idő + mit fed le */
-.sc-opts{display:flex;flex-direction:column;gap:8px;margin-top:10px}
-.sc-opt{display:grid;grid-template-columns:38px 1fr;column-gap:10px;align-items:center;padding:8px 12px 9px 10px;
-  border-radius:14px;border:2px dashed rgba(143,176,181,.3);text-align:left}
-.sc-opt .dir{grid-column:1/3;font:700 11px var(--mono);color:var(--faint);line-height:1;margin-bottom:5px}
-.sc-opt.oR .dir{text-align:right}
-.sc-opt .ic{font-size:26px;line-height:1;text-align:center}
-.sc-opt .txt{min-width:0}
-.sc-opt b{display:block;font-size:14px;line-height:1.2}
+/* bal/jobb opciók a kártya alján, két dobozban (a 3.5-ös elrendezés): cím + keret·idő + mit fed le */
+.sc-opts{display:flex;justify-content:space-between;gap:10px;margin-top:10px}
+.sc-opt{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px 11px;
+  border-radius:14px;border:2px dashed rgba(143,176,181,.3);text-align:center}
+.sc-opt .ic{font-size:26px;line-height:1}
+.sc-opt .txt{min-width:0;max-width:100%}
+.sc-opt b{display:block;font-size:13.5px;line-height:1.2}
 .sc-opt small{display:block;line-height:1.3}
-.sc-opt small.s1{font:700 11.5px var(--mono);color:var(--amber);margin-top:3px}
-.sc-opt small.s2{font:500 12px var(--font);color:var(--muted)}
-.minicard .sc-opt{padding:6px 12px 7px 10px}
-.minicard .sc-opt .dir{margin-bottom:3px}
+.sc-opt small.s1{font:700 11px var(--mono);color:var(--amber);margin-top:4px}
+.sc-opt small.s2{font:500 11.5px var(--font);color:var(--muted);margin-top:2px}
+.sc-opt .dir{font:700 12px var(--mono);color:var(--faint)}
+.minicard .sc-opt{padding:8px 8px 9px}
 @media(max-height:720px){.scard{padding:16px 16px 12px}.sc-chip{padding:7px 10px;font-size:13.5px;margin-bottom:6px}.sc-setup{font-size:14px}
   .minicard .sc-opt small.s2{display:none}}
 .sc-opt.hotL{border-color:var(--red);background:rgba(255,138,122,.1)}
@@ -329,22 +327,22 @@ const Mw=x=>x>=1000?((x/1000).toLocaleString('hu-HU')+' milliárdot'):(x+' milli
 const art=x=>{const s=String(x);return(s[0]==='5'||(s[0]==='1'&&(s.length===1||s.length===4)))?'az':'a';};
 /* P: a település nevei és számai (OSM-ből vagy a tartalék mintából) */
 function copyWeek(P){
-  const N=NUM[G.type]||NUM.v,b=N.b,e=GV.esc;
+  const N=NUM[G.type]||NUM.v,b=N.b,e=GV.esc,az=GVMAP.az;
   const isk=P.schoolKind!=='óvoda';
   const sch=isk?'az iskola':'az óvoda',schTol=isk?'az iskolától':'az óvodától',schHoz=isk?'az iskolához':'az óvodához';
   const brand=(P.n1&&P.n2&&P.n1!==P.n2)?P.n1+' és '+P.n2:(P.n1?P.n1+' két külső vége':'a két külső szakasz');
   return[
-   {setup:`Egy óra alatt 40 mm eső esett: a ${e(P.slope)} felől lezúduló víz 3 utcát öntött el, ${P.dmgN} pince ázott el — a ${e(P.main)} házaié is. Egy beavatkozásra van keret: <b>${M(b[0])}</b>.`,
+   {setup:`Egy óra alatt 40 mm eső esett: ${az(P.slope)} ${e(P.slope)} felől lezúduló víz 3 utcát öntött el, ${P.dmgN} pince ázott el — ${az(P.main)} ${e(P.main)} házaié is. Egy beavatkozásra van keret: <b>${M(b[0])}</b>.`,
     q:`Mire költöd ${art(b[0])} ${Mw(b[0])}?`,
-    L:{t:'Mobil gát a '+P.mainRa,s:[M(b[0])+' · kész 2 hét alatt',P.mainN+' házat véd a '+P.mainOn]},
-    R:{t:'Árkok, átereszek tisztítása a '+P.slope+' tetején',s:[M(Math.round(b[0]*0.3))+' · kész 1 hét alatt','2 eltömődött áteresz + 600 m árok']}},
+    L:{t:'Mobil gát '+az(P.main)+' '+P.mainRa,s:[M(b[0])+' · kész 2 hét alatt',P.mainN+' házat véd '+az(P.main)+' '+P.mainOn]},
+    R:{t:'Árkok, átereszek tisztítása '+az(P.slope)+' '+P.slope+' tetején',s:[M(Math.round(b[0]*0.3))+' · kész 1 hét alatt','2 eltömődött áteresz + 600 m árok']}},
    {setup:`3 év alatt ${P.accN} gyalogos- és kerékpáros-baleset ${sch} 500 méteres körzetében. Egy helyszínre jut forgalombiztonsági keret: <b>${M(b[1])}</b>.`,
     q:`Hová kerüljön ${art(b[1])} ${Mw(b[1])}?`,
     L:{t:'Csillapítás a csomópontban'+(P.jn?' ('+P.jn+')':''),s:[M(b[1])+' · '+P.juncD+' m-re '+schTol,'kiemelt átkelő + sávszűkítés + 30-as zóna']},
     R:{t:'Zebra '+schHoz,s:[M(b[1])+' · közvetlenül a kapunál','zebra + sárga villogó + gyalogoskorlát']}},
    {setup:`A vihar ${P.outN} ponton szakította el a légvezetéket: ${nb(N.hh)} háztartás maradt ${N.h} órán át áram nélkül. Egy szakasz megerősítésére van keret: <b>${M(b[2])}</b>.`,
     q:`Melyik szakaszra menjen ${art(b[2])} ${Mw(b[2])}?`,
-    L:{t:'Földkábel a '+P.mainOn,s:[M(b[2])+' · '+P.cabLen+' m földkábel',P.shops+' üzlet és '+P.mainN+' ház a belvárosban']},
+    L:{t:'Földkábel '+az(P.main)+' '+P.mainOn,s:[M(b[2])+' · '+P.cabLen+' m földkábel',P.shops+' üzlet és '+P.mainN+' ház a belvárosban']},
     R:{t:'Megerősítés a két erdőszéli szakaszon',s:[M(b[2])+' · '+P.brLen+' m vezeték',brand+': szigetelt vezeték + gallyazás']}},
    {setup:`Két hét múlva 36 °C-os hőhullám jön, 5 napig. ${N.where} ${nb(N.eld)} lakó 75 év feletti; tavaly ${N.amb} mentőhívás volt a hőségben. Egy csomagra futja: <b>${M(b[3])}</b>.`,
     q:`Mire menjen ${art(b[3])} ${Mw(b[3])}?`,
@@ -352,7 +350,7 @@ function copyWeek(P){
     R:{t:'Árnyékolás '+P.sqRa,s:[M(b[3])+' · kész 10 nap alatt','12 napvitorla + 2 ivókút '+P.sqOn]}},
    {setup:`Megjött a klímabiztonsági keret: <b>${M(b[4])}</b>, 3 éven belül kell elkölteni. Egy nagy beruházás vagy egy csomag — a testület ma dönt.`,
     q:`Mire menjen ${art(b[4])} ${Mw(b[4])}?`,
-    L:{t:'Minden a tározóra',s:[M(b[4])+' · 3 év építés',nb(N.tank)+' m³-es tározó '+(P.streams?'a patakon':'a '+P.slope+' alján')+' · a '+P.slope+' alját védi']},
+    L:{t:'Minden a tározóra',s:[M(b[4])+' · 3 év építés',nb(N.tank)+' m³-es tározó '+(P.streams?'a patakon':az(P.slope)+' '+P.slope+' alján')+' · '+az(P.slope)+' '+P.slope+' alját védi']},
     R:{t:'Csomag a top-3 zónára',s:[M(b[4])+' · 1 év','fák + csillapítás + esőkertek + hűsítő pontok a 3 kockázati zónában']}}
   ];
 }
@@ -461,23 +459,23 @@ function buildWeek(){
   S.tank=(()=>{let b=null,bd=1e9;D.streams.forEach(w=>w.pts.forEach(p=>{const d=Math.hypot(p[0]-S.floodC[0],p[1]-S.floodC[1]);if(d<bd){bd=d;b=p;}}));return b||S.floodC;})();
   SCN=S;
   const main=S.main.name,sq=S.square.name;
-  const hu=GVMAP.hu;const sqRa=S.square.generic?'a központba':'a '+hu(sq,'ra');
+  const hu=GVMAP.hu,az=GVMAP.az,azA=GVMAP.azA;const sqRa=S.square.generic?'a központba':az(sq)+' '+hu(sq,'ra');
   const jn=S.juncNames.length===2?S.juncNames.join(' × '):S.juncNames.length===1?S.juncNames[0]+'i':'';
   const n1=S.branches[0].names[0]||'',n2=S.branches[1]?(S.branches[1].names[0]||''):'';
-  const stormWhere=(n1&&n2&&n1!==n2)?'a viharzóna két szakaszán: '+n1+' és '+n2:(n1?'a '+n1+' két külső szakaszán':'a két külső szakaszon');
+  const stormWhere=(n1&&n2&&n1!==n2)?'a viharzóna két szakaszán: '+n1+' és '+n2:(n1?az(n1)+' '+n1+' két külső szakaszán':'a két külső szakaszon');
   /* a kártyák számai a valós adatból: házak a főutcán, boltok, hosszak */
   const mainN=Math.min(120,Math.max(12,D.bld.filter(q=>distToLine(S.main.line,q.x,q.y)<45).length));
   const T=copyWeek({main,mainRa:hu(main,'ra'),mainOn:hu(main,'n'),slope:S.slope.name,mainN,shops:Math.max(4,S.main.shops||0),
     cabLen:Math.min(600,Math.max(200,Math.round(plen(S.main.line)/50)*50)),brLen:Math.max(200,Math.round(S.branches.reduce((a,b)=>a+plen(b.pts),0)/50)*50),
-    schoolKind:S.schoolKind,juncD:S.juncD,jn,n1,n2,hot:S.hotName,sqRa,sqOn:S.square.generic?'a központban':'a '+hu(sq,'n'),
+    schoolKind:S.schoolKind,juncD:S.juncD,jn,n1,n2,hot:S.hotName,sqRa,sqOn:S.square.generic?'a központban':az(sq)+' '+hu(sq,'n'),
     streams:D.streams.length>0,dmgN:S.dmg.length,accN:S.acc.length,outN:S.out.length});
   return[
    {ic:'💧',disc:'Vízgazdálkodás',best:'R',pts:100,bonus:50,t:'Villámárvíz után',setup:T[0].setup,q:T[0].q,
-    chips:[['💬','A '+main+' lakói gátat követelnek'],['📋','A biztosítói jelentés még sehol']],
+    chips:[['💬',azA(main)+' '+main+' lakói gátat követelnek'],['📋','A biztosítói jelentés még sehol']],
     L:{ic:'🧱',t:T[0].L.t,s:T[0].L.s,cell:S.mainPt},R:{ic:'🧹',t:T[0].R.t,s:T[0].R.s,cell:S.slope.top},
     layers:[{ic:'🌊',n:'Elöntés',type:'poly',c:C_WATER,polys:[S.flood],op:0.35},{ic:'📍',n:'Károk',type:'pts',c:C_HEAT,pts:S.dmg},
       {ic:'⛰️',n:'Lejtő',type:'slope',line:S.slope.line,top:S.slope.top,bottom:S.slope.bottom,drop:S.slope.drop,name:S.slope.name}],
-    call:'A károk a '+S.slope.name+' lejtőjén sorakoznak'+(S.slope.drop?' ('+Math.round(S.slope.drop)+' m szintkülönbség)':'')+' — fent van a baj.',
+    call:'A károk '+az(S.slope.name)+' '+S.slope.name+' lejtőjén sorakoznak'+(S.slope.drop?' ('+Math.round(S.slope.drop)+' m szintkülönbség)':'')+' — fent van a baj.',
     why:'A gát a tünetet kezeli, a tisztítás az okot — harmadannyiért.',
     focus:{pts:S.slope.line.concat(S.flood),spot:S.slope.bottom,tag:'ide folyik · '+S.dmg.length+' kár',bearing:-20},
     pre:{pts:S.flood.concat([S.mainPt]),spot:S.floodC,tag:'három utca ázott el',poly:S.flood,bearing:-20}},
@@ -493,7 +491,7 @@ function buildWeek(){
     focus:{pts:[S.junc,S.schoolPt,[S.school.x,S.school.y]],spot:S.junc,tag:'balesetgóc · '+S.juncD+' m',bearing:10},
     pre:{pts:[S.junc,S.schoolPt,[S.school.x,S.school.y]],spot:[S.school.x,S.school.y],tag:(S.schoolKind==='iskola'?'az iskola':'az óvoda')+' · 400 aláírás',bearing:10}},
    {ic:'⚡',disc:'Energetika',best:'R',pts:100,bonus:50,t:'Vihar után sötét',setup:T[2].setup,q:T[2].q,
-    chips:[['💬','A boltok földkábelt követelnek a '+hu(main,'ra')],['📋','A hibalista még feldolgozás alatt']],
+    chips:[['💬','A boltok földkábelt követelnek '+az(main)+' '+hu(main,'ra')],['📋','A hibalista még feldolgozás alatt']],
     L:{ic:'🔌',t:T[2].L.t,s:T[2].L.s,cell:along(S.main.line,0.5)},R:{ic:'🌲',t:T[2].R.t,s:T[2].R.s,cell:S.branchMid},
     layers:[{ic:'📍',n:'Áramkimaradások',type:'pts',c:C_HEAT,pts:S.out},{ic:'⚡',n:'Hálózat',type:'line',c:C_GOLD,lines:S.net.map(b=>b.pts),dash:[3,2]},{ic:'🌪️',n:'Viharzóna',type:'poly',c:C_VULN,polys:S.storm,op:0.3}],
     call:'Az áramkimaradások 85%-a '+stormWhere+' — az erdőszél fái a vezeték fölött.',
@@ -501,11 +499,11 @@ function buildWeek(){
     focus:{pts:S.branches.reduce((a,b)=>a.concat(b.pts),[]).concat(S.storm.reduce((a,b)=>a.concat(b),[])),spot:S.branchMid,tag:'viharzóna · '+S.out.length+' hiba',bearing:-35},
     pre:{pts:S.out.map(p=>[p[0],p[1]]).concat([along(S.main.line,0.5)]),spot:S.branchMid,tag:'órákig nem volt áram',poly:zone(S.out.map(p=>[p[0],p[1]]),40),bearing:-35}},
    {ic:'🌡️',disc:'Klíma × Egészség',best:'L',pts:150,bonus:50,t:'Hőhullám jön',setup:T[3].setup,q:T[3].q,
-    chips:[['💬','A '+sq+' árnyékolása régi ígéret'],['🩺','A háziorvosok idős rosszulléteket jeleznek']],
+    chips:[['💬',azA(sq)+' '+sq+' árnyékolása régi ígéret'],['🩺','A háziorvosok idős rosszulléteket jeleznek']],
     L:{ic:'🧊',t:T[3].L.t,s:T[3].L.s,cell:S.hot},R:{ic:'⛱️',t:T[3].R.t,s:T[3].R.s,cell:S.square.pt},
     layers:[{ic:'🔥',n:'Hőtérkép',type:'heat',pts:S.heatPts},{ic:'👵',n:'75+ lakók',type:'poly',c:C_VULN,polys:S.old,op:0.3},
       {ic:'🏥',n:'Gondozók',type:'markers',c:C_VULN,markers:S.care},{ic:'⏱',n:'Elérés',type:'iso',c:C_TEAL,lines:S.hotIso}],
-    call:'A hőgóc és az idősek ugyanott'+(S.hotName?' ('+S.hotName+')':'')+' — a '+sq+' kívül esik.',
+    call:'A hőgóc és az idősek ugyanott'+(S.hotName?' ('+S.hotName+')':'')+' — '+az(sq)+' '+sq+' kívül esik.',
     why:'Ott ment életet, ahol hő, kor és elérés metszi egymást.',
     focus:{pts:S.old[0].concat([S.square.pt]),spot:S.hot,tag:'hőgóc · idősek',bearing:25},
     pre:{pts:S.old[0].concat([S.square.pt]),spot:null,bearing:25}},
