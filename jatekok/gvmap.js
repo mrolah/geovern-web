@@ -35,14 +35,27 @@
   function distToLines(lines,x,y,maxCheck){let m=1e9;for(const r of lines){for(let i=0;i<r.pts.length-1;i++){const d=distSeg(x,y,r.pts[i][0],r.pts[i][1],r.pts[i+1][0],r.pts[i+1][1]).d;if(d<m){m=d;if(maxCheck&&m<maxCheck)return m;}}}return m;}
 
   /* ---------- település-középpont ---------- */
+  /* Világszerte keres (London, New York is jó), de azonos név esetén a magyar települést részesíti előnyben;
+     utca vagy házszám nem lehet „település”. A gyorsítótár-kulcs 2. verziójú, így a korábbi (országra szűkített,
+     néha téves — pl. „London” → belgrádi utca) találatok nem élnek tovább a böngészőkben. */
+  const PLACE_T=/^(city|town|village|municipality|administrative|suburb|borough|hamlet|quarter|neighbourhood|county|state)$/;
+  const normName=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+  function pickGeo(j,name){
+    if(!j||!j.length)return null;const q=normName(name);
+    const first=r=>normName(r.name||String(r.display_name||'').split(',')[0]);
+    const place=r=>r.class==='place'||r.class==='boundary'||PLACE_T.test(r.type||'');
+    const exact=j.filter(r=>first(r)===q&&place(r));
+    return exact.find(r=>r.address&&r.address.country_code==='hu')||exact[0]||j.find(place)||null;
+  }
   function resolveCenter(town){
     if(town.known||!town.name)return Promise.resolve(town.center);
-    const k='gv-geo-'+town.key;
+    const k='gv-geo2-'+town.key;
     try{const c=JSON.parse(localStorage.getItem(k)||'null');if(c&&c.ll)return Promise.resolve(c.ll);}catch(e){}
-    const u=NOMINATIM+'?format=json&limit=1&countrycodes=hu,at,sk,ro,rs,hr,si&email=hello%40geovern.com&q='+encodeURIComponent(town.name);
+    const u=NOMINATIM+'?format=jsonv2&limit=8&addressdetails=1&accept-language=hu&email=hello%40geovern.com&q='+encodeURIComponent(town.name);
     const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),6000);
     return fetch(u,{signal:ctrl.signal,headers:{'Accept':'application/json'}}).then(r=>r.json()).then(j=>{clearTimeout(to);
-      if(j&&j[0]){const ll=[+j[0].lon,+j[0].lat];try{localStorage.setItem(k,JSON.stringify({ll,ts:Date.now()}));}catch(e){}return ll;}return town.center;})
+      const hit=pickGeo(j,town.name);
+      if(hit){const ll=[+hit.lon,+hit.lat];try{localStorage.setItem(k,JSON.stringify({ll,ts:Date.now(),n:hit.display_name}));}catch(e){}return ll;}return town.center;})
       .catch(()=>{clearTimeout(to);return town.center;});
   }
 
