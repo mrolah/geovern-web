@@ -115,7 +115,7 @@
   ];
   const inSub=/\/jatekok\//.test(location.pathname);
   /* a játékok közti linkek verziószámot kapnak (?v=…), hogy a GitHub Pages 10 perces gyorsítótára ne a régi HTML-t adja */
-  const VER='8';
+  const VER='9';
   function qs(){return '?'+(TOWN.name?'telepules='+encodeURIComponent(TOWN.name)+'&':'')+'v='+VER;}
   function urlFor(file){return (inSub?'../':'')+file+qs();}
   function hubUrl(){return (inSub?'../':'')+'jatekok.html'+qs();}

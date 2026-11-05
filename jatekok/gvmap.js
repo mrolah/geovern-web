@@ -35,14 +35,26 @@
   function distToLines(lines,x,y,maxCheck){let m=1e9;for(const r of lines){for(let i=0;i<r.pts.length-1;i++){const d=distSeg(x,y,r.pts[i][0],r.pts[i][1],r.pts[i+1][0],r.pts[i+1][1]).d;if(d<m){m=d;if(maxCheck&&m<maxCheck)return m;}}}return m;}
 
   /* ---------- település-középpont ---------- */
+  /* Világszerte keres (London, New York is jó), de azonos név esetén a magyar települést részesíti előnyben;
+     a 2. verziójú gyorsítótár-kulcs miatt a korábbi (országra szűkített, néha téves) találatok nem élnek tovább. */
+  const PLACE_T=/^(city|town|village|municipality|administrative|suburb|borough|hamlet|quarter|neighbourhood|county|state)$/;
+  const normName=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+  function pickGeo(j,name){
+    if(!j||!j.length)return null;const q=normName(name);
+    const first=r=>normName(r.name||String(r.display_name||'').split(',')[0]);
+    const exact=j.filter(r=>first(r)===q);
+    const place=r=>r.class==='place'||r.class==='boundary'||PLACE_T.test(r.type||'');
+    return exact.find(r=>r.address&&r.address.country_code==='hu'&&place(r))||exact.find(place)||exact[0]||j.find(place)||j[0];
+  }
   function resolveCenter(town){
     if(town.known||!town.name)return Promise.resolve(town.center);
-    const k='gv-geo-'+town.key;
+    const k='gv-geo2-'+town.key;
     try{const c=JSON.parse(localStorage.getItem(k)||'null');if(c&&c.ll)return Promise.resolve(c.ll);}catch(e){}
-    const u=NOMINATIM+'?format=json&limit=1&countrycodes=hu,at,sk,ro,rs,hr,si&email=hello%40geovern.com&q='+encodeURIComponent(town.name);
+    const u=NOMINATIM+'?format=jsonv2&limit=6&addressdetails=1&accept-language=hu&email=hello%40geovern.com&q='+encodeURIComponent(town.name);
     const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),6000);
     return fetch(u,{signal:ctrl.signal,headers:{'Accept':'application/json'}}).then(r=>r.json()).then(j=>{clearTimeout(to);
-      if(j&&j[0]){const ll=[+j[0].lon,+j[0].lat];try{localStorage.setItem(k,JSON.stringify({ll,ts:Date.now()}));}catch(e){}return ll;}return town.center;})
+      const hit=pickGeo(j,town.name);
+      if(hit){const ll=[+hit.lon,+hit.lat];try{localStorage.setItem(k,JSON.stringify({ll,ts:Date.now(),n:hit.display_name}));}catch(e){}return ll;}return town.center;})
       .catch(()=>{clearTimeout(to);return town.center;});
   }
 
@@ -292,6 +304,36 @@ out geom;`;}
       const layers=map.getStyle().layers||[];let before=null;for(const l of layers){if(l.type==='line'||l.type==='symbol'){before=l.id;break;}}
       map.addLayer({id:'gv-hillshade',type:'hillshade',source:'gv-dem',paint:{'hillshade-exaggeration':opts.exaggeration||0.55,'hillshade-shadow-color':'#000000','hillshade-highlight-color':opts.highlight||'#6a8f9e','hillshade-accent-color':'#102a35','hillshade-illumination-direction':335}},before||undefined);}catch(e){}}
 
+  /* ---------- kamera döntött (pitch) nézethez ----------
+     A cameraForBounds csak pitch 0-ra számol; döntött nézetben a kép közepe fölötti rész a közép felé zsugorodik,
+     az alatta lévő tágul — így a terület könnyen az alsó lap alá csúszik. Itt a valós vetítéssel iterálunk, hogy a
+     pontok a padding-gel szűkített képernyőrészen belül maradjanak a megadott dőlésnél. */
+  function fitPitched(map,lls,opt){
+    opt=opt||{};const pad=Object.assign({top:0,bottom:0,left:0,right:0},opt.padding||{});
+    const pitch=opt.pitch==null?50:opt.pitch,bearing=opt.bearing||0,maxZoom=opt.maxZoom||17,minZoom=opt.minZoom||3;
+    if(!lls||!lls.length)return null;
+    const pts=lls.map(l=>maplibregl.LngLat.convert(l));
+    let cam=null;try{cam=map.cameraForBounds(pts.reduce((b,p)=>b.extend(p),new maplibregl.LngLatBounds(pts[0],pts[0])),{padding:pad,bearing,maxZoom});}catch(e){}
+    if(!cam)return null;
+    let tr;try{tr=map.transform.clone();}catch(e){return Object.assign({pitch},cam);}
+    try{
+      tr.bearing=bearing;tr.pitch=pitch;
+      const W=tr.width,H=tr.height;const bx={l:pad.left,r:W-pad.right,t:pad.top,b:H-pad.bottom};
+      if(bx.r-bx.l<40||bx.b-bx.t<40)return Object.assign({pitch},cam);
+      let center=maplibregl.LngLat.convert(cam.center),zoom=Math.max(minZoom,Math.min(maxZoom,cam.zoom));
+      for(let it=0;it<12;it++){
+        tr.center=center;tr.zoom=zoom;
+        let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;pts.forEach(p=>{const q=tr.locationPoint(p);x0=Math.min(x0,q.x);x1=Math.max(x1,q.x);y0=Math.min(y0,q.y);y1=Math.max(y1,q.y);});
+        const s=Math.max((x1-x0)/(bx.r-bx.l),(y1-y0)/(bx.b-bx.t));
+        if(s>1.01&&zoom>minZoom){zoom=Math.max(minZoom,zoom-Math.log2(s)*0.9);continue;}
+        const dx=(x0+x1)/2-(bx.l+bx.r)/2,dy=(y0+y1)/2-(bx.t+bx.b)/2;
+        if(Math.abs(dx)<1.5&&Math.abs(dy)<1.5){if(s<0.8&&zoom<maxZoom){zoom=Math.min(maxZoom,zoom+Math.min(0.35,-Math.log2(s)*0.6));continue;}break;}
+        center=tr.pointLocation(new maplibregl.Point(W/2+dx,H/2+dy));
+      }
+      return{center:[center.lng,center.lat],zoom,bearing,pitch};
+    }catch(e){return Object.assign({pitch},cam);}
+  }
+
   /* ---------- magyar toldalék utcanevekhez: ra/re, n, ban/ben ---------- */
   function hu(name,kind){name=String(name||'').trim();if(!name)return '';const low=name.toLowerCase();
     const last=low.split(/\s+/).pop();const back=/[aáoóuú][^aáoóuúeéiíöőüű]*$/.test(last.replace(/[^a-záéíóöőúüű]/g,''))||!/[eéiíöőüű]/.test(last);
@@ -305,5 +347,5 @@ out geom;`;}
 
   /* ---------- rétegkapcsoló: v3.4-től a gv.js-ben él (GV.layerControl); itt alias a kompatibilitás miatt ---------- */
   function layerControl(opts){if(!window.GV||!GV.layerControl)throw new Error('GVMAP.layerControl: a gv.js-t a gvmap.js előtt kell betölteni');return GV.layerControl(opts);}
-  window.GVMAP={STYLE_PRIMARY,STYLE_FALLBACK,setCenter,toXY,toLL,distSeg,pointInPoly,distToPoly,centroid,resolveCenter,loadOSM,parse,fromTiles,loadData,evaluators,treeValue,snapToRoad,heatGrid,polysFC,circleFC,pointsFC,clusterZones,createMap,add3D,whenIdle,layerControl,roadGraph,demLoad,addHillshade,hu,DEM_URL,query,get lastError(){return lastError;}};
+  window.GVMAP={STYLE_PRIMARY,STYLE_FALLBACK,setCenter,toXY,toLL,distSeg,pointInPoly,distToPoly,centroid,resolveCenter,loadOSM,parse,fromTiles,loadData,evaluators,treeValue,snapToRoad,heatGrid,polysFC,circleFC,pointsFC,clusterZones,createMap,add3D,whenIdle,layerControl,roadGraph,demLoad,addHillshade,fitPitched,hu,DEM_URL,query,get lastError(){return lastError;}};
 })();

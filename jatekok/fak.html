@@ -12,9 +12,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="config.js?v=8"></script>
-<script src="gv.js?v=8"></script>
-<script src="gvmap.js?v=8"></script>
+<script src="config.js?v=9"></script>
+<script src="gv.js?v=9"></script>
+<script src="gvmap.js?v=9"></script>
 <style>
 :root{--bg:#050f14;--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b4a;--text:#EAF4F4;--muted:#9BB7BC;--faint:#5E7A80;
   --card:rgba(6,17,22,.9);--line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
@@ -68,12 +68,7 @@ p{color:var(--muted);font-size:15px}p+p{margin-top:8px}
 /* az 1. kör fái a 2. körben: halvány „szellem”-jelölők, nem fogják a koppintást */
 .mk.ghost{pointer-events:none}.mk.ghost .tree{opacity:.42;animation:none}
 .poi{width:26px;height:26px;border-radius:50%;background:rgba(199,123,255,.25);border:1.5px solid #c77bff;display:flex;align-items:center;justify-content:center;font-size:14px;pointer-events:none;animation:fadein .35s}
-/* legjobb helyek: csillag pulzáló udvarral — ide érdemes ültetni (a koppintás átmegy a térképre) */
-.best{width:30px;height:30px;pointer-events:none;position:relative;animation:fadein .35s}
-.best span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.8))}
-.best::before{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid #ffe08a;animation:bestp 1.8s ease-out infinite}
-@keyframes bestp{0%{transform:scale(.7);opacity:.9}100%{transform:scale(2.2);opacity:0}}
-@media(prefers-reduced-motion:reduce){.best::before{animation:none;opacity:.5}}
+/* legjobb helyek: térképi réteg (sárga „metszet”-ragyogás + gyűrűk), nem HTML-jelölő — zoomolásra, mozgatásra a térképpel együtt mozog */
 @keyframes fadein{from{opacity:0}to{opacity:1}}
 .maplibregl-ctrl-attrib{font-size:10px!important}
 .err{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
@@ -129,24 +124,27 @@ const LAYERS=[
   {id:'vuln',label:'Sérülékeny lakók',icon:'🧒',color:'#c77bff',title:'Bölcsőde, óvoda, iskola, rendelő, idősotthon — kb. 150 m-es körzet'},
   {id:'canopy',label:'Meglévő zöld',icon:'🌳',color:'#3ddc97',title:'Parkok, erdők, gyep — ahol már van lombkorona'},
   {id:'ped',label:'Gyalogos forgalom',icon:'🛍️',color:'#ffd166',title:'Boltok, vendéglátás — ahol sokan járnak'},
-  {id:'best',label:'Legjobb helyek',icon:'⭐',color:'#ffe08a',title:'A nyolc legértékesebb hely a rétegek alapján — ide ültess'},
+  {id:'best',label:'Legjobb helyek',icon:'⭐',color:'#ffe08a',title:'A rétegek metszete: ahol a hőség, a sérülékeny lakók és a hiányzó lombkorona találkozik — a sárga ragyogás a legértékesebb sáv, a gyűrűk a 8 legjobb hely'},
   {id:'ghost',label:'1. kör fái',icon:'📍',color:'#9BB7BC',title:'Ahová az első körben, adat nélkül ültettél'}];
 const DEFAULT_ON=['heat','vuln','canopy','best','ghost'];
-/* a legjobb helyek: utca melletti rácspontok értéke (treeValue), a nyolc legjobb, egymástól legalább 90 m-re */
-let bestMarkers=[];
-function bestSpots(){const c=[];for(let x=-AX;x<=AX;x+=25)for(let y=-AY;y<=AY;y+=25){if(E.inWater(x,y))continue;const rd=E.roadDist?E.roadDist(x,y):0;if(rd>60)continue;
+/* a legjobb helyek: utca melletti rácspontok értéke (treeValue = a rétegek metszete). A felső negyed sárgán ragyog
+   (heatmap-réteg), a nyolc legjobb — egymástól legalább 90 m-re — gyűrűt kap. */
+function bestGrid(){const c=[];for(let x=-AX;x<=AX;x+=25)for(let y=-AY;y<=AY;y+=25){if(E.inWater(x,y))continue;const rd=E.roadDist?E.roadDist(x,y):0;if(rd>60)continue;
     let px=x,py=y;if(MODE==='osm'){const sn=GVMAP.snapToRoad(D,x,y,60);if(!sn)continue;px=sn.x;py=sn.y;if(E.inWater(px,py)||E.nearRail(px,py))continue;}
     c.push([px,py,GVMAP.treeValue(E,px,py)]);}
-  c.sort((a,b)=>b[2]-a[2]);const out=[];for(const q of c){if(out.length>=8)break;if(out.some(o=>Math.hypot(o[0]-q[0],o[1]-q[1])<90))continue;out.push(q);}return out;}
-function addBest(){bestMarkers.forEach(m=>m.remove());bestMarkers=[];if(!E)return;
-  bestSpots().forEach((q,i)=>{const el=document.createElement('div');el.className='best';el.innerHTML='<span>⭐</span>';el.title=Math.round(q[2]*10)+' pont';
-    bestMarkers.push(new maplibregl.Marker({element:el,anchor:'center'}).setLngLat(GVMAP.toLL(q[0],q[1])));});}
+  return c;}
+function bestSpots(c){const s=c.slice().sort((a,b)=>b[2]-a[2]);const out=[];for(const q of s){if(out.length>=8)break;if(out.some(o=>Math.hypot(o[0]-q[0],o[1]-q[1])<90))continue;out.push(q);}return out;}
+function bestSources(){const c=bestGrid();if(!c.length)return{glow:GVMAP.pointsFC([]),top:GVMAP.pointsFC([])};
+  const vs=c.map(q=>q[2]).sort((a,b)=>a-b);const q0=vs[Math.floor(vs.length*0.72)],mx=vs[vs.length-1];const span=Math.max(0.05,mx-q0);
+  const glow={type:'FeatureCollection',features:c.filter(q=>q[2]>q0).map(q=>({type:'Feature',properties:{w:+Math.pow((q[2]-q0)/span,1.4).toFixed(3)},geometry:{type:'Point',coordinates:GVMAP.toLL(q[0],q[1])}}))};
+  const top={type:'FeatureCollection',features:bestSpots(c).map((q,i)=>({type:'Feature',properties:{rank:i+1,pts:Math.round(q[2]*10)},geometry:{type:'Point',coordinates:GVMAP.toLL(q[0],q[1])}}))};
+  return{glow,top};}
 /* térképi réteg → (réteg-id, átlátszatlanság-tulajdonság, bekapcsolt érték) */
-const MAPL={heat:[['heat','heatmap-opacity',.75]],vuln:[['vuln-f','fill-opacity',.22],['vuln-l','line-opacity',.9]],canopy:[['canopy-f','fill-opacity',.3]],ped:[['ped','circle-opacity',.85],['ped','circle-stroke-opacity',1]]};
+const MAPL={heat:[['heat','heatmap-opacity',.8]],vuln:[['vuln-f','fill-opacity',.22],['vuln-l','line-opacity',.9]],canopy:[['canopy-f','fill-opacity',.3]],ped:[['ped','circle-opacity',.85],['ped','circle-stroke-opacity',1]],
+  best:[['best-glow','heatmap-opacity',.95],['best-ring','circle-opacity',1],['best-ring','circle-stroke-opacity',1],['best-core','circle-opacity',1]]};
 let LC=null,revealT=[];
 function applyLayer(id,on){
   if(id==='ghost'){S.ghosts.forEach(t=>on?t.mk.addTo(map):t.mk.remove());return;}
-  if(id==='best'){if(on&&!bestMarkers.length)addBest();bestMarkers.forEach(m=>on?m.addTo(map):m.remove());return;}
   if(!mapReady||!layersAdded)return;
   (MAPL[id]||[]).forEach(([lid,prop,val])=>{
     if(on){map.setLayoutProperty(lid,'visibility','visible');requestAnimationFrame(()=>map.setPaintProperty(lid,prop,val));}
@@ -198,11 +196,19 @@ function addLayers(){if(layersAdded||!mapReady||!E)return;layersAdded=true;const
   /* minden réteg rejtve és 0 átlátszatlansággal indul; a chip kapcsolja be (applyLayer), átmenettel */
   map.addLayer({id:'heat',type:'heatmap',source:'heat',layout:{visibility:v},paint:{'heatmap-weight':['get','w'],'heatmap-intensity':1.1,
     'heatmap-radius':['interpolate',['linear'],['zoom'],13,14,15,30,17,70],'heatmap-opacity':0,'heatmap-opacity-transition':tr,
-    'heatmap-color':['interpolate',['linear'],['heatmap-density'],0,'rgba(255,107,74,0)',0.25,'rgba(255,159,69,.35)',0.6,'rgba(255,107,74,.7)',1,'rgba(255,60,40,.95)']}});
+    'heatmap-color':['interpolate',['linear'],['heatmap-density'],0,'rgba(255,107,74,0)',0.3,'rgba(255,159,69,.08)',0.55,'rgba(255,120,74,.4)',0.8,'rgba(255,80,50,.78)',1,'rgba(255,50,35,.95)']}});
   map.addLayer({id:'canopy-f',type:'fill',source:'canopy',layout:{visibility:v},paint:{'fill-color':'#3ddc97','fill-opacity':0,'fill-opacity-transition':tr}});
   map.addLayer({id:'vuln-f',type:'fill',source:'vuln',layout:{visibility:v},paint:{'fill-color':'#c77bff','fill-opacity':0,'fill-opacity-transition':tr}});
   map.addLayer({id:'vuln-l',type:'line',source:'vuln',layout:{visibility:v},paint:{'line-color':'#c77bff','line-width':1.5,'line-dasharray':[2,2],'line-opacity':0,'line-opacity-transition':tr}});
   map.addLayer({id:'ped',type:'circle',source:'ped',layout:{visibility:v},paint:{'circle-color':'#ffd166','circle-radius':4.5,'circle-opacity':0,'circle-opacity-transition':tr,'circle-stroke-color':'#2b1400','circle-stroke-width':1,'circle-stroke-opacity':0,'circle-stroke-opacity-transition':tr}});
+  /* a rétegek metszete: sárga ragyogás a legértékesebb sávon + gyűrű a 8 legjobb helyen — térképi réteg, a térképpel mozog */
+  const B=bestSources();map.addSource('best-glow',{type:'geojson',data:B.glow});map.addSource('best-top',{type:'geojson',data:B.top});
+  map.addLayer({id:'best-glow',type:'heatmap',source:'best-glow',layout:{visibility:v},paint:{'heatmap-weight':['get','w'],'heatmap-intensity':['interpolate',['linear'],['zoom'],13,0.9,17,1.6],
+    'heatmap-radius':['interpolate',['linear'],['zoom'],13,9,15,20,17,46],'heatmap-opacity':0,'heatmap-opacity-transition':tr,
+    'heatmap-color':['interpolate',['linear'],['heatmap-density'],0,'rgba(255,224,138,0)',0.25,'rgba(190,230,110,.18)',0.55,'rgba(255,230,120,.55)',0.85,'rgba(255,245,170,.85)',1,'rgba(255,255,220,.98)']}});
+  map.addLayer({id:'best-ring',type:'circle',source:'best-top',layout:{visibility:v},paint:{'circle-color':'rgba(255,224,138,.16)','circle-radius':['interpolate',['linear'],['zoom'],13,6,15,11,17,19],
+    'circle-opacity':0,'circle-opacity-transition':tr,'circle-stroke-color':'#ffe08a','circle-stroke-width':2.5,'circle-stroke-opacity':0,'circle-stroke-opacity-transition':tr}});
+  map.addLayer({id:'best-core',type:'circle',source:'best-top',layout:{visibility:v},paint:{'circle-color':'#fff6cc','circle-radius':3.2,'circle-opacity':0,'circle-opacity-transition':tr,'circle-stroke-color':'#3a2a00','circle-stroke-width':1}});
 }
 
 /* ---- ültetés ---- */
@@ -240,16 +246,16 @@ function render(){const n=S.trees.length;
     <div class="row"><button class="btn" onclick="start()">Indítás</button></div><div class="src">${srcTxt()}</div>`;return;}
   if(S.st==='place'){TB.innerHTML=(S.round===1?'1. kör · vakon':'2. kör · adattal')+' · <b>'+n+'/'+N+'</b>';
     P.innerHTML=`<span class="eyebrow">${S.round===1?'1. kör — adat nélkül':'2. kör — a rétegekkel'}</span>
-    <h1>${S.round===1?'Koppints az utcákra, ahová fát ültetnél':'Most ültesd újra — a ⭐ helyekre'}</h1>
+    <h1>${S.round===1?'Koppints az utcákra, ahová fát ültetnél':'Most ültesd újra — a sárga gyűrűkre'}</h1>
     <div class="cnt">${Array.from({length:N},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</div>
     <div class="row"><button class="btn btn-ghost" onclick="undo()" ${n?'':'disabled'}>Vissza</button><button class="btn" onclick="finishRound()" ${n===N?'':'disabled'}>Kiértékelés</button></div>
-    <div class="hint">${S.round===2?(n<N?(S.last!=null?'Ez a hely <b>'+S.last+' pont</b>. ':'')+'A ⭐ a legjobb helyek — oda ültess. Még '+(N-n)+' fa.':'Mind '+nwA+' fa a helyén — jöhet a kiértékelés.'):(n<N?'Még '+(N-n)+' fa. A fa a járda mellé áll; egy fára koppintva visszaveszed.':'Mind '+nwA+' fa a helyén — jöhet a kiértékelés.')}</div>`;return;}
+    <div class="hint">${S.round===2?(n<N?(S.last!=null?'Ez a hely <b>'+S.last+' pont</b>. ':'')+'A sárga ragyogás a rétegek metszete, a gyűrűk a 8 legjobb hely — oda ültess. Még '+(N-n)+' fa.':'Mind '+nwA+' fa a helyén — jöhet a kiértékelés.'):(n<N?'Még '+(N-n)+' fa. A fa a járda mellé áll; egy fára koppintva visszaveszed.':'Mind '+nwA+' fa a helyén — jöhet a kiértékelés.')}</div>`;return;}
   if(S.st==='reveal1'){TB.innerHTML='1. kör · <b>'+S.r1+' pont</b>';P.innerHTML=`<span class="eyebrow">1. kör — eredmény</span>
     <h1>Vakon: <em>${S.r1}</em> / ${N*10}</h1>
     <p>Minden fa 0–10 pontot ér: annyit, amennyi hőséget, sérülékeny lakót és gyalogost árnyékol — és annyival kevesebbet, amennyi lombkorona már ott van.</p>
     <div class="row"><button class="btn" onclick="showLayers()">Rétegek bekapcsolása</button></div><div class="hint">A számok a fákon: hány pontot ér a hely.</div>`;return;}
   if(S.st==='layers'){P.innerHTML=`<h1>Ugyanaz a város. Más utca.</h1>
-    <p>A ⭐ mutatja, hol ér a legtöbbet a fa. A 2. körben minden fa azonnal kiírja a pontját.</p>
+    <p>A sárga ragyogás a rétegek metszete — ahol hő, sérülékeny lakó és hiányzó lombkorona találkozik; a gyűrűk a 8 legjobb hely. A 2. körben minden fa azonnal kiírja a pontját.</p>
     <div class="row"><button class="btn" onclick="round2()">Újra, adattal</button></div>`;return;}
   if(S.st==='final'){const d=S.r2-S.r1;TB.innerHTML='Vakon <b>'+S.r1+'</b> · adattal <b>'+S.r2+'</b>';
     P.innerHTML=`<span class="eyebrow">A hét lenyomata</span>
