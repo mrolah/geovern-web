@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
-<script src="config.js?v=10"></script>
-<script src="gv.js?v=10"></script>
+<script src="config.js?v=8"></script>
+<script src="gv.js?v=8"></script>
 <style>
 :root{--paper:#050f14;--paper2:#0b1a21;--ink:#EAF4F4;--ink2:#9BB7BC;--blue:#2AD1B5;--water:#4AA8FF;--green:#3ddc97;--amber:#FF9F45;--red:#ff6b4a;
   --line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--slab:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
@@ -93,6 +93,9 @@ p{color:var(--ink2);font-size:15.5px}p+p{margin-top:8px}
 .sum b{font-size:16px}
 .sum{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:12px;background:rgba(15,74,87,.25);font:500 14px var(--mono)}
 .sum.over b{color:var(--red)}
+.chk{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px dashed var(--blue);border-radius:12px;background:rgba(42,209,181,.08);margin-top:10px;cursor:pointer}
+.chk input{width:22px;height:22px;accent-color:var(--blue);margin-top:2px;flex:none}
+.chk b{font-size:15px}.chk small{display:block;color:var(--ink2);font-size:12.5px}
 /* eredmény */
 .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
 .k{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:rgba(15,74,87,.2)}
@@ -104,24 +107,6 @@ p{color:var(--ink2);font-size:15.5px}p+p{margin-top:8px}
 .plan{margin-top:12px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0b1a21}
 .plan svg{display:block;width:100%;height:auto}
 .hist{font:500 12.5px var(--mono);color:var(--ink2);margin-top:10px}
-/* mérőhálózat: egyirányú döntés (ha telepítetted, marad), −10 M a keretből; csak ezután látszik az elemek mért hatékonysága */
-.meas{margin-top:12px;padding:12px 14px;border:1.5px dashed var(--blue);border-radius:14px;background:rgba(42,209,181,.08)}
-.meas.on{border-style:solid;border-color:rgba(42,209,181,.6);background:rgba(42,209,181,.1)}
-.meas .mh{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.meas .mh b{font-size:15px}
-.meas .cost{font:700 12.5px var(--mono);color:var(--amber);white-space:nowrap}
-.meas small{display:block;color:var(--ink2);font-size:12.5px;margin-top:5px;line-height:1.4}
-.btn-sm{padding:9px 16px;font-size:14px;min-height:38px;border-radius:10px}
-.eff{margin-top:10px;padding-top:4px}
-.eff .eh{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:4px}
-.eff .eh b{color:var(--ink);font-weight:700;letter-spacing:.02em;text-transform:none;font-size:13px}
-.eff .er{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n v" "b b" "s s";align-items:center;column-gap:10px;row-gap:4px;padding:7px 0;border-top:1px solid rgba(255,255,255,.07)}
-.eff .en{grid-area:n;font-size:14px;font-weight:700}
-.eff .eb{grid-area:b;height:9px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden}
-.eff .eb i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),#9af0dc);border-radius:5px}
-.eff .er>b{grid-area:v;font:700 14px var(--mono);color:var(--ink);white-space:nowrap}
-.eff .er small{grid-area:s;margin:0;font-size:12px;color:var(--ink2);line-height:1.3}
-.eff .er.top .en{color:#9af0dc}
 footer{max-width:760px;margin:0 auto;padding:0 16px 30px;font-size:12px;color:var(--ink2)}
 </style>
 </head>
@@ -137,26 +122,16 @@ footer{max-width:760px;margin:0 auto;padding:0 16px 30px;font-size:12px;color:va
 document.getElementById('homelink').href=GV.hubUrl();
 const BUDGET=120, MEAS=10;
 const M=[
- {k:'cso',ic:'🚰',short:'Nagyobb cső',n:'Csatornabővítés — nagyobb cső',s0:'18 hónap · nem hűsít · a lakók fele ezt kéri',per:150,lead:18,cool:0},
- {k:'eso',ic:'🌱',short:'Esőkertek',n:'Esőkertek az utcában',s0:'6 hónap · hűsít · 60 M felett nincs több hely',per:200,per2:60,cap:60,lead:6,cool:1,meas:true},
- {k:'burk',ic:'🧱',short:'Áteresztő burkolat',n:'Vízáteresztő burkolat a parkolókon',s0:'8 hónap · kicsit hűsít',per:110,lead:8,cool:.5,meas:true},
- {k:'teto',ic:'🏢',short:'Zöldtető + ciszterna',n:'Zöldtető + ciszterna a középületeken',s0:'10 hónap · hűsít',per:90,lead:10,cool:1}
+ {k:'cso',n:'Csatornabővítés — nagyobb cső',s:'+150 m³ / 10 M · 18 hónap · hűsítés: nincs',per:150,lead:18,cool:0},
+ {k:'eso',n:'Esőkertek az utcában',s:'+200 m³ / 10 M 60 M-ig (utána hely híján +60) · 6 hónap · hűsít',per:200,per2:60,cap:60,lead:6,cool:1},
+ {k:'burk',n:'Vízáteresztő burkolat a parkolókon',s:'+110 m³ / 10 M · 8 hónap · kicsit hűsít',per:110,lead:8,cool:.5},
+ {k:'teto',n:'Zöldtető + ciszterna a középületeken',s:'+90 m³ / 10 M · 10 hónap · hűsít',per:90,lead:10,cool:1}
 ];
-const MF=1.3; /* mérés után az esőkert és a burkolat a mélypontokra kerül: +30 % */
-/* mért hatékonyság: m³ visszatartás 10 M Ft-ért (és ezer Ft / m³) — csak telepített mérőhálózattal látszik */
-const effOf=m=>Math.round(m.per*(m.meas?MF:1));
-const sEff=m=>'+'+effOf(m)+' m³ / 10 M'+(m.cap?' '+m.cap+' M-ig (utána csak +'+Math.round(m.per2*MF)+')':'')+' · '+m.lead+' hónap · '+(m.cool>=1?'hűsít':m.cool?'kicsit hűsít':'nem hűsít');
-function effBlock(){const rows=M.slice().sort((a,b)=>effOf(b)-effOf(a));const mx=effOf(rows[0]);
-  return `<div class="eff"><div class="eh">Mért hatékonyság · <b>m³ visszatartás 10 M Ft-ért</b></div>${rows.map((m,i)=>`<div class="er${i?'':' top'}"><span class="en">${m.ic} ${m.short}</span><span class="eb"><i style="width:${Math.round(effOf(m)/mx*100)}%"></i></span><b>${effOf(m)} m³</b><small>${Math.round(10000/effOf(m))} e Ft / m³ · kész ${m.lead} hónap alatt${m.cap?' · '+m.cap+' M felett csak +'+Math.round(m.per2*MF)+' m³':''}${m.meas?' · a mélypontokra kerül (+30 %)':''}</small></div>`).join('')}</div>`;}
-/* a mérés egyirányú: ha telepítetted, marad (a 10 M elköltve); ha így túllépné a keretet, a legnagyobb tételből veszünk le */
-function measure(){if(S.meas)return;S.meas=true;let over=total(S.a)-BUDGET;
-  if(over>0)['cso','eso','burk','teto'].sort((x,y)=>S.a[y]-S.a[x]).forEach(k=>{if(over<=0)return;const d=Math.min(S.a[k],over);S.a[k]-=d;over-=d;});
-  render();}
 let S={st:'intro',a:{cso:0,eso:0,burk:0,teto:0},meas:false,tries:[]};
 const main=document.getElementById('main');
 const townTxt=GV.TOWN.name?GV.esc(GV.TOWN.name):'a település';
 
-function capacity(a,meas){const f=meas?MF:1;let c=0,cool=0,lead=0;
+function capacity(a,meas){const f=meas?1.3:1;let c=0,cool=0,lead=0;
   c+=a.cso/10*M[0].per; if(a.cso)lead=Math.max(lead,M[0].lead);
   const e1=Math.min(a.eso,M[1].cap),e2=Math.max(0,a.eso-M[1].cap);c+=(e1/10*M[1].per+e2/10*M[1].per2)*f;cool+=a.eso/10*M[1].cool;if(a.eso)lead=Math.max(lead,M[1].lead);
   c+=a.burk/10*M[2].per*f;cool+=a.burk/10*M[2].cool;if(a.burk)lead=Math.max(lead,M[2].lead);
@@ -196,12 +171,11 @@ function sceneOverlay(storm,res){
 }
 function sceneBadges(res){
   const a=S.a;const gardens=Math.min(5,Math.round(a.eso/15));const perm=a.burk>0;const roof=a.teto>0;const badges=[];
-  const num=S.meas||res; /* a m³-számok csak méréssel (vagy a vihar után) látszanak */
-  if(a.cso)badges.push(`<span class="bd on">🚰 Nagyobb cső${num?' · +'+a.cso/10*M[0].per+' m³':' · '+a.cso+' M'}</span>`);
-  if(a.eso)badges.push(`<span class="bd on">🌱 ${gardens+1} esőkert${num?' · +'+Math.round((Math.min(a.eso,M[1].cap)/10*M[1].per+Math.max(0,a.eso-M[1].cap)/10*M[1].per2)*(S.meas?MF:1))+' m³':' · '+a.eso+' M'}</span>`);
-  if(perm)badges.push(`<span class="bd on">🧱 Áteresztő parkoló${num?' · +'+Math.round(a.burk/10*M[2].per*(S.meas?MF:1))+' m³':' · '+a.burk+' M'}</span>`);
-  if(roof)badges.push(`<span class="bd on">🏢 Zöldtető + ciszterna${num?' · +'+a.teto/10*M[3].per+' m³':' · '+a.teto+' M'}</span>`);
-  if(S.meas)badges.push(`<span class="bd m">📡 Mérőhálózat (−${MEAS} M) · a zöld oda kerül, ahová a víz</span>`);
+  if(a.cso)badges.push(`<span class="bd on">🚰 Nagyobb cső · +${a.cso/10*M[0].per} m³</span>`);
+  if(a.eso)badges.push(`<span class="bd on">🌱 ${gardens+1} esőkert · +${Math.round((Math.min(a.eso,M[1].cap)/10*M[1].per+Math.max(0,a.eso-M[1].cap)/10*M[1].per2)*(S.meas?1.3:1))} m³</span>`);
+  if(perm)badges.push(`<span class="bd on">🧱 Áteresztő parkoló · +${Math.round(a.burk/10*M[2].per*(S.meas?1.3:1))} m³</span>`);
+  if(roof)badges.push(`<span class="bd on">🏢 Zöldtető + ciszterna · +${a.teto/10*M[3].per} m³</span>`);
+  if(S.meas)badges.push(`<span class="bd m">📡 Mérőhálózat · a zöld oda kerül, ahová a víz</span>`);
   if(!badges.length)badges.push(`<span class="bd none">Még nincs beavatkozás — oszd el a keretet</span>`);
   return `<span class="t">${res?'Ez volt a terv':'A terved a képen'}</span>${badges.join('')}`;
 }
@@ -230,10 +204,8 @@ function render(){
    main.className='wide';main.innerHTML=`<div class="cols"><div class="colL">${scene(false,null,true)}</div>
    <div class="sheet"><div class="hd"><span class="eyebrow">Keretosztás</span><div class="sum ${over?'over':''}" id="sum"><span>Elköltve</span><b>${t} / ${BUDGET} M</b></div></div><h2>Mire menjen a pénz?</h2>
    <div class="ctl">${M.map(m=>`<label class="m ${S.a[m.k]?'':'off'}" id="m-${m.k}"><b>${m.n}</b><span class="v">${S.a[m.k]} M</span>
-     <input type="range" min="0" max="${BUDGET-(S.meas?MEAS:0)}" step="10" value="${S.a[m.k]}" aria-label="${m.n}" oninput="setA('${m.k}',this)"><small>${S.meas?sEff(m):m.s0}</small></label>`).join('')}</div>
-   <div class="meas ${S.meas?'on':''}">${S.meas
-     ?`<div class="mh"><b>📡 Mérőhálózat telepítve</b><span class="cost">−${MEAS} M a keretből · ${BUDGET-MEAS} M marad</span></div><small>4 esőmérő + 6 vízszint-szonda. Most látszik, hová folyik a víz — és mit ér egy-egy elem.</small>${effBlock()}`
-     :`<div class="mh"><b>📡 Mérőhálózat előbb — ${MEAS} M Ft</b><button class="btn btn-sm" onclick="measure()">Telepítem</button></div><small>Esőmérők és vízszint-szondák: megmutatják, hová folyik a víz, és mennyit ér egy-egy elem. Enélkül a zöld oda kerül, ahol hely van — és csak a vihar után derül ki, mit ért.</small>`}</div>
+     <input type="range" min="0" max="${BUDGET}" step="10" value="${S.a[m.k]}" aria-label="${m.n}" oninput="setA('${m.k}',this)"><small>${m.s}</small></label>`).join('')}</div>
+   <label class="chk"><input type="checkbox" ${S.meas?'checked':''} onchange="S.meas=this.checked;render()"><div><b>Mérőhálózat előbb — ${MEAS} M Ft</b><small>Esőmérők és vízszint-szondák: megmutatják, hová folyik a víz. Az esőkert és a burkolat oda kerül, ahol kell.</small></div></label>
    ${S.meas?plan():''}
    <div class="row"><button class="btn" id="stormbtn" onclick="storm()" ${t===0||over?'disabled':''}>Jön a vihar ⛈</button></div>
    ${S.tries.length?`<div class="hist">Eddigi próbák: ${S.tries.map(x=>x.surplus>0?x.surplus+' m³ felszínen':'száraz').join(' · ')}</div>`:''}
