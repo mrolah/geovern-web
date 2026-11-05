@@ -12,9 +12,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="config.js?v=12"></script>
-<script src="gv.js?v=12"></script>
-<script src="gvmap.js?v=12"></script>
+<script src="config.js?v=13"></script>
+<script src="gv.js?v=13"></script>
+<script src="gvmap.js?v=13"></script>
 <style>
 :root{--bg:#050f14;--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b4a;--text:#EAF4F4;--muted:#9BB7BC;--faint:#5E7A80;
   --card:rgba(6,17,22,.9);--line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
@@ -175,18 +175,24 @@ const LAYERS=[
   {id:'ped',label:'Gyalogos forgalom',icon:'🛍️',color:'#ffd166',title:'Boltok, vendéglátás — ahol sokan járnak'},
   {id:'best',label:'Legjobb helyek',icon:'⭐',color:'#ffe08a',title:'A rétegek metszete: ahol a hőség, a sérülékeny lakók és a hiányzó lombkorona találkozik — a sárga ragyogás a legértékesebb sáv, a gyűrűk a 8 legjobb hely'},
   {id:'ghost',label:'1. kör fái',icon:'📍',color:'#9BB7BC',title:'Ahová az első körben, adat nélkül ültettél'}];
-const DEFAULT_ON=['heat','vuln','canopy','best','ghost'];
 /* a legjobb helyek: utca melletti rácspontok értéke (treeValue = a rétegek metszete). A felső negyed sárgán ragyog
-   (heatmap-réteg), a nyolc legjobb — egymástól legalább 90 m-re — gyűrűt kap. */
+   (heatmap-réteg), a nyolc legjobb — egymástól legalább 90 m-re — gyűrűt kap. A szaggatott kerettől legalább EDGE méterre
+   (a kereten kívülre nem lehet ültetni, ott ne legyen gyűrű). */
+const EDGE=35;
 function bestGrid(){const c=[];for(let x=-AX;x<=AX;x+=25)for(let y=-AY;y<=AY;y+=25){if(E.inWater(x,y))continue;const rd=E.roadDist?E.roadDist(x,y):0;if(rd>60)continue;
     let px=x,py=y;if(MODE==='osm'){const sn=GVMAP.snapToRoad(D,x,y,60);if(!sn)continue;px=sn.x;py=sn.y;if(E.inWater(px,py)||E.nearRail(px,py))continue;}
+    if(Math.abs(px)>AX-EDGE||Math.abs(py)>AY-EDGE)continue;
     c.push([px,py,GVMAP.treeValue(E,px,py)]);}
   return c;}
+/* pontozás a település saját skáláján: a legjobb (gyűrűs) hely 10 pont, a többi ehhez mérten */
+let VMAX=1;
+function ptsAt(x,y){return Math.max(0,Math.min(10,Math.round(10*GVMAP.treeValue(E,x,y)/VMAX)));}
 function bestSpots(c){const s=c.slice().sort((a,b)=>b[2]-a[2]);const out=[];for(const q of s){if(out.length>=8)break;if(out.some(o=>Math.hypot(o[0]-q[0],o[1]-q[1])<90))continue;out.push(q);}return out;}
 function bestSources(){const c=bestGrid();if(!c.length)return{glow:GVMAP.pointsFC([]),top:GVMAP.pointsFC([])};
+  VMAX=Math.max(0.05,...c.map(q=>q[2]));
   const vs=c.map(q=>q[2]).sort((a,b)=>a-b);const q0=vs[Math.floor(vs.length*0.72)],mx=vs[vs.length-1];const span=Math.max(0.05,mx-q0);
   const glow={type:'FeatureCollection',features:c.filter(q=>q[2]>q0).map(q=>({type:'Feature',properties:{w:+Math.pow((q[2]-q0)/span,1.4).toFixed(3)},geometry:{type:'Point',coordinates:GVMAP.toLL(q[0],q[1])}}))};
-  const top={type:'FeatureCollection',features:bestSpots(c).map((q,i)=>({type:'Feature',properties:{rank:i+1,pts:Math.round(q[2]*10)},geometry:{type:'Point',coordinates:GVMAP.toLL(q[0],q[1])}}))};
+  const top={type:'FeatureCollection',features:bestSpots(c).map((q,i)=>({type:'Feature',properties:{rank:i+1,pts:Math.min(10,Math.round(10*q[2]/VMAX))},geometry:{type:'Point',coordinates:GVMAP.toLL(q[0],q[1])}}))};
   return{glow,top};}
 /* térképi réteg → (réteg-id, átlátszatlanság-tulajdonság, bekapcsolt érték) */
 const MAPL={heat:[['heat','heatmap-opacity',.8]],vuln:[['vuln-f','fill-opacity',.22],['vuln-l','line-opacity',.9]],canopy:[['canopy-f','fill-opacity',.3]],ped:[['ped','circle-opacity',.85],['ped','circle-stroke-opacity',1]],
@@ -216,7 +222,7 @@ function pingBest(times){if(!mapReady||!layersAdded||!map.getLayer('best-ping'))
   pingRAF=requestAnimationFrame(step);}
 LC=GVMAP.layerControl({container:'layers',title:'Rétegek',hint:(matchMedia('(hover:hover) and (pointer:fine)').matches?'kattintásra':'koppintásra')+' be / ki',
   layers:LAYERS.map(l=>Object.assign({apply:on=>applyLayer(l.id,on)},l)),
-  onChange:(id,on,user)=>{if(user){revealT.forEach(clearTimeout);revealT=[];S.toggles[id]=(S.toggles[id]||0)+1;}}});
+  onChange:(id,on,user)=>{if(user){S.toggles[id]=(S.toggles[id]||0)+1;if(S.demo)endDemo();}if(S.st==='place'&&S.round===2&&id==='best')render();}});
 function showChips(v){LC.show(v);}
 
 /* ---- indulás: középpont → térkép → adat a betöltött csempékből (tartalék: Overpass) ---- */
@@ -290,12 +296,12 @@ function onTap(e){
   const t={x:+x.toFixed(1),y:+y.toFixed(1),el};
   el.addEventListener('click',ev=>{ev.stopPropagation();if(S.st!=='place')return;removeTree(t);});
   t.mk=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat(ll).addTo(map);
-  if(S.round===2){const p=Math.round(GVMAP.treeValue(E,t.x,t.y)*10);t.p=p;const tr=el.querySelector('.tree');tr.classList.add('scored',p<=3?'lo':p<=6?'mid':'hi');tr.querySelector('.pt').textContent=p;S.last=p;}
+  if(S.round===2){const p=ptsAt(t.x,t.y);t.p=p;const tr=el.querySelector('.tree');tr.classList.add('scored',p<=3?'lo':p<=6?'mid':'hi');tr.querySelector('.pt').textContent=p;S.last=p;}
   S.trees.push(t);render();
 }
 function removeTree(t){const i=S.trees.indexOf(t);if(i<0)return;t.mk.remove();S.trees.splice(i,1);render();}
 function undo(){const t=S.trees[S.trees.length-1];if(t)removeTree(t);}
-function evaluate(){let total=0;S.trees.forEach(t=>{const p=Math.round(GVMAP.treeValue(E,t.x,t.y)*10);t.p=p;total+=p;const tr=t.el.querySelector('.tree');tr.classList.add('scored',p<=3?'lo':p<=6?'mid':'hi');tr.querySelector('.pt').textContent=p;});return total;}
+function evaluate(){let total=0;S.trees.forEach(t=>{const p=ptsAt(t.x,t.y);t.p=p;total+=p;const tr=t.el.querySelector('.tree');tr.classList.add('scored',p<=3?'lo':p<=6?'mid':'hi');tr.querySelector('.pt').textContent=p;});return total;}
 let flashT=null;function flash(m){const h=P.querySelector('.hint');if(!h)return;const o=h.dataset.base||h.textContent;h.dataset.base=o;h.textContent=m;clearTimeout(flashT);flashT=setTimeout(()=>{h.textContent=o;},2200);}
 
 /* ---- képernyők ---- */
@@ -311,16 +317,16 @@ function render(){const n=S.trees.length;
     <div class="row"><button class="btn" onclick="start()">Indítás</button></div><div class="src">${srcTxt()}</div>`;return;}
   if(S.st==='place'){TB.innerHTML=(S.round===1?'1. kör · vakon':'2. kör · adattal')+' · <b>'+n+'/'+N+'</b>';
     P.innerHTML=`<span class="eyebrow">${S.round===1?'1. kör — adat nélkül':'2. kör — a rétegekkel'}</span>
-    <h1>${S.round===1?'Koppints az utcákra, ahová fát ültetnél':'Most ültesd újra — a sárga gyűrűkre'}</h1>
+    <h1>${S.round===1?'Koppints az utcákra, ahová fát ültetnél':(LC.get('best')?'Most ültesd újra — a sárga gyűrűkre':'Most ültesd újra — a rétegek alapján')}</h1>
     <div class="cnt">${Array.from({length:N},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</div>
     <div class="row"><button class="btn btn-ghost" onclick="undo()" ${n?'':'disabled'}>Vissza</button><button class="btn" onclick="finishRound()" ${n===N?'':'disabled'}>Kiértékelés</button></div>
-    <div class="hint">${S.round===2?(n<N?(S.last!=null?'Ez a hely <b>'+S.last+' pont</b>. ':'')+'A sárga ragyogás a rétegek metszete, a gyűrűk a 8 legjobb hely — oda ültess. Még '+(N-n)+' fa.':'Mind '+nwA+' fa a helyén — jöhet a kiértékelés.'):(n<N?'Még '+(N-n)+' fa. A fa a járda mellé áll; egy fára koppintva visszaveszed.':'Mind '+nwA+' fa a helyén — jöhet a kiértékelés.')}</div>`;return;}
+    <div class="hint">${S.round===2?(n<N?(S.last!=null?'Ez a hely <b>'+S.last+' pont</b>. ':'')+(LC.get('best')?'A sárga ragyogás a rétegek metszete, a gyűrűk a 8 legjobb hely, a legjobb 10 pont — oda ültess. ':'Tipp: kapcsold be a ⭐ Legjobb helyek réteget. ')+'Még '+(N-n)+' fa.':'Mind '+nwA+' fa a helyén — jöhet a kiértékelés.'):(n<N?'Még '+(N-n)+' fa. A fa a járda mellé áll; egy fára koppintva visszaveszed.':'Mind '+nwA+' fa a helyén — jöhet a kiértékelés.')}</div>`;return;}
   if(S.st==='reveal1'){TB.innerHTML='1. kör · <b>'+S.r1+' pont</b>';P.innerHTML=`<span class="eyebrow">1. kör — eredmény</span>
     <h1>Vakon: <em>${S.r1}</em> / ${N*10}</h1>
-    <p>Minden fa 0–10 pontot ér: annyit, amennyi hőséget, sérülékeny lakót és gyalogost árnyékol — és annyival kevesebbet, amennyi lombkorona már ott van.</p>
+    <p>Minden fa 0–10 pontot ér: annyit, amennyi hőséget, sérülékeny lakót és gyalogost árnyékol — és annyival kevesebbet, amennyi lombkorona már ott van. A település legjobb helye 10 pont.</p>
     <div class="row"><button class="btn" onclick="showLayers()">Rétegek bekapcsolása</button></div><div class="hint">A számok a fákon: hány pontot ér a hely.</div>`;return;}
   if(S.st==='layers'){P.innerHTML=`<h1>Ugyanaz a város. Más utca.</h1>
-    <p>A sárga ragyogás a rétegek metszete — ahol hő, sérülékeny lakó és hiányzó lombkorona találkozik; a gyűrűk a 8 legjobb hely. A 2. körben minden fa azonnal kiírja a pontját.</p>
+    <p>${S.demo?'Betöltöttük az összes réteget — most egyenként kikapcsoljuk őket. Mindegyik koppintásra visszakapcsol.':'Koppints a rétegekre, és visszakapcsolod őket. A ⭐ Legjobb helyek a metszet: ahol hő, sérülékeny lakó és hiányzó lombkorona találkozik — a gyűrűk a 8 legjobb hely, a legjobb 10 pontot ér.'}</p>
     <div class="row"><button class="btn" onclick="round2()">Újra, adattal</button></div>`;return;}
   if(S.st==='final'){const d=S.r2-S.r1;TB.innerHTML='Vakon <b>'+S.r1+'</b> · adattal <b>'+S.r2+'</b>';
     P.innerHTML=`<span class="eyebrow">A hét lenyomata</span>
@@ -333,11 +339,25 @@ function finishRound(){const sc=evaluate();if(S.round===1){S.r1=sc;S.st='reveal1
   GV.record('fak',{mode:MODE,src:(D&&D.src)||'',n:N,d3:D3,center:[+center[0].toFixed(5),+center[1].toFixed(5)],blind:{score:S.r1,pts:S.blindPts},informed:{score:S.r2,pts:S.trees.map(t=>[t.x,t.y])},
     layers:LC.all(),toggles:S.toggles,known:T.known});}render();fitArea(true);}
 /* 1. kör kiértékelve → a fák „szellemként” maradnak, a chip-sor megjelenik, a rétegek egymás után úsznak be */
+/* rétegek: előbb mind bekapcsol (a teljes kép), kis szünet, aztán egyenként kikapcsolnak — ugyanazzal a mozdulattal, mint egy
+   koppintás (lenyomás + villanás, a réteg kiúszik, a chip a sorban a képbe gördül), így látszik, hogy mindegyik vissza-kapcsolható.
+   Ha a játékos közben koppint, a bemutató megáll. */
+const SEQ=['heat','vuln','canopy','ped','best','ghost'];
 function showLayers(){S.blindPts=S.trees.map(t=>[t.x,t.y]);S.ghosts=S.trees;S.trees=[];S.ghosts.forEach(t=>t.el.classList.add('ghost'));
-  S.st='layers';render();fitArea(true);
-  revealT.forEach(clearTimeout);revealT=[];LC.set('ghost',true);
-  DEFAULT_ON.filter(id=>id!=='ghost').forEach((id,i)=>revealT.push(setTimeout(()=>LC.set(id,true),200+i*550)));}
-function round2(){S.round=2;S.st='place';S.last=null;render();fitArea(true);if(LC&&LC.get('best'))setTimeout(()=>pingBest(3),950);}
+  S.st='layers';S.demo=true;render();fitArea(true);
+  revealT.forEach(clearTimeout);revealT=[];
+  SEQ.forEach((id,i)=>revealT.push(setTimeout(()=>LC.set(id,true),150+i*160)));
+  const t2=150+SEQ.length*160+2000;
+  SEQ.forEach((id,i)=>revealT.push(setTimeout(()=>LC.demo(id,false),t2+i*650)));
+  revealT.push(setTimeout(endDemo,t2+SEQ.length*650+250));}
+function endDemo(){revealT.forEach(clearTimeout);revealT=[];if(!S.demo)return;S.demo=false;if(S.st==='layers')render();
+  const row=LC.el.querySelector('.gvl-row');if(row)try{row.scrollTo({left:0,behavior:'smooth'});}catch(e){row.scrollLeft=0;}} /* a chip-sor vissza az elejére */
+function dataOn(){return SEQ.some(id=>id!=='ghost'&&LC.get(id));}
+function round2(){endDemo();S.round=2;S.st='place';S.last=null;
+  if(!dataOn())setTimeout(()=>LC.demo('best',true),700); /* „adattal”: ha minden réteg ki van kapcsolva, a Legjobb helyek bekapcsol */
+  else if(LC.get('best'))setTimeout(()=>pingBest(3),950);
+  render();fitArea(true);}
+
 </script>
 </body>
 </html>

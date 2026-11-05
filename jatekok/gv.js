@@ -115,7 +115,7 @@
   ];
   const inSub=/\/jatekok\//.test(location.pathname);
   /* a játékok közti linkek verziószámot kapnak (?v=…), hogy a GitHub Pages 10 perces gyorsítótára ne a régi HTML-t adja */
-  const VER='12';
+  const VER='13';
   function qs(){return '?'+(TOWN.name?'telepules='+encodeURIComponent(TOWN.name)+'&':'')+'v='+VER;}
   function urlFor(file){return (inSub?'../':'')+file+qs();}
   function hubUrl(){return (inSub?'../':'')+'jatekok.html'+qs();}
@@ -173,7 +173,7 @@
 .gvl-chip:active{transform:scale(.96)}
 .gvl-chip:focus-visible{outline:2px solid #fff;outline-offset:2px}
 @media(hover:hover){.gvl-chip:hover{border-color:rgba(255,255,255,.4);color:#fff}.gvl-chip[aria-checked=true]:hover{filter:brightness(1.12)}}
-@media(prefers-reduced-motion:reduce){.gvl-chip,.gvl-sw,.gvl-sw svg,.gvl-ic{transition:none}.gvl-chip.flash{animation:none}}
+@media(prefers-reduced-motion:reduce){.gvl-chip,.gvl-sw,.gvl-sw svg,.gvl-ic{transition:none}.gvl-chip.flash,.gvl-chip.press,.gvl-chip.flash.press{animation:none}}
 .gvl-chip[aria-checked=true]{background:var(--cbg);border-color:var(--c);color:#fff}
 .gvl-sw{width:18px;height:18px;border-radius:50%;border:2px solid var(--c);opacity:.55;display:grid;place-items:center;flex:none;transition:background .2s,opacity .2s}
 .gvl-sw svg{width:11px;height:11px;opacity:0;transition:opacity .15s}
@@ -182,6 +182,8 @@
 .gvl-ic{font-size:15px;line-height:1;filter:grayscale(1);opacity:.6;transition:filter .2s,opacity .2s}
 .gvl-chip[aria-checked=true] .gvl-ic{filter:none;opacity:1}
 .gvl-chip.flash{animation:gvl-flash .55s ease-out}
+.gvl-chip.press{animation:gvl-press .32s ease-out}.gvl-chip.flash.press{animation:gvl-flash .55s ease-out,gvl-press .32s ease-out}
+@keyframes gvl-press{0%{transform:scale(1)}35%{transform:scale(.9)}100%{transform:scale(1)}}
 @keyframes gvl-flash{0%{box-shadow:0 0 0 0 var(--c)}100%{box-shadow:0 0 0 14px rgba(0,0,0,0)}}
 [data-theme=light] .gvl-head{color:#3f5d66;text-shadow:0 1px 4px rgba(255,255,255,.95)}[data-theme=light] .gvl-head small{color:#6b858c}
 [data-theme=light] .gvl-chip{background:rgba(255,255,255,.94);border-color:rgba(13,34,41,.14);color:#3f5d66;box-shadow:0 2px 8px rgba(0,30,40,.14)}
@@ -206,7 +208,11 @@
       if(changed&&l.apply)l.apply(on);if(changed&&opts.onChange)opts.onChange(id,on,!!user);}
     function fades(){const ov=row.scrollWidth-row.clientWidth>4;root.classList.toggle('fade-l',ov&&row.scrollLeft>4);root.classList.toggle('fade-r',ov&&row.scrollLeft<row.scrollWidth-row.clientWidth-4);}
     row.addEventListener('scroll',fades,{passive:true});window.addEventListener('resize',fades);
-    const api={el:root,set,get:id=>!!state[id],all:()=>Object.assign({},state),show(v){root.style.display=v===false?'none':'';if(v!==false)requestAnimationFrame(fades);},refresh:fades};
+    /* bemutató-kapcsolás: ugyanaz, mint egy koppintás (lenyomás + villanás + a réteg átúszik), a chip a sorban a képbe görgetve */
+    function demo(id,on){const b=chips[id];if(!b)return;
+      try{b.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest',inline:'center'});}catch(e){}
+      b.classList.remove('flash','press');void b.offsetWidth;b.classList.add('flash','press');set(id,on,false);}
+    const api={el:root,set,demo,get:id=>!!state[id],all:()=>Object.assign({},state),show(v){root.style.display=v===false?'none':'';if(v!==false)requestAnimationFrame(fades);},refresh:fades};
     opts.layers.forEach(l=>{if(l.on)set(l.id,true);});requestAnimationFrame(fades);return api;
   }
 
