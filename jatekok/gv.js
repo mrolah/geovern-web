@@ -4,7 +4,7 @@
    · névtelen munkamenet-azonosító
    · eredmények mentése: localStorage (mindig) + opcionális webhook (config.js)
    · CSV-export az összes helyben mentett eredményről
-   · közös záró-panel: „Változott a véleményed?” + a következő játék gombja (megosztás egyelőre kikapcsolva)
+   · közös záró-panel: a következő játék gombja (a vélemény-kérdés v3.5.4-től kikerült; megosztás egyelőre kikapcsolva)
    · rétegkapcsoló chip-sor (layerControl): jelmagyarázat és be/ki kapcsoló egyben — minden játékban ugyanaz (v3.4)
    A fájl nem függ semmitől; a config.js előtte töltődik be (ha hiányzik, üres config).
    ===================================================================== */
@@ -115,7 +115,7 @@
   ];
   const inSub=/\/jatekok\//.test(location.pathname);
   /* a játékok közti linkek verziószámot kapnak (?v=…), hogy a GitHub Pages 10 perces gyorsítótára ne a régi HTML-t adja */
-  const VER='11';
+  const VER='12';
   function qs(){return '?'+(TOWN.name?'telepules='+encodeURIComponent(TOWN.name)+'&':'')+'v='+VER;}
   function urlFor(file){return (inSub?'../':'')+file+qs();}
   function hubUrl(){return (inSub?'../':'')+'jatekok.html'+qs();}
@@ -127,12 +127,6 @@
     /* opts: {game, title, lead, share, onOpinion} — visszaad egy HTML-stringet; a gombok a GV.* függvényeket hívják */
     const nx=nextGame(opts.game);
     return `<div class="gv-end" data-game="${esc(opts.game)}">
-      <div class="gv-end-q">Változott a véleményed a játék alatt?</div>
-      <div class="gv-end-ops">
-        <button type="button" onclick="GV.opinion(this,'igen')">Igen, másképp látom</button>
-        <button type="button" onclick="GV.opinion(this,'reszben')">Részben</button>
-        <button type="button" onclick="GV.opinion(this,'nem')">Nem, eddig is így gondoltam</button>
-      </div>
       <div class="gv-end-next"><a class="gv-next" href="${esc(urlFor(nx.file))}">Következő: ${esc(nx.n)} →</a></div>
     </div>`;
   }
@@ -145,7 +139,7 @@
     else prompt('Másold ki:',t);}
 
   /* ---- közös stílus a záró-panelhez (a játékok saját színeit a CSS-változókon át veszi) ---- */
-  const css=`.gv-end{margin-top:14px;padding-top:14px;border-top:1px dashed var(--gv-line,rgba(128,128,128,.35))}
+  const css=`.gv-end{margin-top:18px}
   .gv-end-q{font-weight:700;margin-bottom:8px}
   .gv-end-ops{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
   .gv-end-ops button{font:600 13px/1.2 inherit;padding:9px 12px;border-radius:100px;border:1.5px solid var(--gv-line,rgba(128,128,128,.4));
@@ -188,7 +182,12 @@
 .gvl-ic{font-size:15px;line-height:1;filter:grayscale(1);opacity:.6;transition:filter .2s,opacity .2s}
 .gvl-chip[aria-checked=true] .gvl-ic{filter:none;opacity:1}
 .gvl-chip.flash{animation:gvl-flash .55s ease-out}
-@keyframes gvl-flash{0%{box-shadow:0 0 0 0 var(--c)}100%{box-shadow:0 0 0 14px rgba(0,0,0,0)}}`;
+@keyframes gvl-flash{0%{box-shadow:0 0 0 0 var(--c)}100%{box-shadow:0 0 0 14px rgba(0,0,0,0)}}
+[data-theme=light] .gvl-head{color:#3f5d66;text-shadow:0 1px 4px rgba(255,255,255,.95)}[data-theme=light] .gvl-head small{color:#6b858c}
+[data-theme=light] .gvl-chip{background:rgba(255,255,255,.94);border-color:rgba(13,34,41,.14);color:#3f5d66;box-shadow:0 2px 8px rgba(0,30,40,.14)}
+[data-theme=light] .gvl-chip[aria-checked=true]{background:linear-gradient(var(--cbg),var(--cbg)),rgba(255,255,255,.96);border-color:var(--c);color:#0d2229}
+[data-theme=light] .gvl-chip:focus-visible{outline-color:#0d2229}
+@media(hover:hover){[data-theme=light] .gvl-chip:hover{border-color:rgba(13,34,41,.35);color:#0d2229}}`;
   function hexRGBA(h,a){h=String(h).replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')';}
   function layerControl(opts){
     if(!document.getElementById('gvl-css')){const st=document.createElement('style');st.id='gvl-css';st.textContent=LCSS;document.head.appendChild(st);}

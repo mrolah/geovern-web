@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
-<script src="config.js?v=11"></script>
-<script src="gv.js?v=11"></script>
+<script src="config.js?v=12"></script>
+<script src="gv.js?v=12"></script>
 <style>
 :root{--sun:#050f14;--navy:#EAF4F4;--coral:#FF9F45;--cream:rgba(15,74,87,.2);--mint:#2AD1B5;--line:rgba(42,209,181,.25);--card:rgba(6,17,22,.85);--muted:#9BB7BC;
   --font:'Roboto',system-ui,sans-serif;--disp:'Roboto',system-ui,sans-serif;--gv-accent:var(--mint);--gv-accent-ink:#04211d;--gv-line:var(--line)}
@@ -65,6 +65,11 @@ p{font-size:15.5px;color:var(--muted)}p+p{margin-top:8px}
 .hot.pick circle.r{fill:#FF9F45;stroke:#FF9F45;stroke-width:4}.hot.pick text{fill:#2b1400}
 .rev .hot:not(.pick){opacity:.6}
 .rev .hot.first circle.r{stroke:#FF9F45;stroke-dasharray:6 5}
+.tiplbl rect{fill:#FF9F45;stroke:#2b1400;stroke-width:3}.tiplbl text{font:900 40px var(--font);fill:#2b1400;letter-spacing:.04em}
+/* 2. kör: a kérdés külön, jól látható sorban; alatta az első tipp */
+.ask{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px 14px;border:2px solid #FF9F45;border-radius:14px;background:rgba(255,159,69,.12);font:900 19px/1.25 var(--disp)}
+.ask .ic{font-size:22px;flex:none}
+.firsttip{margin-top:8px;font-size:14px;color:var(--muted)}.firsttip b{color:var(--navy)}
 .hot.om.pick circle.r{fill:#FF9F45;stroke:#FF9F45}.hot.om.pick text{fill:#2b1400}
 .hot.om.sym circle.r{fill:rgba(11,28,34,.92);stroke:#EAF4F4}.hot.om.sym text.em{font-size:42px;fill:#fff}
 .hot.om.sym.best circle.r{stroke:var(--mint);stroke-width:6}.hot.om.sym.pick:not(.best) circle.r{stroke:#FF9F45;stroke-width:6}
@@ -111,7 +116,7 @@ const Q2=[
   r:'<b>Részvétel igen, biztonság nem.</b> A pedibusz elégedettséget hoz, módváltást néhány pontot, és a vonalak ~3 év után kifulladnak. Jó belépő a szülőknek — nem biztonsági beavatkozás.'}];
 const Q3=[
  {l:'A',t:'Eltűnnek — a szülők gyalog hozzák a gyereket',x:300,y:730,dx:84,dy:40,ic:'🚶',fx:'sajnos nem',pts:0,r:'<b>Sajnos nem.</b> Bécsben a délutáni iskolautcánál ugyanannyi szülői autó jött — csak kétszáz méterrel odébb állt meg.'},
- {l:'B',t:'100–300 méterrel odébb állnak meg',x:770,y:612,dx:-80,dy:-70,ic:'🚗',fx:'ide állnak (Bécs, Köln)',pts:100,r:'<b>Pontosan ez történik</b> (Bécs, Salzburg, Köln). Ezért kell a lezáráshoz K+R-hely és „park & stride” — különben a sor és a kitétel a sarkon lesz, rosszabb rálátással.'},
+ {l:'B',t:'100–300 méterrel odébb állnak meg',x:815,y:320,dx:-100,dy:90,ic:'🚗',fx:'ide állnak (Bécs, Köln)',pts:100,r:'<b>Pontosan ez történik</b> (Bécs, Salzburg, Köln). Ezért kell a lezáráshoz K+R-hely és „park & stride” — különben a sor és a kitétel a sarkon lesz, rosszabb rálátással.'},
  {l:'C',t:'A szomszéd utcába terelődnek',x:1148,y:230,dx:-84,dy:30,ic:'🚗',fx:'részben',pts:60,r:'<b>Részben.</b> Kölnben a sorompóponthoz és a szomszéd utcába tolódott a kitétel; Islingtonban viszont minden környező úton csökkent a forgalom. A kérdés nem az eszköz, hanem a hely — és hogy mérik-e.'}];
 const Q4=[
  {l:'A',t:'A levegőt az iskola előtt',x:480,y:470,dx:-90,dy:-60,ic:'💨',fx:'NO₂ napi ~−2%',pts:0,r:'<b>Alig.</b> Londonban a legjobb mérőponton a reggeli csúcsban −23% NO₂, napi átlagban ~2%. Barcelona: „nincs általános javulás”. Ezzel ne add el.'},
@@ -131,9 +136,12 @@ function sketch(reveal){
    ${reveal?`<g class="lyr" data-ly="fear" style="display:${S.ly.fear?'':'none'}"><circle class="fear" cx="398" cy="392" r="82"/><circle class="fear" cx="539" cy="632" r="62"/><circle class="fear" cx="812" cy="331" r="52"/></g>
      <g class="lyr" data-ly="acc" style="display:${S.ly.acc?'':'none'}">${ACC.map(p=>`<circle class="acc" cx="${p[0]}" cy="${p[1]}" r="11"/>`).join('')}</g>`:''}
    <!-- pontok: kis jel a helyen + szám-címke mellette (vonallal összekötve) -->
-   <g class="lyr" data-ly="pts" style="display:${!reveal||S.ly.pts?'':'none'}">${HOT.map(h=>`<g class="hot ${(reveal?S.fear2===h.id:S.fear===h.id)?'pick':''} ${reveal&&S.fear===h.id?'first':''}" onclick="pickFear(${h.id})"><line class="ln" x1="${h.x}" y1="${h.y}" x2="${h.x+h.dx}" y2="${h.y+h.dy}"/><circle class="p" cx="${h.x}" cy="${h.y}" r="12"/><circle class="r" cx="${h.x+h.dx}" cy="${h.y+h.dy}" r="42"/><text x="${h.x+h.dx}" y="${h.y+h.dy+16}" text-anchor="middle">${h.id}</text></g>`).join('')}</g>
+   <g class="lyr" data-ly="pts" style="display:${!reveal||S.ly.pts?'':'none'}">${HOT.map(h=>`<g class="hot ${(reveal?S.fear2===h.id:S.fear===h.id)?'pick':''} ${reveal&&S.fear===h.id?'first':''}" onclick="pickFear(${h.id})"><line class="ln" x1="${h.x}" y1="${h.y}" x2="${h.x+h.dx}" y2="${h.y+h.dy}"/><circle class="p" cx="${h.x}" cy="${h.y}" r="12"/><circle class="r" cx="${h.x+h.dx}" cy="${h.y+h.dy}" r="42"/><text x="${h.x+h.dx}" y="${h.y+h.dy+16}" text-anchor="middle">${h.id}</text>${reveal&&S.fear===h.id?tipLabel(h.x+h.dx,h.y+h.dy,h.dy<0):''}</g>`).join('')}</g>
   </svg></div>`;
 }
+/* „ELSŐ TIPP” címke az első tipp száma fölött (a 2. körben) */
+function tipLabel(cx,cy,above){const w=270,h=60,x=Math.max(8,Math.min(1192-w,cx-w/2)),y=above?cy-42-10-h:cy+42+10; /* a szám-címke túloldalán, hogy a pontot ne takarja */
+  return `<g class="tiplbl"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="30"/><text x="${x+w/2}" y="${y+44}" text-anchor="middle">ELSŐ TIPP</text></g>`;}
 /* a döntés változatai a képen: betűs buborék + vonal + pont a helyen; koppintásra választ */
 function sketchOpts(opts,picked,revealed,fn){
   return `<div class="mapbox"><svg viewBox="0 0 1200 900" aria-label="A változatok helye a képen">
@@ -159,7 +167,7 @@ function render(){
    <div class="row"><button class="btn" onclick="go('fear')">Indítás</button></div></div>`;return;}
   if(T==='fear'){prog(1);const rv=S.fearRevealed;const done=S.fear2!=null;main.innerHTML=`<div class="card"><span class="eyebrow">1 / 5 · ${rv?'2. kör — a rétegekkel':'Észlelt veszély'}</span>
    <h2>${rv?(done?'Most már a rétegekkel: '+esc(HOT.find(h=>h.id===S.fear2).n):'Hol a legveszélyesebb pont a gyerekeknek? — most a rétegekkel'):'Hol a legveszélyesebb pont a gyerekeknek?'}</h2><p>${rv?(done?'A szaggatott kör az első tipped, a narancs a mostani.':'Két réteg a képen — kapcsold ki-be, és koppints újra a számra.'):'Koppints a számra a képen. A narancs pont a hely, a szám a címkéje.'}</p>${rv?'<div id="iskl"></div>':''}${sketch(rv)}
-   ${rv&&!done?`<div class="hint">Első tipp: <b>${esc(HOT.find(h=>h.id===S.fear).n)}</b>${S.fear===3?' — ez a balesetgóc.':''} Hová mutatnál most?</div></div>`:''}${rv&&done?`
+   ${rv&&!done?`<div class="ask"><span class="ic">👆</span><span>Hová mutatnál most? Koppints egy számra.</span></div><div class="firsttip">Első tipped: <b>${S.fear} · ${esc(HOT.find(h=>h.id===S.fear).n)}</b>${S.fear===3?' — ez a balesetgóc.':''} (a képen: „Első tipp”)</div></div>`:''}${rv&&done?`
    <div class="reveal"><b>${S.fear2===3?'Jó: a balesetgóc a körforgalom.':'A balesetgóc a körforgalom — nem ott, ahol félünk.'}</b>Koppenhága 13 691 szülői félelem-pontot gyűjtött: a rendőrségi balesethelyek „csak ritkán” estek ezekre. Két réteg kell — a félelemé és a baleseteké.</div>
    <div class="row"><button class="btn" onclick="go('q2')">Tovább</button></div></div>`:''}${!rv?`<div class="row"><button class="btn" onclick="revealFear()" ${S.fear?'':'disabled'}>Mutasd a két réteget</button></div></div>`:''}`;return;}
   if(T==='q2'){prog(2);const rv=S.a2!=null;main.innerHTML=`<div class="card"><span class="eyebrow">2 / 5 · A döntés</span>

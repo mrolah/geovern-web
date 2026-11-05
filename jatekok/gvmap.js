@@ -16,6 +16,9 @@
   const STYLES={openfreemap:'https://tiles.openfreemap.org/styles/dark',carto:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'+(CFG.CARTO_KEY?'?key='+encodeURIComponent(CFG.CARTO_KEY):'')};
   const STYLE_PRIMARY=STYLES[CFG.BASEMAP]||STYLES.openfreemap;
   const STYLE_FALLBACK=CFG.BASEMAP==='carto'?STYLES.openfreemap:STYLES.carto;
+  /* világos alaptérkép (v3.5.4, egyelőre a fák-játék használja): OpenFreeMap Positron, tartalék a CARTO Positron */
+  const STYLES_LIGHT={openfreemap:'https://tiles.openfreemap.org/styles/positron',carto:'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'+(CFG.CARTO_KEY?'?key='+encodeURIComponent(CFG.CARTO_KEY):'')};
+  function styleFor(theme,fallback){const S=theme==='light'?STYLES_LIGHT:STYLES;return fallback?(CFG.BASEMAP==='carto'?S.openfreemap:S.carto):(S[CFG.BASEMAP]||S.openfreemap);}
   const OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
   const NOMINATIM='https://nominatim.openstreetmap.org/search';
   const CACHE_DAYS=7;
@@ -230,7 +233,8 @@ out geom;`;}
 
   /* ---------- térkép létrehozása tartalék-stílussal + 3D épületek ---------- */
   function createMap(opts,onReady,onFail){
-    let map,fell=false,ready=false;
+    let map,fell=false,ready=false;opts=Object.assign({},opts);const theme=opts.theme;delete opts.theme;
+    const STYLE_PRIMARY=styleFor(theme),STYLE_FALLBACK=styleFor(theme,true);
     try{map=new maplibregl.Map(Object.assign({style:STYLE_PRIMARY,attributionControl:{compact:true}},opts));}catch(e){onFail&&onFail();return null;}
     map.on('load',()=>{if(!ready){ready=true;onReady&&onReady(map);}});
     map.on('error',e=>{if(ready)return;const msg=(e&&e.error&&e.error.message)||'';
@@ -240,11 +244,24 @@ out geom;`;}
     setTimeout(()=>{if(!ready)onFail&&onFail();},20000);
     return map;
   }
-  function add3D(map){const src=vectorSource(map);if(!src||map.getLayer('gv-3d'))return;
+  function add3D(map,theme){const src=vectorSource(map);if(!src||map.getLayer('gv-3d'))return;
     const layers=map.getStyle().layers||[];let before=null;for(const l of layers){if(l.type==='symbol'){before=l.id;break;}}
+    const light=theme==='light';
     try{map.addLayer({id:'gv-3d',type:'fill-extrusion',source:src,'source-layer':'building',minzoom:13,
-      paint:{'fill-extrusion-color':'#16323e','fill-extrusion-height':['max',6,['coalesce',['get','render_height'],['get','height'],0]],
-        'fill-extrusion-base':['coalesce',['get','render_min_height'],['get','min_height'],0],'fill-extrusion-opacity':0.85}},before||undefined);}catch(e){}}
+      paint:{'fill-extrusion-color':light?'#dde3e7':'#16323e','fill-extrusion-height':['max',6,['coalesce',['get','render_height'],['get','height'],0]],
+        'fill-extrusion-base':['coalesce',['get','render_min_height'],['get','min_height'],0],'fill-extrusion-opacity':light?0.9:0.85}},before||undefined);}catch(e){}}
+  /* téma-váltás futás közben: új alaptérkép-stílus, a saját források és rétegek (keep(id) → true) átkerülnek az újba,
+     a 3D-épületek nem (azokat a hívó teszi vissza az új színnel, a feliratok alá). Tartalék stílus, ha az első nem jön. */
+  function setMapTheme(map,theme,keep){
+    const prev=map.getStyle();const carry=(next)=>{const sources=Object.assign({},next.sources);
+      Object.keys(prev.sources||{}).forEach(k=>{if(keep(k)&&!sources[k])sources[k]=prev.sources[k];});
+      const layers=next.layers.slice();(prev.layers||[]).forEach(l=>{if(keep(l.id)&&!layers.some(x=>x.id===l.id))layers.push(l);});
+      return Object.assign({},next,{sources,layers});};
+    return new Promise(res=>{let done=false,tried=false;const fin=ok=>{if(!done){done=true;map.off('error',onErr);res(ok);}};
+      const go=url=>{map.once('style.load',()=>fin(true));map.setStyle(url,{diff:false,transformStyle:(p,next)=>carry(next)});};
+      const onErr=e=>{const msg=(e&&e.error&&e.error.message)||'';if(!tried&&/style|Failed to fetch|NetworkError|404|50\d/i.test(msg)){tried=true;go(styleFor(theme,true));}};
+      map.on('error',onErr);go(styleFor(theme));setTimeout(()=>fin(false),12000);});
+  }
   /* várakozás, amíg a csempék betöltődnek (idle), max. ms-ig */
   function whenIdle(map,ms){return new Promise(res=>{let done=false;const fin=()=>{if(!done){done=true;res();}};map.once('idle',fin);setTimeout(fin,ms||6000);});}
 
@@ -318,5 +335,5 @@ out geom;`;}
 
   /* ---------- rétegkapcsoló: v3.4-től a gv.js-ben él (GV.layerControl); itt alias a kompatibilitás miatt ---------- */
   function layerControl(opts){if(!window.GV||!GV.layerControl)throw new Error('GVMAP.layerControl: a gv.js-t a gvmap.js előtt kell betölteni');return GV.layerControl(opts);}
-  window.GVMAP={STYLE_PRIMARY,STYLE_FALLBACK,setCenter,toXY,toLL,distSeg,pointInPoly,distToPoly,centroid,resolveCenter,loadOSM,parse,fromTiles,loadData,evaluators,treeValue,snapToRoad,heatGrid,polysFC,circleFC,pointsFC,clusterZones,createMap,add3D,whenIdle,layerControl,roadGraph,demLoad,addHillshade,hu,DEM_URL,query,get lastError(){return lastError;}};
+  window.GVMAP={STYLE_PRIMARY,STYLE_FALLBACK,setCenter,toXY,toLL,distSeg,pointInPoly,distToPoly,centroid,resolveCenter,loadOSM,parse,fromTiles,loadData,evaluators,treeValue,snapToRoad,heatGrid,polysFC,circleFC,pointsFC,clusterZones,createMap,add3D,whenIdle,layerControl,roadGraph,demLoad,addHillshade,styleFor,setMapTheme,hu,DEM_URL,query,get lastError(){return lastError;}};
 })();

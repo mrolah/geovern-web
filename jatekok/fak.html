@@ -12,9 +12,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="config.js?v=11"></script>
-<script src="gv.js?v=11"></script>
-<script src="gvmap.js?v=11"></script>
+<script src="config.js?v=12"></script>
+<script src="gv.js?v=12"></script>
+<script src="gvmap.js?v=12"></script>
 <style>
 :root{--bg:#050f14;--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b4a;--text:#EAF4F4;--muted:#9BB7BC;--faint:#5E7A80;
   --card:rgba(6,17,22,.9);--line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
@@ -27,8 +27,14 @@ body.maperr #map{display:none}
 body.maperr::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(900px 600px at 70% 20%,rgba(15,74,87,.55),transparent 60%),var(--bg)}
 .homelink{position:fixed;top:calc(10px + var(--sat));left:10px;z-index:40;font:700 12px var(--mono);letter-spacing:.06em;color:var(--text);
   background:var(--card);border:1px solid var(--line);border-radius:100px;padding:8px 14px;backdrop-filter:blur(10px);text-decoration:none}
-.topbar{position:fixed;top:calc(10px + var(--sat));right:10px;z-index:40;display:flex;align-items:center;gap:12px;background:var(--card);
-  border:1px solid var(--line);border-radius:100px;padding:8px 14px;backdrop-filter:blur(12px);font:500 13px var(--mono);color:var(--muted);max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar{position:fixed;top:calc(10px + var(--sat));right:10px;z-index:40;display:flex;align-items:center;gap:8px;background:var(--card);
+  border:1px solid var(--line);border-radius:100px;padding:4px 5px 4px 12px;backdrop-filter:blur(12px);font:500 13px var(--mono);color:var(--muted);max-width:calc(100vw - 126px);white-space:nowrap}
+#tb-round{min-width:0;overflow:hidden;text-overflow:ellipsis}
+/* sötét / világos kapcsoló a felső sávban */
+.thm{flex:none;display:inline-flex;gap:2px;padding:2px;border-radius:100px;background:rgba(127,127,127,.2)}
+.thm button{border:none;background:transparent;width:27px;height:26px;border-radius:100px;font-size:13px;line-height:1;cursor:pointer;opacity:.5;filter:grayscale(.7);transition:background .2s,opacity .2s,filter .2s;touch-action:manipulation}
+.thm button[aria-pressed=true]{background:var(--teal);opacity:1;filter:none;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.thm button:focus-visible{outline:2px solid var(--text);outline-offset:1px}
 .topbar b{color:var(--amber);font-weight:500}
 .sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:30;width:100%;max-width:520px;padding:0 12px calc(12px + var(--sab))}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px 20px 18px;backdrop-filter:blur(16px);
@@ -71,6 +77,24 @@ p{color:var(--muted);font-size:15px}p+p{margin-top:8px}
 /* legjobb helyek: térképi réteg (sárga „metszet”-ragyogás + gyűrűk), nem HTML-jelölő — zoomolásra, mozgatásra a térképpel együtt mozog */
 @keyframes fadein{from{opacity:0}to{opacity:1}}
 .maplibregl-ctrl-attrib{font-size:10px!important}
+/* ---- világos mód: Positron alaptérkép, világos panel és jelölők (a választás a böngészőben megmarad) ---- */
+html[data-theme=light]{--bg:#eef2f1;--teal:#087f6e;--amber:#c2620f;--red:#d94a32;--text:#0d2229;--muted:#3f5d66;--faint:#6b858c;
+  --card:rgba(255,255,255,.93);--line:rgba(8,127,110,.26);--gv-accent:#2AD1B5;--gv-accent-ink:#04211d}
+html[data-theme=light] .panel{box-shadow:0 -8px 36px rgba(0,30,40,.18)}
+html[data-theme=light] .btn{background:#2AD1B5;color:#04211d}
+html[data-theme=light] .btn-ghost{background:transparent;color:var(--text)}
+html[data-theme=light] .cnt i{background:rgba(13,34,41,.12)}html[data-theme=light] .cnt i.on{background:#2AD1B5}
+html[data-theme=light] .sc{background:rgba(8,127,110,.07)}
+html[data-theme=light] .tree{background:rgba(255,255,255,.96);box-shadow:0 3px 10px rgba(0,20,30,.28)}
+html[data-theme=light] .tree .pt,html[data-theme=light] .tree.mid .pt{color:#fff}
+html[data-theme=light] .poi{background:rgba(139,63,217,.14);border-color:#8b3fd9}
+html[data-theme=light] .thm button[aria-pressed=true]{background:#2AD1B5}
+html[data-theme=light] body.maperr::before{background:radial-gradient(900px 600px at 70% 20%,rgba(42,209,181,.18),transparent 60%),var(--bg)}
+html[data-theme=light] .gvl-chip[data-id=best]{--c:#c99a06!important;--cbg:rgba(201,154,6,.16)!important}
+html[data-theme=light] .gvl-chip[data-id=canopy]{--c:#1f9d5c!important;--cbg:rgba(31,157,92,.14)!important}
+html[data-theme=light] .gvl-chip[data-id=vuln]{--c:#8b3fd9!important;--cbg:rgba(139,63,217,.12)!important}
+html[data-theme=light] .gvl-chip[data-id=ped]{--c:#d89a00!important;--cbg:rgba(216,154,0,.14)!important}
+html[data-theme=light] .gvl-chip[data-id=ghost]{--c:#6b858c!important;--cbg:rgba(107,133,140,.14)!important}
 .err{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
 body.maperr .err{display:flex}
 .err div{max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px}
@@ -81,7 +105,7 @@ body.maperr .err{display:flex}
 <body>
 <div id="map"></div>
 <a class="homelink" id="homelink" href="../jatekok.html">← JÁTÉKOK</a>
-<div class="topbar" id="topbar"><span id="tb-round">Hőhullám · <span data-town>a település</span></span></div>
+<div class="topbar" id="topbar"><span id="tb-round">Hőhullám · <span data-town>a település</span></span><span class="thm" id="thm" role="group" aria-label="Térkép színe"><button type="button" data-t="dark" aria-pressed="true" aria-label="Sötét térkép" title="Sötét térkép">🌙</button><button type="button" data-t="light" aria-pressed="false" aria-label="Világos térkép" title="Világos térkép">☀️</button></span></div>
 <div class="err"><div><h1>A térkép nem töltött be</h1><p>Valószínűleg a mobilnet nem engedi a térképcsempéket. Próbáld újra wifin, vagy válassz egy térkép nélküli játékot.</p>
 <div class="row"><a class="btn" id="err-next" href="../jatekok.html">Másik játék</a></div></div></div>
 <div class="sheet"><div id="layers" style="display:none"></div><div class="panel" id="panel"></div></div>
@@ -107,6 +131,31 @@ const NW={3:'három',4:'négy',5:'öt',6:'hat',7:'hét',8:'nyolc',9:'kilenc',10:
 let S={st:'loading',round:1,trees:[],ghosts:[],r1:null,r2:null,blindPts:null,toggles:{}};
 let map=null,mapReady=false,D=null,E=null,MODE='osm',center=T.center;
 const P=document.getElementById('panel');const TB=document.getElementById('tb-round');
+/* ---- téma: sötét (alap) vagy világos. ?tema=vilagos|sotet felülírja; a választást a böngésző megjegyzi ---- */
+let THEME=(()=>{const q=(Q.get('tema')||Q.get('theme')||'').toLowerCase();if(/^(light|vilagos|világos)$/.test(q))return 'light';if(/^(dark|sotet|sötét)$/.test(q))return 'dark';
+  try{const t=localStorage.getItem('gv-theme');if(t==='light'||t==='dark')return t;}catch(e){}return 'dark';})();
+document.documentElement.dataset.theme=THEME;
+const TP={ /* a saját térképi rétegek színei témánként (a világos alapon sötétebb, telítettebb árnyalatok) */
+ dark:{area:'#2AD1B5',canopy:'#3ddc97',vuln:'#c77bff',ped:'#ffd166',pedStroke:'#2b1400',ring:'#ffe08a',ringFill:'rgba(255,224,138,.16)',core:'#fff6cc',coreStroke:'#3a2a00',ping:'#fff1a8',
+  heat:['interpolate',['linear'],['heatmap-density'],0,'rgba(255,107,74,0)',0.3,'rgba(255,159,69,.08)',0.55,'rgba(255,120,74,.4)',0.8,'rgba(255,80,50,.78)',1,'rgba(255,50,35,.95)'],
+  glow:['interpolate',['linear'],['heatmap-density'],0,'rgba(255,224,138,0)',0.25,'rgba(190,230,110,.18)',0.55,'rgba(255,230,120,.55)',0.85,'rgba(255,245,170,.85)',1,'rgba(255,255,220,.98)']},
+ light:{area:'#087f6e',canopy:'#1f9d5c',vuln:'#8b3fd9',ped:'#f2b705',pedStroke:'#5a3b00',ring:'#a86b00',ringFill:'rgba(250,204,21,.28)',core:'#fffbe6',coreStroke:'#6b4200',ping:'#d69e2e',
+  heat:['interpolate',['linear'],['heatmap-density'],0,'rgba(255,107,74,0)',0.3,'rgba(255,140,60,.08)',0.55,'rgba(240,100,60,.4)',0.8,'rgba(225,60,40,.72)',1,'rgba(200,30,30,.9)'],
+  glow:['interpolate',['linear'],['heatmap-density'],0,'rgba(250,204,21,0)',0.25,'rgba(250,204,21,.3)',0.55,'rgba(250,190,20,.6)',0.85,'rgba(245,165,10,.85)',1,'rgba(240,140,0,.95)']}};
+let mapTheme=THEME,swapping=false;
+function thmUI(){document.querySelectorAll('#thm button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===THEME)));}
+function setTheme(t){if(t!=='light'&&t!=='dark'||t===THEME)return;THEME=t;document.documentElement.dataset.theme=t;try{localStorage.setItem('gv-theme',t);}catch(e){}thmUI();applyMapTheme();}
+document.getElementById('thm').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTheme(b.dataset.t);});thmUI();
+/* a saját források és rétegek átkerülnek az új alaptérkép-stílusba; a 3D-épületek új színnel, a feliratok alá */
+const KEEP=new Set(['area','heat','canopy','vuln','ped','best-glow','best-top','canopy-f','vuln-f','vuln-l','best-ring','best-ping','best-core']);
+function applyMapTheme(){if(!mapReady||!layersAdded||swapping||mapTheme===THEME)return;swapping=true;const want=THEME;cancelAnimationFrame(pingRAF);
+  GVMAP.setMapTheme(map,want,id=>KEEP.has(id)).then(()=>{mapTheme=want;swapping=false;if(D3)GVMAP.add3D(map,want);themePaint();syncLayers();if(THEME!==mapTheme)applyMapTheme();});}
+function themePaint(){const t=TP[THEME];const sp=(id,p,v)=>{try{if(map.getLayer(id))map.setPaintProperty(id,p,v);}catch(e){}};
+  sp('area','line-color',t.area);sp('canopy-f','fill-color',t.canopy);sp('vuln-f','fill-color',t.vuln);sp('vuln-l','line-color',t.vuln);sp('ped','circle-color',t.ped);sp('ped','circle-stroke-color',t.pedStroke);
+  sp('heat','heatmap-color',t.heat);sp('best-glow','heatmap-color',t.glow);sp('best-ring','circle-color',t.ringFill);sp('best-ring','circle-stroke-color',t.ring);
+  sp('best-core','circle-color',t.core);sp('best-core','circle-stroke-color',t.coreStroke);sp('best-ping','circle-stroke-color',t.ping);}
+/* csere után a rétegek láthatósága a chipek állapotát követi (ha közben kapcsoltak) */
+function syncLayers(){if(!LC)return;Object.keys(MAPL).forEach(id=>{const on=LC.get(id);(MAPL[id]||[]).forEach(([lid,prop,val])=>{try{if(!map.getLayer(lid))return;map.setLayoutProperty(lid,'visibility',on?'visible':'none');map.setPaintProperty(lid,prop,on?val:0);}catch(e){}});});}
 const townTxt=T.name?GV.esc(T.name):'a település';
 const rnd=GV.rng('fak-'+T.key);
 
@@ -145,10 +194,11 @@ const MAPL={heat:[['heat','heatmap-opacity',.8]],vuln:[['vuln-f','fill-opacity',
 let LC=null,revealT=[];
 function applyLayer(id,on){
   if(id==='ghost'){S.ghosts.forEach(t=>on?t.mk.addTo(map):t.mk.remove());return;}
-  if(!mapReady||!layersAdded)return;
+  if(!mapReady||!layersAdded||swapping)return; /* stílus-csere alatt a syncLayers állítja be utána */
+  const safe=f=>{if(swapping)return;try{f();}catch(e){}}; /* (az isStyleLoaded csempetöltés közben is hamis — nem jó őr) */
   (MAPL[id]||[]).forEach(([lid,prop,val])=>{
-    if(on){map.setLayoutProperty(lid,'visibility','visible');requestAnimationFrame(()=>map.setPaintProperty(lid,prop,val));}
-    else{map.setPaintProperty(lid,prop,0);setTimeout(()=>{if(LC&&!LC.get(id))map.setLayoutProperty(lid,'visibility','none');},450);}});
+    if(on){safe(()=>map.setLayoutProperty(lid,'visibility','visible'));requestAnimationFrame(()=>safe(()=>map.setPaintProperty(lid,prop,val)));}
+    else{safe(()=>map.setPaintProperty(lid,prop,0));setTimeout(()=>{if(LC&&!LC.get(id))safe(()=>map.setLayoutProperty(lid,'visibility','none'));},450);}});
   if(id==='vuln')poiMarkers.forEach(m=>on?m.addTo(map):m.remove());
   if(id==='best'&&on)setTimeout(()=>pingBest(3),420);
 }
@@ -159,7 +209,7 @@ function pingBest(times){if(!mapReady||!layersAdded||!map.getLayer('best-ping'))
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   const dur=1500,t0=performance.now();map.setLayoutProperty('best-ping','visibility','visible');
   const baseR=()=>{const z=map.getZoom();return z<=13?6:z>=17?19:z<15?6+(z-13)*2.5:11+(z-15)*4;};
-  const step=now=>{const e=(now-t0)/dur;
+  const step=now=>{const e=(now-t0)/dur;if(swapping||!map.getLayer('best-ping'))return;
     if(e>=times||!LC||!LC.get('best')){map.setPaintProperty('best-ping','circle-stroke-opacity',0);map.setLayoutProperty('best-ping','visibility','none');return;}
     const t=e%1;map.setPaintProperty('best-ping','circle-radius',baseR()*(1+1.7*t));map.setPaintProperty('best-ping','circle-stroke-opacity',0.9*(1-t)*(1-t));
     pingRAF=requestAnimationFrame(step);};
@@ -173,11 +223,11 @@ function showChips(v){LC.show(v);}
 render();
 GVMAP.resolveCenter(T).then(c=>{center=c;GVMAP.setCenter(c);initMap();});
 function initMap(){
-  map=GVMAP.createMap({container:'map',center,zoom:15,pitch:D3?50:0,bearing:D3?-15:0,dragRotate:false,pitchWithRotate:false,touchPitch:false},
-    m=>{mapReady=true;try{m.touchZoomRotate.disableRotation();}catch(e){}if(D3)GVMAP.add3D(m);
+  map=GVMAP.createMap({container:'map',theme:THEME,center,zoom:15,pitch:D3?50:0,bearing:D3?-15:0,dragRotate:false,pitchWithRotate:false,touchPitch:false},
+    m=>{mapReady=true;try{m.touchZoomRotate.disableRotation();}catch(e){}if(D3)GVMAP.add3D(m,THEME);
       const ring=[[-AX,-AY],[AX,-AY],[AX,AY],[-AX,AY],[-AX,-AY]].map(p=>GVMAP.toLL(p[0],p[1]));
       m.addSource('area',{type:'geojson',data:{type:'Feature',geometry:{type:'Polygon',coordinates:[ring]}}});
-      m.addLayer({id:'area',type:'line',source:'area',paint:{'line-color':'#2AD1B5','line-width':1.5,'line-dasharray':[3,3],'line-opacity':.55}});
+      m.addLayer({id:'area',type:'line',source:'area',paint:{'line-color':TP[THEME].area,'line-width':1.5,'line-dasharray':[3,3],'line-opacity':.55}});
       fitArea();m.on('click',onTap);
       GVMAP.whenIdle(m,7000).then(()=>GVMAP.loadData(m,T,center,800)).then(d=>{D=d;
         if(D.ok&&!D.water.some(p=>GVMAP.pointInPoly(0,0,p))){E=GVMAP.evaluators(D);MODE='osm';}
@@ -209,20 +259,21 @@ function addLayers(){if(layersAdded||!mapReady||!E)return;layersAdded=true;const
   /* minden réteg rejtve és 0 átlátszatlansággal indul; a chip kapcsolja be (applyLayer), átmenettel */
   map.addLayer({id:'heat',type:'heatmap',source:'heat',layout:{visibility:v},paint:{'heatmap-weight':['get','w'],'heatmap-intensity':1.1,
     'heatmap-radius':['interpolate',['linear'],['zoom'],13,14,15,30,17,70],'heatmap-opacity':0,'heatmap-opacity-transition':tr,
-    'heatmap-color':['interpolate',['linear'],['heatmap-density'],0,'rgba(255,107,74,0)',0.3,'rgba(255,159,69,.08)',0.55,'rgba(255,120,74,.4)',0.8,'rgba(255,80,50,.78)',1,'rgba(255,50,35,.95)']}});
-  map.addLayer({id:'canopy-f',type:'fill',source:'canopy',layout:{visibility:v},paint:{'fill-color':'#3ddc97','fill-opacity':0,'fill-opacity-transition':tr}});
-  map.addLayer({id:'vuln-f',type:'fill',source:'vuln',layout:{visibility:v},paint:{'fill-color':'#c77bff','fill-opacity':0,'fill-opacity-transition':tr}});
-  map.addLayer({id:'vuln-l',type:'line',source:'vuln',layout:{visibility:v},paint:{'line-color':'#c77bff','line-width':1.5,'line-dasharray':[2,2],'line-opacity':0,'line-opacity-transition':tr}});
-  map.addLayer({id:'ped',type:'circle',source:'ped',layout:{visibility:v},paint:{'circle-color':'#ffd166','circle-radius':4.5,'circle-opacity':0,'circle-opacity-transition':tr,'circle-stroke-color':'#2b1400','circle-stroke-width':1,'circle-stroke-opacity':0,'circle-stroke-opacity-transition':tr}});
+    'heatmap-color':TP[THEME].heat}});
+  map.addLayer({id:'canopy-f',type:'fill',source:'canopy',layout:{visibility:v},paint:{'fill-color':TP[THEME].canopy,'fill-opacity':0,'fill-opacity-transition':tr}});
+  map.addLayer({id:'vuln-f',type:'fill',source:'vuln',layout:{visibility:v},paint:{'fill-color':TP[THEME].vuln,'fill-opacity':0,'fill-opacity-transition':tr}});
+  map.addLayer({id:'vuln-l',type:'line',source:'vuln',layout:{visibility:v},paint:{'line-color':TP[THEME].vuln,'line-width':1.5,'line-dasharray':[2,2],'line-opacity':0,'line-opacity-transition':tr}});
+  map.addLayer({id:'ped',type:'circle',source:'ped',layout:{visibility:v},paint:{'circle-color':TP[THEME].ped,'circle-radius':4.5,'circle-opacity':0,'circle-opacity-transition':tr,'circle-stroke-color':TP[THEME].pedStroke,'circle-stroke-width':1,'circle-stroke-opacity':0,'circle-stroke-opacity-transition':tr}});
   /* a rétegek metszete: sárga ragyogás a legértékesebb sávon + gyűrű a 8 legjobb helyen — térképi réteg, a térképpel mozog */
   const B=bestSources();map.addSource('best-glow',{type:'geojson',data:B.glow});map.addSource('best-top',{type:'geojson',data:B.top});
   map.addLayer({id:'best-glow',type:'heatmap',source:'best-glow',layout:{visibility:v},paint:{'heatmap-weight':['get','w'],'heatmap-intensity':['interpolate',['linear'],['zoom'],13,0.9,17,1.6],
     'heatmap-radius':['interpolate',['linear'],['zoom'],13,9,15,20,17,46],'heatmap-opacity':0,'heatmap-opacity-transition':tr,
-    'heatmap-color':['interpolate',['linear'],['heatmap-density'],0,'rgba(255,224,138,0)',0.25,'rgba(190,230,110,.18)',0.55,'rgba(255,230,120,.55)',0.85,'rgba(255,245,170,.85)',1,'rgba(255,255,220,.98)']}});
-  map.addLayer({id:'best-ring',type:'circle',source:'best-top',layout:{visibility:v},paint:{'circle-color':'rgba(255,224,138,.16)','circle-radius':['interpolate',['linear'],['zoom'],13,6,15,11,17,19],
-    'circle-opacity':0,'circle-opacity-transition':tr,'circle-stroke-color':'#ffe08a','circle-stroke-width':2.5,'circle-stroke-opacity':0,'circle-stroke-opacity-transition':tr}});
-  map.addLayer({id:'best-ping',type:'circle',source:'best-top',layout:{visibility:v},paint:{'circle-color':'rgba(0,0,0,0)','circle-radius':10,'circle-stroke-color':'#fff1a8','circle-stroke-width':2,'circle-stroke-opacity':0}});
-  map.addLayer({id:'best-core',type:'circle',source:'best-top',layout:{visibility:v},paint:{'circle-color':'#fff6cc','circle-radius':3.2,'circle-opacity':0,'circle-opacity-transition':tr,'circle-stroke-color':'#3a2a00','circle-stroke-width':1}});
+    'heatmap-color':TP[THEME].glow}});
+  map.addLayer({id:'best-ring',type:'circle',source:'best-top',layout:{visibility:v},paint:{'circle-color':TP[THEME].ringFill,'circle-radius':['interpolate',['linear'],['zoom'],13,6,15,11,17,19],
+    'circle-opacity':0,'circle-opacity-transition':tr,'circle-stroke-color':TP[THEME].ring,'circle-stroke-width':2.5,'circle-stroke-opacity':0,'circle-stroke-opacity-transition':tr}});
+  map.addLayer({id:'best-ping',type:'circle',source:'best-top',layout:{visibility:v},paint:{'circle-color':'rgba(0,0,0,0)','circle-radius':10,'circle-stroke-color':TP[THEME].ping,'circle-stroke-width':2,'circle-stroke-opacity':0}});
+  map.addLayer({id:'best-core',type:'circle',source:'best-top',layout:{visibility:v},paint:{'circle-color':TP[THEME].core,'circle-radius':3.2,'circle-opacity':0,'circle-opacity-transition':tr,'circle-stroke-color':TP[THEME].coreStroke,'circle-stroke-width':1}});
+  if(mapTheme!==THEME)setTimeout(applyMapTheme,0); /* ha betöltés közben váltottak témát */
 }
 
 /* ---- ültetés ---- */
