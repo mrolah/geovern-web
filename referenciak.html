@@ -56,14 +56,26 @@ header{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:c
 h2{font-size:clamp(20px,2.6vw,26px);font-weight:900;line-height:1.15;margin-bottom:10px}
 .sub{color:var(--muted);font-size:13.5px}
 .hint{font:400 12px var(--mono);color:var(--faint);margin-top:12px}
-/* referencia-markerek */
-.rmk{border-radius:50%;background:var(--amber);color:#231303;
+.sub-bp{margin-top:6px}
+@media(max-width:640px){.sub-bp{display:none}} /* mobilon a Budapest-tipp a buborékban van (gomb) */
+/* referencia-markerek: a külső elemet a MapLibre pozicionálja (transform) — azon nincs átmenet, különben a jelölő
+   „lemarad” a térképtől nagyításkor és mozgatáskor. A kinézet és a hover-nagyítás a belső elemen van. */
+.rmk{cursor:pointer}
+.rmk-i{border-radius:50%;background:var(--amber);color:#231303;
   font:700 12px var(--mono);display:flex;align-items:center;justify-content:center;
-  border:2px solid rgba(5,15,20,.9);box-shadow:0 0 14px rgba(255,159,69,.65);cursor:pointer;transition:transform .15s}
-.rmk:hover{transform:scale(1.15)}
-.rmk.s1{width:22px;height:22px}
-.rmk.s2{width:28px;height:28px;font-size:13px}
-.rmk.s3{width:38px;height:38px;font-size:15px}
+  border:2px solid rgba(5,15,20,.9);box-shadow:0 0 14px rgba(255,159,69,.65);transition:transform .15s,opacity .25s}
+.rmk:hover .rmk-i{transform:scale(1.15)}
+.rmk.s1 .rmk-i{width:22px;height:22px}
+.rmk.s2 .rmk-i{width:28px;height:28px;font-size:13px}
+.rmk.s3 .rmk-i{width:38px;height:38px;font-size:15px}
+/* Budapest: közelről minden ügyfél a projekt idején érvényes székhelyén (a város-jelölő helyett) */
+.rmk.hq .rmk-i{width:16px;height:16px;font-size:10px;box-shadow:0 0 10px rgba(255,159,69,.7)}
+.rmk.hq.n2 .rmk-i{width:21px;height:21px;font-size:11px}
+.rmk.hq.anon .rmk-i{background:rgba(5,15,20,.85);color:var(--amber);border:2px dashed var(--amber);box-shadow:none;width:22px;height:22px;font-size:11px}
+body:not(.zb) .rmk.hq{visibility:hidden;pointer-events:none}body:not(.zb) .rmk.hq .rmk-i{opacity:0}
+body.zb .rmk.bp{visibility:hidden;pointer-events:none}body.zb .rmk.bp .rmk-i{opacity:0}
+.rp-addr{display:block;font:400 10.5px var(--mono);color:var(--faint);margin-top:2px}
+.rp-go{display:inline-block;margin-top:9px;font:700 12px var(--font);color:var(--teal);cursor:pointer;background:none;border:none;padding:0}
 /* popup */
 .maplibregl-popup-content{background:#07181e!important;border:1px solid var(--cardline);border-radius:12px!important;
   color:var(--text);font-family:var(--font);padding:14px 16px!important;box-shadow:0 16px 50px rgba(0,0,0,.55)!important;max-width:260px}
@@ -109,6 +121,7 @@ h2{font-size:clamp(20px,2.6vw,26px);font-weight:900;line-height:1.15;margin-bott
   <span class="eyebrow" data-i18n="eb">REFERENCIÁK</span>
   <h2 data-i18n="h2">Projektek, amelyekben személyesen közreműködtünk</h2>
   <p class="sub" data-i18n="sub">Kattintson a városokra — a térkép szabadon nagyítható.</p>
+  <p class="sub sub-bp" data-i18n="sub2">Budapesten közelről minden ügyfél a projekt idején érvényes székhelyén látszik.</p>
   <p class="hint" data-i18n="note">90+ referencia és partner · 12 ország · 2008 óta</p>
 </div>
 
@@ -117,13 +130,16 @@ h2{font-size:clamp(20px,2.6vw,26px);font-weight:900;line-height:1.15;margin-bott
 const I18N={
 hu:{title:'GEOVERN — Referenciák',back:'← Vissza a főoldalra',cta:'Konzultáció',
  eb:'REFERENCIÁK',h2:'Projektek, amelyekben személyesen közreműködtünk',
- sub:'Kattintson a városokra — a térkép szabadon nagyítható.',note:'90+ referencia és partner · 12 ország · 2008 óta'},
+ sub:'Kattintson a városokra — a térkép szabadon nagyítható.',sub2:'Budapesten közelről minden ügyfél a projekt idején érvényes székhelyén látszik.',note:'90+ referencia és partner · 12 ország · 2008 óta',
+ hqT:'Székhely a projekt évében',hqC:'Jelenlegi székhely',hqGo:'Budapesti székhelyek a térképen →',anon:'Helyszín nélkül (anonimizált)'},
 en:{title:'GEOVERN — References',back:'← Back to home',cta:'Book a call',
  eb:'REFERENCES',h2:'Projects we personally contributed to',
- sub:'Click the cities — the map is freely zoomable.',note:'90+ references & partners · 12 countries · since 2008'},
+ sub:'Click the cities — the map is freely zoomable.',sub2:'Zoom into Budapest: each client sits at its head office at the time of the project.',note:'90+ references & partners · 12 countries · since 2008',
+ hqT:'Head office in the project year',hqC:'Current head office',hqGo:'Budapest head offices on the map →',anon:'No location (anonymised)'},
 de:{title:'GEOVERN — Referenzen',back:'← Zurück zur Startseite',cta:'Gespräch buchen',
  eb:'REFERENZEN',h2:'Projekte mit persönlicher Mitwirkung',
- sub:'Klicken Sie auf die Städte — die Karte ist frei zoombar.',note:'90+ Referenzen & Partner · 12 Länder · seit 2008'}
+ sub:'Klicken Sie auf die Städte — die Karte ist frei zoombar.',sub2:'In Budapest hineinzoomen: jeder Kunde an seinem damaligen Firmensitz.',note:'90+ Referenzen & Partner · 12 Länder · seit 2008',
+ hqT:'Sitz im Projektjahr',hqC:'Aktueller Sitz',hqGo:'Budapester Firmensitze auf der Karte →',anon:'Ohne Standort (anonymisiert)'}
 };
 /* ============ ADAT ============ */
 const REF_TAGS={
@@ -142,29 +158,36 @@ const PART=N('Partneri program','Partner programme','Partnerprogramm');
 /* Fegyveres erők anonimizálva; cégnevek változatlanul, intézménynevek lefordítva */
 const REFP=[
  ['Budapest',[19.04,47.50],[
-  [N('Lechner Tudásközpont','Lechner Knowledge Centre','Lechner Wissenszentrum'),2026,'gov'],
-  ['NMHH',2024,'tel'],
-  [N('Miniszterelnökség','Prime Minister’s Office','Amt des Ministerpräsidenten'),2022,'gov'],
+  /* 4. elem: [hossz, szél., cím] — a projekt évében érvényes székhely (év nélkülieknél a mostani); kutatás és geokódolás: 2026-11 */
+  [N('Lechner Tudásközpont','Lechner Knowledge Centre','Lechner Wissenszentrum'),2026,'gov',[19.05299,47.47584,'1111 Budapest, Budafoki út 59']],
+  ['NMHH',2024,'tel',[19.02777,47.50679,'1015 Budapest, Ostrom u. 23–25']],
+  [N('Miniszterelnökség','Prime Minister’s Office','Amt des Ministerpräsidenten'),2022,'gov',[19.04564,47.50467,'1055 Budapest, Kossuth Lajos tér 2–4']],
   [N('Proptech startup','Proptech startup','Proptech-Startup'),2021,'re'],
-  ['Raiffeisen Bank',2020,'fin'],
-  [N('E.ON Hungária','E.ON Hungary','E.ON Ungarn'),2020,'en'],
-  ['Magyar Telekom',2020,'tel'],
-  ['Takarék Bank',2017,'fin'],
-  ['Erste Bank',2017,'fin'],
-  [N('Oktatási minisztérium','Ministry of Education','Bildungsministerium'),2017,'edu'],
-  ['MKB Bank',2017,'fin'],
-  [N('Egészségügyi minisztérium','Ministry of Health','Gesundheitsministerium'),2016,'hea'],
-  [N('Országos vízügyi hatóság','National water authority','Nationale Wasserbehörde'),2016,'gov'],
-  [N('Volvo Hungária','Volvo Hungary','Volvo Ungarn'),2016,'auto'],
-  [N('Honvédelmi Minisztérium','Ministry of Defence (HU)','Verteidigungsministerium (HU)'),2015,'def'],
-  ['Nescafé',2014,'fmcg'],['Tesco',2014,'fmcg'],['MOL Upstream',2013,'en'],['Auchan',2013,'fmcg'],
-  ['Vodafone',2012,'tel'],
-  [N('Katasztrófavédelem (BM OKF)','National disaster management','Katastrophenschutz-Direktion'),2011,'def'],
+  ['Raiffeisen Bank',2020,'fin',[19.06618,47.53206,'1133 Budapest, Váci út 116–118']],
+  [N('E.ON Hungária','E.ON Hungary','E.ON Ungarn'),2020,'en',[19.06167,47.51993,'1134 Budapest, Váci út 17']],
+  ['Magyar Telekom',2020,'tel',[19.09774,47.47511,'1097 Budapest, Könyves Kálmán krt. 36']],
+  ['Takarék Bank',2017,'fin',[19.00942,47.50795,'1122 Budapest, Pethényi köz 10']],
+  ['Erste Bank',2017,'fin',[19.06033,47.53679,'1138 Budapest, Népfürdő u. 24–26']],
+  [N('Oktatási minisztérium','Ministry of Education','Bildungsministerium'),2017,'edu',[19.04990,47.50864,'1055 Budapest, Szalay u. 10–14']],
+  ['MKB Bank',2017,'fin',[19.05413,47.49167,'1056 Budapest, Váci u. 38']],
+  [N('Egészségügyi minisztérium','Ministry of Health','Gesundheitsministerium'),2016,'hea',[19.04697,47.50197,'1051 Budapest, Arany János u. 6–8']],
+  [N('Országos vízügyi hatóság','National water authority','Nationale Wasserbehörde'),2016,'gov',[19.02810,47.49662,'1012 Budapest, Márvány u. 1/D']],
+  [N('Volvo Hungária','Volvo Hungary','Volvo Ungarn'),2016,'auto',[19.24066,47.49471,'1172 Budapest, Cinkotai út 34']],
+  [N('Honvédelmi Minisztérium','Ministry of Defence (HU)','Verteidigungsministerium (HU)'),2015,'def',[19.04889,47.51119,'1055 Budapest, Balaton u. 7–11']],
+  ['Nescafé',2014,'fmcg',[19.07074,47.47335,'1095 Budapest, Lechner Ödön fasor 7']],
+  ['Tesco',2014,'fmcg',[18.96291,47.44929,'2040 Budaörs, Kinizsi u. 1–3']],
+  ['MOL Upstream',2013,'en',[19.05143,47.47379,'1117 Budapest, Október huszonharmadika u. 18']],
+  ['Auchan',2013,'fmcg',[19.02777,47.47855,'1113 Budapest, Bocskai út 134–146']],
+  ['Vodafone',2012,'tel',[19.07012,47.47399,'1096 Budapest, Lechner Ödön fasor 6']],
+  [N('Katasztrófavédelem (BM OKF)','National disaster management','Katastrophenschutz-Direktion'),2011,'def',[19.11876,47.50802,'1149 Budapest, Mogyoródi út 43']],
   [N('Fegyveres erők — meteorológiai szolgálat','Armed forces — meteorological service','Streitkräfte — Wetterdienst'),2008,'def'],
-  [N('Magyar Posta','Magyar Posta (Hungarian Post)','Ungarische Post'),2008,'tr'],
-  [N('Közép-Duna-völgyi Vízügyi Igazgatóság (KDVVIZIG)','Middle Danube Valley Water Directorate','Wasserdirektion Mittleres Donautal'),0,'wat'],
-  [N('Duna-Ipoly Nemzeti Park Igazgatóság','Danube-Ipoly National Park Directorate','Nationalparkdirektion Donau-Ipoly'),0,'nat'],
-  [N('Eötvös Loránd Tudományegyetem (ELTE)','Eötvös Loránd University (ELTE)','Eötvös-Loránd-Universität (ELTE)'),PART,'edu']]],
+  [N('Magyar Posta','Magyar Posta (Hungarian Post)','Ungarische Post'),2008,'tr',[19.06075,47.53511,'1138 Budapest, Dunavirág u. 2–6']],
+  [N('Budapest Főváros — Árvízvédekezés','City of Budapest — Flood protection','Stadt Budapest — Hochwasserschutz'),0,'mun',[19.05510,47.49497,'1052 Budapest, Városház u. 9–11']],
+  [N('Budapest Főváros — Zajtérképezés','City of Budapest — Noise mapping','Stadt Budapest — Lärmkartierung'),0,'mun',[19.05510,47.49497,'1052 Budapest, Városház u. 9–11']],
+  [N('Budapest Főváros — Szabályozási Keretterv','City of Budapest — Framework Zoning Plan','Stadt Budapest — Rahmen-Bebauungsplan'),0,'mun',[19.05510,47.49497,'1052 Budapest, Városház u. 9–11']],
+  [N('Közép-Duna-völgyi Vízügyi Igazgatóság (KDVVIZIG)','Middle Danube Valley Water Directorate','Wasserdirektion Mittleres Donautal'),0,'wat',[19.07144,47.49722,'1088 Budapest, Rákóczi út 41']],
+  [N('Duna-Ipoly Nemzeti Park Igazgatóság','Danube-Ipoly National Park Directorate','Nationalparkdirektion Donau-Ipoly'),0,'nat',[18.99231,47.49849,'1121 Budapest, Költő u. 21']],
+  [N('Eötvös Loránd Tudományegyetem (ELTE)','Eötvös Loránd University (ELTE)','Eötvös-Loránd-Universität (ELTE)'),PART,'edu',[19.05863,47.49070,'1053 Budapest, Egyetem tér 1–3']]]],
  [N('Bécs','Vienna','Wien'),[16.37,48.21],[
   ['ASFINAG',2026,'tr'],['STRABAG',2026,'ind'],['TAG GmbH',2026,'en'],['ÖBB',2025,'tr'],
   [N('Bécs város (MA 30·45·01)','City of Vienna (MA 30·45·01)','Stadt Wien (MA 30·45·01)'),2025,'mun'],
@@ -243,6 +266,7 @@ function initMap(){
   }catch(e){document.body.classList.add('maperr');return;}
   map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
   map.on('error',e=>{if(!mapReady&&e.error&&/style|source/i.test(String(e.error.message||''))){document.body.classList.add('maperr');}});
+  map.on('zoom',zoomClass);
   map.on('load',()=>{
     mapReady=true;
     buildRefMarkers();
@@ -252,26 +276,49 @@ function initMap(){
     setTimeout(()=>{if(!popup&&refMarkers.length)openRefPopup(0);},2800);
   });
 }
+/* Budapest közelről (ZB-től): a város-jelölő helyett minden ügyfél a székhelyén; azonos címen egy jelölő, számmal */
+const ZB=9,BP=0;
+function rmkEl(cls,txt,title){const el=document.createElement('div');el.className='rmk '+cls;el.title=title||'';
+  const i=document.createElement('div');i.className='rmk-i';i.textContent=txt;el.appendChild(i);return el;}
+function hqGroups(){const g=new Map(),anon=[];REFP[BP][2].forEach(x=>{if(!x[3]){anon.push(x);return;}const k=x[3][0]+','+x[3][1];if(!g.has(k))g.set(k,{ll:[x[3][0],x[3][1]],addr:x[3][2],items:[]});g.get(k).items.push(x);});return{groups:[...g.values()],anon};}
 function buildRefMarkers(){
   refMarkers.forEach(m=>m.remove());refMarkers=[];
   if(!mapReady)return;
   REFP.forEach((r,i)=>{
     const n=r[2].length;
-    const el=document.createElement('div');
-    el.className='rmk '+(n>=10?'s3':n>=3?'s2':'s1');
-    el.textContent=n;
-    el.title=TT(r[0]);
+    const el=rmkEl((n>=10?'s3':n>=3?'s2':'s1')+(i===BP?' bp':''),n,TT(r[0]));
     el.addEventListener('click',ev=>{ev.stopPropagation();openRefPopup(i);});
     refMarkers.push(new maplibregl.Marker({element:el}).setLngLat(r[1]).addTo(map));
   });
+  const H=hqGroups();
+  H.groups.forEach(g=>{const n=g.items.length;const el=rmkEl('hq'+(n>1?' n2':''),n>1?n:'',g.items.map(x=>TT(x[0])).join(' · '));
+    el.addEventListener('click',ev=>{ev.stopPropagation();openHqPopup(g);});
+    refMarkers.push(new maplibregl.Marker({element:el}).setLngLat(g.ll).addTo(map));});
+  if(H.anon.length){const el=rmkEl('hq anon',H.anon.length,I18N[L].anon);
+    el.addEventListener('click',ev=>{ev.stopPropagation();openHqPopup({ll:REFP[BP][1],addr:null,items:H.anon});});
+    refMarkers.push(new maplibregl.Marker({element:el}).setLngLat(REFP[BP][1]).addTo(map));}
+  zoomClass();
 }
+function zoomClass(){if(map)document.body.classList.toggle('zb',map.getZoom()>=ZB);}
+const metaOf=x=>[x[1]?(typeof x[1]==='object'?x[1][L]:''+x[1]):null,REF_TAGS[x[2]][L]].filter(Boolean).join(' · ');
+function openHqPopup(g){
+  if(popup)popup.remove();
+  const d=I18N[L];const cur=g.items.every(x=>!x[1]||typeof x[1]==='object');
+  popup=new maplibregl.Popup({offset:12,closeButton:true}).setLngLat(g.ll)
+    .setHTML(`<div class="rp-city">Budapest · ${g.addr?(cur?d.hqC:d.hqT):d.anon}</div>
+      <div class="rp-list">${g.items.map(x=>`<div class="rp-row"><b>${TT(x[0])}</b><span>${metaOf(x)}</span></div>`).join('')}</div>
+      ${g.addr?`<span class="rp-addr">${g.addr}</span>`:''}`).addTo(map);
+}
+function showBudapestHQ(){if(popup){popup.remove();popup=null;}
+  const c={center:[19.075,47.495],zoom:11.1,pitch:30};RM?map.jumpTo(c):map.flyTo({...c,duration:1800,essential:true});}
 function openRefPopup(i){
   const r=REFP[i];
   if(popup)popup.remove();
   popup=new maplibregl.Popup({offset:16,closeButton:true})
     .setLngLat(r[1])
     .setHTML(`<div class="rp-city">${TT(r[0])} · ${r[2].length}</div>
-      <div class="rp-list">${r[2].map(x=>{const m=[x[1]?(typeof x[1]==='object'?x[1][L]:''+x[1]):null,REF_TAGS[x[2]][L]].filter(Boolean).join(' · ');return `<div class="rp-row"><b>${TT(x[0])}</b><span>${m}</span></div>`;}).join('')}</div>`)
+      <div class="rp-list">${r[2].map(x=>`<div class="rp-row"><b>${TT(x[0])}</b><span>${metaOf(x)}</span></div>`).join('')}</div>
+      ${i===BP?`<button type="button" class="rp-go" onclick="showBudapestHQ()">${I18N[L].hqGo}</button>`:''}`)
     .addTo(map);
 }
 

@@ -183,6 +183,23 @@ input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;height:4px}
   display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .foot a{color:var(--faint)} .foot a:hover{color:var(--muted)}
 @media(prefers-reduced-motion:reduce){.card{transition:none}.mk::after{animation:none}.scrolldown{animation:none}}
+/* időpontfoglaló felugró ablak (Pipedrive Scheduler iframe-ben; JS nélkül a link új lapon nyílik) */
+.bk{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,8,11,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.bk.open{display:flex;animation:bkIn .22s ease-out}
+@keyframes bkIn{from{opacity:0}to{opacity:1}}
+.bk-d{width:min(960px,100%);height:min(800px,100%);display:flex;flex-direction:column;background:#07181e;border:1px solid var(--cardline);border-radius:16px;overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+.bk-h{display:flex;align-items:center;gap:12px;padding:10px 12px 10px 18px;border-bottom:1px solid rgba(143,176,181,.18)}
+.bk-h b{flex:1;font-size:15px}
+.bk-h a{font:500 12px var(--mono);color:var(--muted);white-space:nowrap}.bk-h a:hover{color:var(--teal)}
+.bk-x{width:36px;height:36px;border-radius:10px;border:1px solid rgba(143,176,181,.3);background:transparent;color:var(--text);font-size:20px;line-height:1;cursor:pointer}
+.bk-x:hover{border-color:var(--teal);color:var(--teal)}
+.bk-b{position:relative;flex:1;background:#fff}
+.bk-b iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.bk-l{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:500 13px var(--mono);color:#5E7A80;background:#fff}
+.bk-b.ok .bk-l{display:none}
+body.bk-lock{overflow:hidden}
+@media(max-width:640px){.bk{padding:0}.bk-d{width:100%;height:100%;border-radius:0;border:none}.bk-h a span{display:none}}
+@media(prefers-reduced-motion:reduce){.bk.open{animation:none}}
 </style>
 </head>
 <body>
@@ -304,10 +321,9 @@ input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;height:4px}
     <span class="refline" data-i18n="ref">Referencia: országos kormányzati tudásközpont — átvilágítás · GIS-audit · stratégia (2025–26)</span>
     <h2 data-i18n="ct_h2">Kezdjük egy 30 perces beszélgetéssel</h2>
     <div class="proc" id="proc"></div>
-    <!-- TODO ÉLESÍTÉS ELŐTT: a Calendly-link még minta — cserélje valósra! -->
     <div class="ct-ctas">
       <a class="btn btn-primary" href="mailto:hello@geovern.com" data-i18n="ct_c1">E-mail írása</a>
-      <a class="btn btn-ghost" href="https://calendly.com/geovern/30min" target="_blank" rel="noopener" data-i18n="ct_c2">Időpontfoglalás</a>
+      <a class="btn btn-ghost" id="bk-open" href="https://psh-rf-olah-attila.pipedrive.com/scheduler/0K29R0t6/meeting-standard" target="_blank" rel="noopener" data-i18n="ct_c2">Időpontfoglalás</a>
     </div>
     <p class="ct-row">hello@geovern.com · <a href="tel:+36709350494">+36 70 935 0494</a></p>
     <div class="foot">
@@ -403,6 +419,7 @@ hu:{title:'GEOVERN — GIS stratégiai tanácsadás',nav_cta:'Konzultáció',nav
  ro_d:'Indikatív sávok — a pontos potenciált a GIS-audit számszerűsíti.',unit:'M Ft',mo:'hónap',
  ref:'Referencia: országos kormányzati tudásközpont — átvilágítás · GIS-audit · stratégia (2025–26)',
  ct_h2:'Kezdjük egy 30 perces beszélgetéssel',ct_c1:'E-mail írása',ct_c2:'Időpontfoglalás',
+ bk_t:'Időpontfoglalás',bk_new:'Megnyitás új lapon',bk_x:'Bezárás',bk_l:'Naptár betöltése…',
  ft1:'Impresszum',ft2:'Adatkezelés',
  dots:['Kezdőlap','Miért mi?','Use case-ek','Szolgáltatások','ROI','Kapcsolat']},
 en:{title:'GEOVERN — GIS strategy consulting',nav_cta:'Book a call',nav_conf:'Conference',nav_ref:'References',nav_sw:'Crisis game',nav_games:'Games',nav_ev:'Events',nav_ab:'About',hero_eb:'INDEPENDENT GIS STRATEGY CONSULTING',
@@ -421,6 +438,7 @@ en:{title:'GEOVERN — GIS strategy consulting',nav_cta:'Book a call',nav_conf:'
  ro_d:'Indicative bands — your exact potential is quantified in a GIS audit.',unit:'M HUF',mo:'months',
  ref:'Reference: national-level government knowledge centre — review · GIS audit · strategy (2025–26)',
  ct_h2:'Let’s start with a 30-minute conversation',ct_c1:'Write an email',ct_c2:'Book a slot',
+ bk_t:'Book a slot',bk_new:'Open in new tab',bk_x:'Close',bk_l:'Loading calendar…',
  ft1:'Imprint',ft2:'Privacy',
  dots:['Home','Why us','Use cases','Services','ROI','Contact']},
 de:{title:'GEOVERN — GIS-Strategieberatung',nav_cta:'Gespräch buchen',nav_conf:'Konferenz',nav_ref:'Referenzen',nav_sw:'Krisenspiel',nav_games:'Spiele',nav_ev:'Veranstaltungen',nav_ab:'Über uns',hero_eb:'UNABHÄNGIGE GIS-STRATEGIEBERATUNG',
@@ -439,6 +457,7 @@ de:{title:'GEOVERN — GIS-Strategieberatung',nav_cta:'Gespräch buchen',nav_con
  ro_d:'Indikative Bandbreiten — Ihr Potenzial quantifiziert das GIS-Audit.',unit:'Mio. HUF',mo:'Monate',
  ref:'Referenz: staatliches Wissenszentrum mit Landesmandat — Review · GIS-Audit · Strategie (2025–26)',
  ct_h2:'Starten wir mit einem 30-Minuten-Gespräch',ct_c1:'E-Mail schreiben',ct_c2:'Termin buchen',
+ bk_t:'Termin buchen',bk_new:'In neuem Tab öffnen',bk_x:'Schließen',bk_l:'Kalender wird geladen…',
  ft1:'Impressum',ft2:'Datenschutz',
  dots:['Start','Warum wir','Use Cases','Leistungen','ROI','Kontakt']}
 };
@@ -656,6 +675,35 @@ document.querySelectorAll('a[data-fade]').forEach(a=>a.addEventListener('click',
   document.body.style.opacity='0';
   setTimeout(()=>location.href=a.getAttribute('href'),340);
 }));
+</script>
+<!-- időpontfoglaló felugró ablak -->
+<div class="bk" id="bk" role="dialog" aria-modal="true" aria-labelledby="bk-t" aria-hidden="true">
+  <div class="bk-d">
+    <div class="bk-h"><b id="bk-t" data-i18n="bk_t">Időpontfoglalás</b>
+      <a href="https://psh-rf-olah-attila.pipedrive.com/scheduler/0K29R0t6/meeting-standard" target="_blank" rel="noopener">↗ <span data-i18n="bk_new">Megnyitás új lapon</span></a>
+      <button type="button" class="bk-x" id="bk-x" aria-label="Bezárás">×</button></div>
+    <div class="bk-b" id="bk-b"><div class="bk-l" data-i18n="bk_l">Naptár betöltése…</div></div>
+  </div>
+</div>
+<script>
+/* Pipedrive Scheduler felugró ablakban: az iframe csak az első megnyitáskor töltődik be (adatvédelem, sebesség);
+   Esc, a háttér vagy a × zárja; JS nélkül / új lapos kattintásnál (Ctrl, Cmd, középső gomb) a link új lapon nyílik. */
+(function(){
+  const URL='https://psh-rf-olah-attila.pipedrive.com/scheduler/0K29R0t6/meeting-standard';
+  const bk=document.getElementById('bk'),body=document.getElementById('bk-b'),x=document.getElementById('bk-x'),opener=document.getElementById('bk-open');
+  if(!bk||!opener)return;let last=null;
+  const d0=I18N[L]||I18N.hu;bk.querySelectorAll('[data-i18n]').forEach(el=>{if(d0[el.dataset.i18n]!==undefined)el.textContent=d0[el.dataset.i18n];}); /* az ablak a nyelvváltás után jön a DOM-ba */
+  function open(e){if(e&&(e.ctrlKey||e.metaKey||e.shiftKey||e.button===1))return;if(e)e.preventDefault();last=document.activeElement;
+    if(!body.querySelector('iframe')){const f=document.createElement('iframe');f.src=URL;f.title=(I18N[L]||I18N.hu).bk_t;f.allow='payment';
+      f.addEventListener('load',()=>body.classList.add('ok'));body.appendChild(f);}
+    x.setAttribute('aria-label',(I18N[L]||I18N.hu).bk_x);bk.classList.add('open');bk.setAttribute('aria-hidden','false');document.body.classList.add('bk-lock');setTimeout(()=>x.focus(),30);}
+  function close(){bk.classList.remove('open');bk.setAttribute('aria-hidden','true');document.body.classList.remove('bk-lock');if(last&&last.focus)last.focus();}
+  opener.addEventListener('click',open);x.addEventListener('click',close);
+  bk.addEventListener('click',e=>{if(e.target===bk)close();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&bk.classList.contains('open'))close();});
+  /* ?foglalas=1 vagy #foglalas: közvetlenül nyitható link (pl. levélből) */
+  if(/[?&]foglalas=1\b/.test(location.search)||location.hash==='#foglalas')open();
+})();
 </script>
 </body>
 </html>
