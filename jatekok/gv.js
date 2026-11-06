@@ -115,7 +115,7 @@
   ];
   const inSub=/\/jatekok\//.test(location.pathname);
   /* a játékok közti linkek verziószámot kapnak (?v=…), hogy a GitHub Pages 10 perces gyorsítótára ne a régi HTML-t adja */
-  const VER='13';
+  const VER='14';
   function qs(){return '?'+(TOWN.name?'telepules='+encodeURIComponent(TOWN.name)+'&':'')+'v='+VER;}
   function urlFor(file){return (inSub?'../':'')+file+qs();}
   function hubUrl(){return (inSub?'../':'')+'jatekok.html'+qs();}
@@ -173,7 +173,8 @@
 .gvl-chip:active{transform:scale(.96)}
 .gvl-chip:focus-visible{outline:2px solid #fff;outline-offset:2px}
 @media(hover:hover){.gvl-chip:hover{border-color:rgba(255,255,255,.4);color:#fff}.gvl-chip[aria-checked=true]:hover{filter:brightness(1.12)}}
-@media(prefers-reduced-motion:reduce){.gvl-chip,.gvl-sw,.gvl-sw svg,.gvl-ic{transition:none}.gvl-chip.flash,.gvl-chip.press,.gvl-chip.flash.press{animation:none}}
+@media(prefers-reduced-motion:reduce){.gvl-chip,.gvl-sw,.gvl-sw svg,.gvl-ic{transition:none}.gvl-chip.flash,.gvl-chip.press,.gvl-chip.flash.press{animation:none}
+  .gvl.glow .gvl-head>span{animation:none;background:var(--gv-accent,#2AD1B5);color:#04211d}}
 .gvl-chip[aria-checked=true]{background:var(--cbg);border-color:var(--c);color:#fff}
 .gvl-sw{width:18px;height:18px;border-radius:50%;border:2px solid var(--c);opacity:.55;display:grid;place-items:center;flex:none;transition:background .2s,opacity .2s}
 .gvl-sw svg{width:11px;height:11px;opacity:0;transition:opacity .15s}
@@ -182,6 +183,14 @@
 .gvl-ic{font-size:15px;line-height:1;filter:grayscale(1);opacity:.6;transition:filter .2s,opacity .2s}
 .gvl-chip[aria-checked=true] .gvl-ic{filter:none;opacity:1}
 .gvl-chip.flash{animation:gvl-flash .55s ease-out}
+/* „RÉTEGEK” felirat ragyogása (bemutató alatt): ide nézz, ezek kapcsolók */
+.gvl-head>span{display:inline-block;transform-origin:left center}
+.gvl.glow .gvl-head>span{padding:3px 9px;margin:-3px -9px;border-radius:100px;animation:gvl-glow 1s ease-in-out infinite}
+@keyframes gvl-glow{0%,100%{background:rgba(42,209,181,0);color:var(--muted,#9BB7BC);box-shadow:0 0 0 0 rgba(42,209,181,0);transform:scale(1)}
+  50%{background:var(--gv-accent,#2AD1B5);color:#04211d;text-shadow:none;box-shadow:0 0 18px 4px rgba(42,209,181,.75);transform:scale(1.22)}}
+[data-theme=light] .gvl.glow .gvl-head>span{animation-name:gvl-glow-l}
+@keyframes gvl-glow-l{0%,100%{background:rgba(42,209,181,0);color:#3f5d66;box-shadow:0 0 0 0 rgba(42,209,181,0);transform:scale(1)}
+  50%{background:#2AD1B5;color:#04211d;text-shadow:none;box-shadow:0 0 16px 3px rgba(42,209,181,.7);transform:scale(1.22)}}
 .gvl-chip.press{animation:gvl-press .32s ease-out}.gvl-chip.flash.press{animation:gvl-flash .55s ease-out,gvl-press .32s ease-out}
 @keyframes gvl-press{0%{transform:scale(1)}35%{transform:scale(.9)}100%{transform:scale(1)}}
 @keyframes gvl-flash{0%{box-shadow:0 0 0 0 var(--c)}100%{box-shadow:0 0 0 14px rgba(0,0,0,0)}}
@@ -212,7 +221,10 @@
     function demo(id,on){const b=chips[id];if(!b)return;
       try{b.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest',inline:'center'});}catch(e){}
       b.classList.remove('flash','press');void b.offsetWidth;b.classList.add('flash','press');set(id,on,false);}
-    const api={el:root,set,demo,get:id=>!!state[id],all:()=>Object.assign({},state),show(v){root.style.display=v===false?'none':'';if(v!==false)requestAnimationFrame(fades);},refresh:fades};
+    /* több chip egyszerre (lenyomás + villanás mindegyiken, görgetés nélkül) */
+    function demoAll(ids,on){ids.forEach(id=>{const b=chips[id];if(!b)return;b.classList.remove('flash','press');void b.offsetWidth;b.classList.add('flash','press');set(id,on,false);});}
+    function glow(on){root.classList.toggle('glow',!!on);}
+    const api={el:root,set,demo,demoAll,glow,get:id=>!!state[id],all:()=>Object.assign({},state),show(v){root.style.display=v===false?'none':'';if(v!==false)requestAnimationFrame(fades);},refresh:fades};
     opts.layers.forEach(l=>{if(l.on)set(l.id,true);});requestAnimationFrame(fades);return api;
   }
 
