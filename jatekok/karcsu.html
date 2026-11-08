@@ -138,5 +138,6 @@ function next(){if(S.i<P.length-1){S.i++;S.picked=null;S.st='q';render();window.
   else{S.st='final';GV.record('karcsu',{answers:S.log,correct:S.log.filter(l=>l.ok).length});render();window.scrollTo({top:0});}}
 render();
 </script>
+<script>window.addEventListener('pageshow',function(){document.body.style.opacity='';document.body.classList.add('in');});</script>
 </body>
 </html>

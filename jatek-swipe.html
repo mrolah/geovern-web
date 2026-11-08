@@ -829,5 +829,6 @@ function localBoard(nick,score,time,org,email){
 render();tickUI();initMap();
 requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.add('in')));
 </script>
+<script>window.addEventListener('pageshow',function(){document.body.style.opacity='';document.body.classList.add('in');});</script>
 </body>
 </html>

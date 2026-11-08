@@ -204,5 +204,6 @@ function confirm3(){const o=OPT3()[S.pick3];S.pts+=o.pts;S.log.push({round:'pack
 function next(){if(S.i<2){S.i++;S.pick=null;S.st='round';render();paint(S.revealed[S.revealed.length-1],null);}
   else{S.st='final';render();paint('sum',[S.meet]);GV.record('ugyanaz',{mode:MODE,rounds:S.log,meet:Z[S.meet].n,score:Math.round(S.pts/3)});}}
 </script>
+<script>window.addEventListener('pageshow',function(){document.body.style.opacity='';document.body.classList.add('in');});</script>
 </body>
 </html>

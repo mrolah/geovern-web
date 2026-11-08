@@ -212,5 +212,6 @@ function togMeas(i){const k=S.meas.indexOf(i);if(k>=0)S.meas.splice(k,1);else S.
 function finish(){S.pts=Math.round(S.pts);GV.record('iskolautca',{fear:S.fear,fear2:S.fear2,fearName:HOT.find(h=>h.id===S.fear).n,decision:Q2[S.a2].l,cars:Q3[S.a3].l,improves:Q4[S.a4].l,support:['igen','feltetellel','nem'][S.support],measure:S.meas.map(i=>MEAS[i]),score:S.pts});go('final');}
 render();
 </script>
+<script>window.addEventListener('pageshow',function(){document.body.style.opacity='';document.body.classList.add('in');});</script>
 </body>
 </html>

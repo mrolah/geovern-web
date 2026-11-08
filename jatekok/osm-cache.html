@@ -46,5 +46,6 @@ function run(){const name=document.getElementById('t').value.trim();if(!name)ret
     document.getElementById('dl').style.display='inline-block';document.getElementById('out').textContent=JSON.stringify(j).slice(0,1500)+'…';});}
 function download(){const blob=new Blob([JSON.stringify(JSONDATA)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=KEY+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
 </script>
+<script>window.addEventListener('pageshow',function(){document.body.style.opacity='';document.body.classList.add('in');});</script>
 </body>
 </html>

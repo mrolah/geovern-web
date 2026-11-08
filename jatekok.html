@@ -29,10 +29,10 @@ body.in{opacity:1}
 body::before{content:'';position:fixed;inset:0;z-index:-1;background:radial-gradient(900px 600px at 70% 10%,rgba(15,74,87,.5),transparent 60%),radial-gradient(700px 500px at 10% 90%,rgba(42,209,181,.1),transparent 60%),var(--bg)}
 a{color:var(--teal);text-decoration:none}
 header{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;gap:16px;padding:14px 26px;background:linear-gradient(180deg,rgba(5,15,20,.92),rgba(5,15,20,.55) 70%,transparent)}
-.logo img{height:32px;width:auto;display:block}
+.logo img{height:38px;width:auto;display:block}
 .spacer{flex:1}
 .navlink{font-size:13.5px;font-weight:500;color:var(--muted)}.navlink:hover{color:var(--teal)}
-@media(max-width:560px){header{padding:12px 14px;gap:10px}.logo img{height:26px}}
+@media(max-width:560px){header{padding:12px 14px;gap:10px}.logo img{height:30px}}
 .wrap{max-width:1040px;margin:0 auto;padding:104px 20px 70px}
 .eyebrow{font:500 12px var(--mono);letter-spacing:.18em;color:var(--teal);display:block;margin-bottom:12px}
 h1{font-size:clamp(32px,5vw,54px);font-weight:900;line-height:1.06;margin-bottom:16px;max-width:760px}
@@ -82,7 +82,7 @@ h2{font-size:clamp(22px,3vw,30px);font-weight:900;line-height:1.12;margin:54px 0
 </head>
 <body>
 <header>
-  <a class="logo" href="index.html"><img src="logo/geovern-logo-teal.svg" alt="GEOVERN"></a>
+  <a class="logo" href="index.html"><img src="/logo/geovern-wm.svg" alt="GEOVERN"></a>
   <div class="spacer"></div>
   <a class="navlink" href="jatek-swipe.html?v=14">Krízisjáték</a>
   <a class="navlink" href="index.html">← Vissza a főoldalra</a>
@@ -163,5 +163,6 @@ function cnt(){const r=GV.results();const games=r.filter(x=>x.game!=='velemeny')
 cnt();
 requestAnimationFrame(()=>document.body.classList.add('in'));
 </script>
+<script>window.addEventListener('pageshow',function(){document.body.style.opacity='';document.body.classList.add('in');});</script>
 </body>
 </html>
