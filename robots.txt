@@ -1,0 +1,5 @@
+# geovern.com
+User-agent: *
+Allow: /
+
+Sitemap: https://geovern.com/sitemap.xml

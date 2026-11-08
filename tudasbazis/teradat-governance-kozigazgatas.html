@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<!-- Google Tag Manager -->
+<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-N86HW64X"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+</script>
+<!-- End Google Tag Manager -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Téradat-governance önkormányzatoknak: a minimális keret | GEOVERN</title>
+<meta name="description" content="Adatgazda, egy igazság forrása, metaadat-minimum, INSPIRE: ötelemű governance-keret, amely tényleg bevezethető egy önkormányzatnál.">
+<meta name="keywords" content="adatgovernance, téradat, INSPIRE, adatgazda, metaadat, önkormányzati GIS, Lechner, E-ING">
+<meta name="author" content="Oláh Attila, GEOVERN">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://geovern.com/tudasbazis/teradat-governance-kozigazgatas.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="GEOVERN">
+<meta property="og:locale" content="hu_HU">
+<meta property="og:title" content="Téradat-governance a közigazgatásban: kié az adat, ki felel érte, ki használhatja">
+<meta property="og:description" content="Adatgazda, egy igazság forrása, metaadat-minimum, INSPIRE: ötelemű governance-keret, amely tényleg bevezethető egy önkormányzatnál.">
+<meta property="og:url" content="https://geovern.com/tudasbazis/teradat-governance-kozigazgatas.html">
+<meta property="og:image" content="https://geovern.com/tudasbazis/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Téradat-governance a közigazgatásban: kié az adat, ki felel érte, ki használhatja">
+<meta name="twitter:description" content="Adatgazda, egy igazság forrása, metaadat-minimum, INSPIRE: ötelemű governance-keret, amely tényleg bevezethető egy önkormányzatnál.">
+<meta name="theme-color" content="#0F4A57">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/tudasbazis/kb.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "@id": "https://geovern.com/tudasbazis/teradat-governance-kozigazgatas.html#article", "headline": "Téradat-governance a közigazgatásban: kié az adat, ki felel érte, ki használhatja", "description": "Adatgazda, adatkezelő, hozzáférési szintek, INSPIRE és nemzeti téradat-keret, ötelemű minimális governance-keret, tipikus hibák és 5 perces önellenőrzés — hogyan lesz rend az önkormányzati téradatban.", "inLanguage": "hu", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "wordCount": 796, "mainEntityOfPage": "https://geovern.com/tudasbazis/teradat-governance-kozigazgatas.html", "url": "https://geovern.com/tudasbazis/teradat-governance-kozigazgatas.html", "author": {"@type": "Person", "name": "Oláh Attila", "url": "https://geovern.com/rolunk.html"}, "publisher": {"@type": "Organization", "name": "GEOVERN", "url": "https://geovern.com/", "logo": "https://geovern.com/logo/geovern-logo-teal.svg", "email": "hello@geovern.com", "telephone": "+36 70 935 0494"}, "articleSection": "GIS-tanácsadás", "keywords": "adatgovernance, téradat, INSPIRE, adatgazda, metaadat, önkormányzati GIS, Lechner, E-ING"}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "GEOVERN", "item": "https://geovern.com/"}, {"@type": "ListItem", "position": 2, "name": "Tudásbázis", "item": "https://geovern.com/tudasbazis/"}, {"@type": "ListItem", "position": 3, "name": "Téradat-governance a közigazgatásban: kié az adat, ki felel érte, ki használhatja", "item": "https://geovern.com/tudasbazis/teradat-governance-kozigazgatas.html"}]}]}</script>
+</head>
+<body>
+<header>
+  <a class="logo" href="/"><img src="/logo/geovern-logo-teal.svg" alt="GEOVERN"></a>
+  <div class="spacer"></div>
+  <a class="navlink" href="/tudasbazis/">Tudásbázis</a>
+  <a class="navlink hide-m" href="/jatekok.html">Játékok</a>
+  <a class="navlink hide-m" href="/referenciak.html">Referenciák</a>
+  <a class="navlink hide-m" href="/rolunk.html">Rólunk</a>
+  <a class="navcta" href="/#s-ct">Konzultáció</a>
+</header>
+
+<main class="wrap">
+<article class="article">
+  <nav class="crumbs" aria-label="Morzsamenü"><a href="/">GEOVERN</a><span>/</span><a href="/tudasbazis/">Tudásbázis</a><span>/</span>GIS-tanácsadás</nav>
+  <span class="eyebrow">GIS-tanácsadás · Adatgovernance</span>
+  <h1>Téradat-governance a közigazgatásban: <em>kié az adat</em>, ki felel érte, ki használhatja</h1>
+  <p class="lead">Adatgazda, adatkezelő, hozzáférési szintek, INSPIRE és nemzeti téradat-keret, ötelemű minimális governance-keret, tipikus hibák és 5 perces önellenőrzés — hogyan lesz rend az önkormányzati téradatban.</p>
+  <div class="meta"><span><b>Szerző:</b> Oláh Attila</span><span><b>Frissítve:</b> <time datetime="2026-11-08">2026. november</time></span><span><b>Olvasási idő:</b> ~4 perc</span></div>
+  <nav class="toc" aria-label="Tartalom"><strong>Tartalom</strong><ol><li><a href="#mi-a-governance">Mi a téradat-governance, egyszerűen?</a></li><li><a href="#harom-kerdes">A három alapkérdés</a></li><li><a href="#inspire">INSPIRE és a nemzeti keret: mit kell, és mit érdemes</a></li><li><a href="#minimalis-keret">A minimális működőképes governance-keret</a></li><li><a href="#tipikus-hibak">Tipikus hibák, amelyeket érdemes elkerülni</a></li><li><a href="#ai-kapcsolat">Miért sürgetőbb ez ma, mint öt éve?</a></li></ol></nav>
+  <p>Amikor egy önkormányzatnál megkérdezzük, hogy „melyik a hiteles fakataszter?”, a válasz gyakran három különböző fájl három különböző osztályon, három különböző dátummal. Nem azért, mert bárki hanyag lenne, hanem mert soha senki nem mondta ki, hogy <strong>kinek az adata, ki felel érte, és ki használhatja</strong>. A téradat-governance pontosan ennek a három kérdésnek a rendszerszintű megválaszolása — és a legtöbb GIS-beruházás megtérülése ezen áll vagy bukik.</p>
+
+<h2 id="mi-a-governance">Mi a téradat-governance, egyszerűen?</h2>
+<p>Az adatgovernance (adatvagyon-gazdálkodás) szabályok, szerepkörök és folyamatok összessége, amelyek biztosítják, hogy az adat <strong>megbízható, megtalálható, hozzáférhető és újrafelhasználható</strong> legyen. Téradatnál ehhez jön még a koordináta-rendszer, a geometriai pontosság, a topológia, a vonatkoztatási dátum és a jogszabályi környezet (INSPIRE, nemzeti téradat-infrastruktúra, adatvédelem).</p>
+<p>Fontos különbség: a governance <em>nem</em> szoftver. Lehet venni adatkatalógus-terméket, de ha nincs kijelölve, ki hagyja jóvá a változást egy rétegben, a katalógus csak egy újabb hely lesz, ahol elavult adat ül.</p>
+
+<h2 id="harom-kerdes">A három alapkérdés</h2>
+<h3>1. Kié az adat? — Adatgazda (data owner)</h3>
+<p>Minden téradat-körnek (fakataszter, közműtérkép, településrendezési eszközök, ingatlanvagyon, zöldfelület, forgalomtechnika) legyen <strong>egyetlen</strong> névvel megnevezett gazdája, jellemzően szakterületi vezető, nem informatikus. Az adatgazda dönt a tartalomról, a minőségi elvárásról és arról, hogy ki láthatja. Ha egy rétegnek két gazdája van, valójában egy sincs.</p>
+<h3>2. Ki felel érte? — Adatkezelő (data steward)</h3>
+<p>Az operatív személy, aki ténylegesen frissíti, ellenőrzi, dokumentálja. Gyakran a GIS-es kolléga, de ideális esetben a szakterület embere, akinek a GIS eszköz, nem hivatás. A steward feladata a metaadat karbantartása is: mikor frissült, milyen forrásból, milyen pontossággal.</p>
+<h3>3. Ki használhatja? — Hozzáférési szintek</h3>
+<p>Három szint szinte mindig elég: <strong>belső szerkesztő</strong>, <strong>belső olvasó</strong> (az egész hivatal), <strong>nyilvános</strong> (lakosság, vállalkozások, más szervek). A legtöbb önkormányzati téradat a nyilvános kategóriába tartozhatna — a visszatartás gyakran nem jogi, hanem kényelmi okból történik.</p>
+
+<h2 id="inspire">INSPIRE és a nemzeti keret: mit kell, és mit érdemes</h2>
+<p>Az INSPIRE irányelv (2007/2/EK) és hazai átültetése a közigazgatási téradatok harmonizált, megtalálható, szolgáltatásként elérhető közzétételét írja elő meghatározott adattémákra. Önkormányzati szinten a kötelezettség témánként eltérő, de a gyakorlati tanulság egyszerű: <strong>aki INSPIRE-kompatibilisen gondolkodik — metaadat, szabványos szolgáltatás (WMS/WFS/OGC API), egységes koordináta-rendszer (EOV / ETRS89) —, annak a saját belső rendje is helyreáll</strong>. A megfelelés mellékterméke a használhatóság.</p>
+<p>A Lechner Tudásközpont által üzemeltetett országos nyilvántartások és az E-ING (elektronikus ingatlan-nyilvántartás) irányába haladó fejlesztések egyre inkább feltételezik, hogy az önkormányzati adatok gépi úton, szabványos formában kapcsolódnak. Aki ma rendet rak, annak holnap nem kell migrálnia.</p>
+
+<h2 id="minimalis-keret">A minimális működőképes governance-keret</h2>
+<p>Nem kell száz oldalas szabályzattal kezdeni. A tapasztalat szerint a következő öt elem egy közepes önkormányzatnál néhány hét alatt bevezethető, és már önmagában megszünteti a „melyik a jó fájl?” problémák többségét.</p>
+<ol class="steps">
+  <li><b>Adatleltár és adatgazda-mátrix</b>Egy táblázat: adatkör, gazda, steward, frissítési gyakoriság, hozzáférési szint, hiteles tárolási hely. Ez a governance „alaptérképe”.</li>
+  <li><b>Egy igazság forrása (single source of truth)</b>Minden adatkörnek egy hiteles helye van (adatbázis vagy portálréteg). Minden más másolat, és másolatként is van jelölve. Az Excel nem hiteles forrás.</li>
+  <li><b>Metaadat-minimum</b>Öt kötelező mező: cím, leírás, forrás, utolsó frissítés, kapcsolattartó. Nem ISO 19115 teljes séma — azt később, ha kell. Öt mező, amit tényleg kitöltenek, többet ér, mint negyven, amit senki.</li>
+  <li><b>Változáskezelési szabály</b>Ki szerkeszthet, ki hagy jóvá, mi történik a régi verzióval. Ez a kettő mondat sok évnyi vitát előz meg.</li>
+  <li><b>Nyilvánossági alapelv</b>„Nyilvános, hacsak nincs jogszabályi vagy adatvédelmi ok az ellenkezőjére.” A lakossági térképportál és a <a href="lakossagi-reszvetel-dontesjatek.html">részvételi eszközök</a> erre épülnek.</li>
+</ol>
+
+<h2 id="tipikus-hibak">Tipikus hibák, amelyeket érdemes elkerülni</h2>
+<ul>
+  <li><strong>Governance = informatika.</strong> Ha az adatgazda az IT-vezető, a szakterület nem érzi magáénak az adatot, és a minőség romlik.</li>
+  <li><strong>Mindent egyszerre.</strong> Harminc adatkör egyszerre nem fog menni. Válaszd ki az öt legtöbbet használt vagy legnagyobb kockázatú kört, és azokon állítsd be a rendet.</li>
+  <li><strong>Szabályzat eszköz nélkül, vagy eszköz szabályzat nélkül.</strong> A kettő együtt működik. Egy portál jogosultsági rendszere a szabályzat technikai lenyomata — ha nincs szabályzat, a portál beállításai esetlegesek lesznek.</li>
+  <li><strong>Külső partnernél „ragadt” adat.</strong> Ha egy külső cég üzemelteti a térképet, és az adat csak náluk él, az adatvagyon valójában nem a szervezeté. A szerződésbe kell írni az adathordozhatóságot.</li>
+</ul>
+
+<h2 id="ai-kapcsolat">Miért sürgetőbb ez ma, mint öt éve?</h2>
+<p>Két okból. Az egyik, hogy a lakosság és a döntéshozók egyre inkább <em>azonnali</em> térképi választ várnak („hol vannak a legforróbb utcák a kerületben?”), amit csak rendezett adatból lehet adni. A másik, hogy a mesterséges intelligencia alapú eszközök — amelyek a következő években a közigazgatási térinformatikát is átalakítják — <strong>csak olyan adatot tudnak megbízhatóan felhasználni, amelynek van gazdája, metaadata és szabványos hozzáférése</strong>. Erről részletesen a <a href="terinformatika-ai-agensek.html">GIS és AI</a> cikkben írunk. A governance tehát nem adminisztratív teher, hanem a következő technológiai lépcső belépőjegye.</p>
+
+<div class="box"><span class="k">Önellenőrzés — 5 perc</span>
+<ul>
+  <li>Meg tudod mondani fejből, ki a fakataszter adatgazdája?</li>
+  <li>Van olyan réteg, amelyik csak egy kolléga gépén létezik?</li>
+  <li>Ha holnap kilép a GIS-es munkatárs, átvehető a munkája egy héten belül?</li>
+  <li>A lakosság eléri valahol a településrendezési tervet térképen, regisztráció nélkül?</li>
+  <li>Van legalább egy WMS/WFS vagy OGC API szolgáltatásod, amit más szerv használ?</li>
+</ul>
+<p>Három vagy több „nem” esetén a governance-keret kialakítása az első lépés — még a következő szoftvervásárlás előtt.</p></div>
+
+  <section class="cta">
+  <span class="k">Következő lépés</span>
+  <h2>Kezdjük egy 30 perces beszélgetéssel</h2>
+  <p>Díjmentes első konzultáció: elmondod, hol tart a szervezet GIS-környezete, mi pedig megmondjuk, hol érdemes elkezdeni — audit, licencoptimalizálás vagy governance.</p>
+  <div class="btns"><a class="btn btn-primary" href="https://psh-rf-olah-attila.pipedrive.com/scheduler/0K29R0t6/meeting-standard" target="_blank" rel="noopener">Időpontfoglalás</a><a class="btn btn-ghost" href="mailto:hello@geovern.com">E-mail írása</a><a class="btn btn-ghost" href="/#s-roi">ROI-kalkulátor →</a></div>
+</section>
+  <aside class="author">
+  <div class="av">AO</div>
+  <div><b>Oláh Attila — alapító, vezető tanácsadó, GEOVERN</b>
+  <p>Több mint húsz év GIS-, Esri- és IT-tapasztalat, 2008 óta 90+ projekt 12 országban, üzleti és vezetői háttér a VertiGIS-nél. Gyártófüggetlen térinformatikai stratégiai tanácsadás és önkormányzati döntésjátékok. <a href="/rolunk.html">Rólunk →</a></p></div>
+</aside>
+  <section class="related"><h2>Kapcsolódó cikkek</h2><div class="grid"><a class="card" href="gis-audit-onkormanyzat.html"><span class="cat gis">GIS-tanácsadás</span><h3>GIS-audit önkormányzatoknak: mit vizsgál, mennyi ideig tart, mit kapsz a végén</h3><p>Hat vizsgált terület, ötlépéses folyamat, 4–6 hét — és egy döntésre kész akcióterv a végén.</p></a><a class="card" href="arcgis-licenc-optimalizalas.html"><span class="cat gis">GIS-tanácsadás</span><h3>ArcGIS-licencköltség csökkentése: 7 lépés, amit audit előtt magad is megnézhetsz</h3><p>Inaktív fiókok, rossz felhasználói szintek, csendes kiterjesztések, kreditpazarlás — hol folyik el a pénz.</p></a><a class="card" href="terinformatika-ai-agensek.html"><span class="cat gis">GIS-tanácsadás</span><h3>Térinformatika és AI: hogyan lesz a GIS-ből AI-kész adatinfrastruktúra</h3><p>Négy feltétel, amitől egy ügynök is megtalálja, megérti és lekérdezi az adatot — és három első lépés.</p></a></div></section>
+</article>
+
+<div class="foot">
+  <span>© 2026 GEOVERN · hello@geovern.com · <a href="tel:+36709350494">+36 70 935 0494</a></span>
+  <span><a href="/impresszum.html">Impresszum</a> · <a href="/adatkezeles.html">Adatkezelés</a></span>
+</div>
+</main>
+</body>
+</html>
