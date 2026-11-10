@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<!-- Google Tag Manager -->
+<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-N86HW64X"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+</script>
+<!-- End Google Tag Manager -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hol fér el egy fa? — GEOVERN játékok</title>
+<meta name="description" content="Egy valós utca, 13 méter széles zöldsáv — ránézésre bárhová fér fa. Aztán jönnek a kapubehajtók, a légvezeték és a föld alatti közművek. Döntésjáték valós térképi és közműadatokon.">
+<meta name="theme-color" content="#050f14">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&display=swap"></noscript>
+<link rel="preload" as="style" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"></noscript>
+
+<script src="config.js?v=15"></script>
+<script src="gv.js?v=15"></script>
+<script src="gvmap.js?v=15"></script>
+<script src="fahely-engine.js?v=15"></script>
+<style>
+:root{--bg:#050f14;--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b4a;--text:#EAF4F4;--muted:#9BB7BC;--faint:#5E7A80;
+  --card:rgba(6,17,22,.92);--line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
+  --gv-accent:var(--teal);--gv-accent-ink:#04211d;--gv-line:var(--line);--sab:env(safe-area-inset-bottom,0px);--sat:env(safe-area-inset-top,0px)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.45}
+#map{position:fixed;inset:0;z-index:0}
+.homelink{position:fixed;top:calc(10px + var(--sat));left:10px;z-index:40;font:700 12px var(--mono);letter-spacing:.06em;color:var(--text);
+  background:var(--card);border:1px solid var(--line);border-radius:100px;padding:8px 14px;backdrop-filter:blur(10px);text-decoration:none}
+.topbar{position:fixed;top:calc(10px + var(--sat));right:10px;z-index:40;display:flex;align-items:center;gap:8px;background:var(--card);
+  border:1px solid var(--line);border-radius:100px;padding:8px 14px;backdrop-filter:blur(12px);font:500 13px var(--mono);color:var(--muted);max-width:calc(100vw - 132px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar b{color:var(--amber);font-weight:500}
+.fitbtn{position:fixed;top:calc(54px + var(--sat));right:10px;z-index:40;font:500 12px var(--mono);color:var(--muted);background:var(--card);border:1px solid var(--line);
+  border-radius:100px;padding:7px 12px;cursor:pointer;backdrop-filter:blur(10px);touch-action:manipulation}
+.sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:30;width:100%;max-width:540px;padding:0 12px calc(12px + var(--sab))}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px 20px 16px;backdrop-filter:blur(16px);
+  box-shadow:0 -10px 50px rgba(0,0,0,.55);max-height:58vh;overflow:auto}
+h1{font-size:23px;font-weight:900;line-height:1.16;margin-bottom:6px}
+h1 em{font-style:normal;color:var(--teal)}
+.eyebrow{font:500 11px var(--mono);letter-spacing:.14em;color:var(--teal);text-transform:uppercase;margin-bottom:8px;display:block}
+.eyebrow i{font-style:normal;color:var(--faint)}
+p{color:var(--muted);font-size:15px}p+p{margin-top:8px}
+p b{color:var(--text);font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 22px;border-radius:14px;font-weight:700;font-size:16px;cursor:pointer;
+  border:none;transition:.2s;font-family:var(--font);background:var(--teal);color:#04211d;min-height:50px;touch-action:manipulation}
+.btn:active{transform:scale(.97)}.btn[disabled]{opacity:.4;cursor:default}
+.btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--text)}
+.row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}.row .btn{flex:1}
+.cnt{display:flex;gap:6px;margin:12px 0 2px}.cnt i{flex:1;height:8px;border-radius:4px;background:rgba(143,176,181,.25)}.cnt i.on{background:var(--teal)}
+.hint{font:500 12.5px var(--mono);color:var(--faint);margin-top:10px;min-height:17px;line-height:1.5}
+.hint b{color:var(--teal)}.hint .bad{color:var(--red)}.hint .warn{color:var(--amber)}
+.prob{display:grid;gap:8px;margin:4px 0 2px}
+.prob>div{display:flex;gap:10px;align-items:flex-start;font-size:15px;color:var(--text);line-height:1.4}
+.prob .n{flex:none;width:24px;height:24px;border-radius:8px;background:rgba(42,209,181,.12);display:flex;align-items:center;justify-content:center;font:700 12px var(--mono);color:var(--teal)}
+.guess{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}
+.guess button{font:700 16px var(--mono);padding:13px 0;border-radius:12px;border:1.5px solid var(--line);background:rgba(15,74,87,.25);color:var(--text);cursor:pointer;touch-action:manipulation;min-height:50px}
+.guess button:active{background:var(--teal);color:#04211d}
+.score{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.sc{border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(15,74,87,.2)}
+.sc span{display:block;font:500 11px var(--mono);letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
+.sc b{display:block;font:500 32px var(--mono);line-height:1.1;margin-top:4px}
+.sc.b1 b{color:var(--amber)}.sc.b2 b{color:var(--teal)}
+.src{font:500 11px var(--mono);color:var(--faint);margin-top:10px;line-height:1.5}
+/* a tölcsér sávja: a szabad terület aránya lépcsőnként */
+.fun{display:grid;gap:5px;margin:12px 0 4px}
+.fun div{display:grid;grid-template-columns:104px 1fr 44px;gap:8px;align-items:center;font:500 11.5px var(--mono);color:var(--muted)}
+.fun i{display:block;height:10px;border-radius:5px;background:rgba(143,176,181,.16);overflow:hidden}
+.fun i u{display:block;height:100%;border-radius:5px;background:var(--teal)}
+.fun b{color:var(--text);font-weight:500;text-align:right}
+.fun .cur{color:var(--text)}.fun .cur u{background:var(--amber)}
+/* a játékos fáinak sorsa */
+.fate{display:grid;gap:5px;margin-top:10px}
+.fate div{display:flex;gap:8px;align-items:baseline;font-size:13.5px;color:var(--muted);line-height:1.35}
+.fate .t{flex:none;font:700 11px var(--mono);border-radius:100px;padding:1px 7px;background:rgba(143,176,181,.2);color:var(--text)}
+.fate .x .t{background:var(--red);color:#fff}.fate .ok .t{background:var(--teal);color:#04211d}.fate .lim .t{background:var(--amber);color:#2b1400}
+.fate b{color:var(--text);font-weight:500}
+/* vizsgálólap: keresztmetszet + okok */
+.insp{border:1px solid var(--line);border-radius:14px;padding:10px 12px 8px;margin:10px 0 2px;background:rgba(15,74,87,.16)}
+.insp h3{font:700 13.5px var(--font);margin-bottom:2px}.insp h3.x{color:var(--red)}.insp h3.ok{color:var(--teal)}.insp h3.lim{color:var(--amber)}
+.insp svg{display:block;width:100%;height:auto;margin:4px 0 2px}
+.insp ul{list-style:none;display:grid;gap:3px;margin-top:4px}
+.insp li{font-size:13px;color:var(--muted);line-height:1.35}
+.insp li b{color:var(--text);font-weight:500}.insp li.x::before{content:'✕ ';color:var(--red);font-weight:700}.insp li.l::before{content:'! ';color:var(--amber);font-weight:700}.insp li.o::before{content:'✓ ';color:var(--teal);font-weight:700}
+.insp .fn{font:500 10.5px var(--mono);color:var(--faint);margin-top:6px}
+details.cat{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+details.cat summary{cursor:pointer;font:500 12.5px var(--mono);color:var(--teal);list-style:none}
+details.cat summary::-webkit-details-marker{display:none}
+details.cat summary::after{content:' ›'}details.cat[open] summary::after{content:' ⌄'}
+.cat h4{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:10px 0 4px}
+.cat p{font-size:13px;line-height:1.5}
+.poll{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.poll button{font:500 13.5px var(--font);padding:10px 8px;border-radius:12px;border:1.5px solid var(--line);background:transparent;color:var(--text);cursor:pointer;touch-action:manipulation}
+.poll button.on{background:var(--teal);color:#04211d;border-color:var(--teal)}
+/* fa-jelölők (a külső elemet a MapLibre pozicionálja, azon nincs saját transform) */
+.mk{width:30px;height:30px;cursor:pointer}
+.tree{width:30px;height:30px;border-radius:50%;background:rgba(6,17,22,.88);border:2px solid var(--teal);display:flex;align-items:center;justify-content:center;
+  font:700 12px var(--mono);color:var(--text);box-shadow:0 4px 14px rgba(0,0,0,.6);animation:pop .3s cubic-bezier(.2,.8,.3,1.3)}
+@keyframes pop{0%{transform:scale(.2)}100%{transform:scale(1)}}
+.tree.x{border-color:var(--red);color:var(--red);background:rgba(40,8,4,.9)}
+.tree.lim{border-color:var(--amber);color:var(--amber)}
+.tree.ok{border-color:var(--teal);color:var(--teal)}
+.mk.ghost{pointer-events:none}.mk.ghost .tree{opacity:.5;animation:none;width:24px;height:24px;margin:3px;font-size:10px}
+.mk.probe .tree{border-style:dashed;animation:none}
+.maplibregl-ctrl-attrib{font-size:10px!important}
+.err{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
+body.maperr .err{display:flex}
+.err div{max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--faint);border-top-color:var(--teal);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(min-width:900px){.sheet{left:18px;transform:none;max-width:430px;bottom:6px}.panel{max-height:78vh}}
+@media(prefers-reduced-motion:reduce){.tree{animation:none}}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<a class="homelink" id="homelink" href="../jatekok.html">← JÁTÉKOK</a>
+<div class="topbar" id="topbar"><span id="tb-round">Diósd · Kossuth Lajos utca</span></div>
+<button class="fitbtn" id="fitbtn" type="button" style="display:none" onclick="fitStreet(true)">Teljes utca</button>
+<div class="err"><div><h1>A játék adatai nem töltöttek be</h1><p>Próbáld újra egy kicsit később, vagy válassz egy másik játékot.</p>
+<div class="row"><a class="btn" id="err-next" href="../jatekok.html">Másik játék</a></div></div></div>
+<div class="sheet"><div id="layers" style="display:none"></div><div class="panel" id="panel"></div></div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+/* =====================================================================
+   HOL FÉR EL EGY FA? — egy valós utca (Diósd, Kossuth Lajos utca), valós adatokon.
+   Két kör, mint a testvérjátékban: előbb adat nélkül ültetsz, aztán négy lépcsőben megnézzük, mit enged az utca
+   (közlekedés → telek és felszín → föld fölött → föld alatt), végül ugyanezt adattal.
+   Adatok (data/fahely-diosd-kossuth.json, előre kiszámolva):
+     · utca, behajtók, kerítések, járdák, parkolók, oszlopok, légvezeték, fák: OpenStreetMap
+     · közművek: az e-közmű lakossági térképe alapján, egyszerűsítve — tájékoztató jellegű
+   A szabályértékek jellemző értékek (a rules táblában, forrással); a számítás a fahely-engine.js-ben van,
+   ugyanaz a kód számolta az adatcsomag számait, mint ami itt a koppintásokat vizsgálja.
+   ===================================================================== */
+const N = 5;                                   /* fák száma körönként */
+const P = document.getElementById('panel'), TB = document.getElementById('tb-round');
+document.getElementById('homelink').href = GV.hubUrl();
+document.getElementById('err-next').href = GV.hubUrl();
+const esc = GV.esc;
+const hu = (v, d = 1) => (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toFixed(d).replace('.', ',');   /* tizedesvessző */
+const nf = v => String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+let D = null, M = null, G = null, EN = null, AX = null;      /* adatcsomag, meta, motor-bemenet, előkészített motor, tengely */
+let map = null, mapReady = false, layersAdded = false, LC = null;
+let S = { st: 'loading', guess: null, stage: 0, trees: [], ghosts: [], r1: null, tries: 0, toggles: {}, t0: Date.now(), last: null, probe: null, poll: null };
+
+/* ---------- koordináták: helyi méter ↔ földrajzi ---------- */
+const LL = (x, y) => [M.lon0 + M.inv[0] * x + M.inv[1] * y, M.lat0 + M.inv[2] * x + M.inv[3] * y];
+const XY = (lon, lat) => { const a = lon - M.lon0, b = lat - M.lat0; return [M.fwd[0] * a + M.fwd[1] * b, M.fwd[2] * a + M.fwd[3] * b]; };
+const LLst = (s, t) => { const p = AX.xy(s, t); return LL(p[0], p[1]); };
+const unflat = a => { const o = []; for (let i = 0; i < a.length; i += 2) o.push([a[i] / 10, a[i + 1] / 10]); return o; };
+const FC = f => ({ type: 'FeatureCollection', features: f });
+const lineFC = (arr, props) => FC(arr.map(l => ({ type: 'Feature', properties: props || {}, geometry: { type: 'LineString', coordinates: l.map(p => LL(p[0], p[1])) } })));
+const polyFC = (arr, props) => FC(arr.map(l => ({ type: 'Feature', properties: props || {}, geometry: { type: 'Polygon', coordinates: [l.map(p => LL(p[0], p[1]))] } })));
+const ptFC = (arr, fn) => FC(arr.map((p, i) => ({ type: 'Feature', properties: fn ? fn(p, i) : {}, geometry: { type: 'Point', coordinates: LL(p[0], p[1]) } })));
+/* méterhű vonalvastagság / körsugár: képpont = méter · 2^z · 512 / (40 075 017 · cos φ) */
+let PXM14 = 0.3093;
+const mw = m => ['interpolate', ['exponential', 2], ['zoom'], 14, m * PXM14, 22, m * PXM14 * 256];
+
+/* ---------- szabályok szövege ---------- */
+const STAGE_TXT = {
+  1: { name: 'Közlekedés', src: 'adat: OpenStreetMap', chip: 's1' },
+  2: { name: 'Telek és felszín', src: 'adat: OpenStreetMap', chip: 's2' },
+  3: { name: 'Föld fölött', src: 'adat: OpenStreetMap', chip: 's3' },
+  4: { name: 'Föld alatt', src: 'adat: e-közmű lakossági térkép', chip: 's4' } };
+const CROWN = ['', 'kis', 'közepes', 'nagy'], CROWN_M2 = [0, 12, 38, 113];
+const rule = id => EN.rules[id];
+function failText(c) { const r = rule(c.id); return '<b>' + esc(r.n) + '</b> ' + hu(Math.max(0, c.d)) + ' m — kell ' + hu(c.need) + ' m'; }
+function limText(c) { const r = rule(c.id);
+  if (c.id === 'tel') return '<b>' + esc(r.n) + '</b> ' + hu(Math.max(0, c.d)) + ' m-re: csak védelemmel, kézi földmunkával';
+  return '<b>' + esc(r.n) + '</b> ' + hu(Math.max(0, c.d)) + ' m-re: legfeljebb ' + CROWN[c.cap] + ' koronájú fa'; }
+
+/* ---------- indulás: adat → motor → térkép ---------- */
+render();
+fetch('data/fahely-diosd-kossuth.json?v=15').then(r => { if (!r.ok) throw new Error('adat'); return r.json(); }).then(init).catch(() => document.body.classList.add('maperr'));
+
+function init(data) {
+  D = data; M = D.meta;
+  PXM14 = 16384 * 512 / (40075016.686 * Math.cos(M.lat0 * Math.PI / 180));
+  const f = {}; Object.keys(D.f).forEach(k => f[k] = D.f[k].map(unflat));
+  ['pole', 'lamp', 'tree', 'manhole', 'junc'].forEach(k => f[k] = D.pt[k].map(p => [p[0] / 10, p[1] / 10, p[2] || 0]));
+  G = { meta: { half: M.half, driveHalf: M.driveHalf, walkHalf: M.walkHalf, limStep: M.limStep }, axis: unflat(D.axis), rules: D.rules, f, lim: { L: D.lim.L.map(v => v / 10), R: D.lim.R.map(v => v / 10) } };
+  EN = FH.prepare(G); AX = EN.axis;
+  /* a 4. lépcső utáni szabad rácspontok — a 2. körben a koppintás ehhez igazodik (ujjnyi pontatlanságon belül) */
+  S.freePts = []; ['L', 'R'].forEach(side => { const F = D.free[side], r = F.runs[4]; for (let i = 0; i < r.length; i += 4) for (let is = r[i + 1]; is <= r[i + 2]; is++) { const p = AX.xy(M.s0 + is * M.step, F.sign * (F.tMin + r[i] * M.step)); S.freePts.push([p[0], p[1], r[i + 3]]); } });
+  S.st = 'intro'; render(); initMap();
+}
+
+const BLANK = { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#050f14' } }] };
+let blankTried = false;
+function initMap() {
+  const opts = { container: 'map', theme: 'dark', center: [M.lon0, M.lat0], zoom: 17, bearing: M.az - 90, pitch: 0, minZoom: 15, maxZoom: 21, dragRotate: false, pitchWithRotate: false, touchPitch: false };
+  const ready = m => { map = m; mapReady = true; try { m.touchZoomRotate.disableRotation(); } catch (e) {} addLayers(); applyStage(); fitStreet(false); m.on('click', onTap); document.getElementById('fitbtn').style.display = ''; };
+  /* ha az alaptérkép nem jön, üres stílussal megyünk tovább: a játék minden rétege a saját adatcsomagból rajzolódik */
+  const fail = () => { if (mapReady || blankTried) return; blankTried = true; try { map && map.remove(); } catch (e) {}
+    try { const m = new maplibregl.Map(Object.assign({}, opts, { style: BLANK, attributionControl: false })); m.on('load', () => ready(m)); } catch (e) { document.body.classList.add('maperr'); } };
+  try { map = GVMAP.createMap(opts, ready, fail); } catch (e) { fail(); }
+}
+
+/* ---------- a térkép saját rétegei (mind fh- előtaggal) ---------- */
+const VIS = {};      /* chip-azonosító → [réteg-azonosítók] */
+function addLayers() {
+  if (layersAdded || !mapReady) return; layersAdded = true;
+  const f = G.f, src = (id, data) => map.addSource(id, { type: 'geojson', data, buffer: 256, tolerance: 0.1 });
+  const lay = (id, type, source, paint, layout, grp) => { map.addLayer({ id, type, source, paint, layout: Object.assign({ visibility: grp ? 'none' : 'visible' }, layout || {}) }); if (grp) (VIS[grp] = VIS[grp] || []).push(id); };
+  const round = { 'line-cap': 'round', 'line-join': 'round' };
+  /* a közterületi sáv (szőnyeg) és az utca saját rajza */
+  const strip = []; ['L', 'R'].forEach(side => { const sg = side === 'L' ? 1 : -1, a = [], b = []; const lim = G.lim[side];
+    for (let i = 0; i < lim.length; i++) { const s = Math.min(i * M.limStep, AX.L); a.push(AX.xy(s, sg * M.half)); b.push(AX.xy(s, sg * lim[i])); }
+    strip.push(a.concat(b.reverse(), [a[0]])); });
+  src('fh-strip', polyFC(strip)); lay('fh-strip', 'fill', 'fh-strip', { 'fill-color': '#0d2a31', 'fill-opacity': 0.94 });
+  src('fh-grass', polyFC(f.grass)); lay('fh-grass', 'fill', 'fh-grass', { 'fill-color': '#1d4a3a', 'fill-opacity': 0.55 });
+  src('fh-park', polyFC(f.park)); lay('fh-park', 'fill', 'fh-park', { 'fill-color': '#33454d', 'fill-opacity': 0.9 }); lay('fh-park-l', 'line', 'fh-park', { 'line-color': '#5d747c', 'line-width': 0.7 });
+  src('fh-road', lineFC([G.axis].concat(f.side))); lay('fh-road', 'line', 'fh-road', { 'line-color': '#27343a', 'line-width': mw(2 * M.half) }, { 'line-cap': 'butt', 'line-join': 'round' });
+  src('fh-drive', lineFC(f.drive)); lay('fh-drive', 'line', 'fh-drive', { 'line-color': '#3a4a50', 'line-width': mw(2 * M.driveHalf) }, { 'line-cap': 'butt' });
+  src('fh-walk', lineFC(f.walk)); lay('fh-walk', 'line', 'fh-walk', { 'line-color': '#5f7178', 'line-width': mw(2 * M.walkHalf) }, round);
+  src('fh-cross', lineFC(f.cross)); lay('fh-cross', 'line', 'fh-cross', { 'line-color': '#e8eef0', 'line-width': mw(3), 'line-dasharray': [0.25, 0.25], 'line-opacity': 0.8 }, { 'line-cap': 'butt' });
+  src('fh-drain', lineFC(f.drain)); lay('fh-drain', 'line', 'fh-drain', { 'line-color': '#3d8fd1', 'line-width': mw(1.2) }, round);
+  src('fh-culv', lineFC(f.culv)); lay('fh-culv', 'line', 'fh-culv', { 'line-color': '#3d8fd1', 'line-width': mw(1), 'line-dasharray': [1, 1.2], 'line-opacity': 0.8 });
+  src('fh-bld', polyFC(f.bld)); lay('fh-bld', 'fill', 'fh-bld', { 'fill-color': '#1a3b47', 'fill-opacity': 0.95 }); lay('fh-bld-l', 'line', 'fh-bld', { 'line-color': '#3f6672', 'line-width': 1 });
+  src('fh-fence', lineFC(f.fence)); lay('fh-fence', 'line', 'fh-fence', { 'line-color': '#8a7350', 'line-width': 1.2 });
+  /* védősávok (kizáró: telt sáv; korlátozó: halványabb), lépcsőnként — a sáv szélessége a szabály távolságának kétszerese, méterhűen */
+  const R = id => rule(id).d[0];
+  const band = (id, source, color, meters, grp, op) => lay(id, 'line', source, { 'line-color': color, 'line-width': mw(meters), 'line-opacity': op == null ? 0.3 : op }, round, grp);
+  const disc = (id, source, color, radius, grp, op) => lay(id, 'circle', source, { 'circle-color': color, 'circle-radius': mw(radius), 'circle-opacity': op == null ? 0.3 : op, 'circle-pitch-alignment': 'map' }, null, grp);
+  const C1 = '#ff9f45', C2 = '#c77bff', C3 = '#ffd166';
+  src('fh-axis', lineFC([G.axis])); src('fh-side', lineFC(f.side));
+  band('fh-b-road', 'fh-road', C1, 2 * (M.half + R('road')), 's1', 0.22);
+  band('fh-b-drive', 'fh-drive', C1, 2 * (M.driveHalf + R('drive')), 's1');
+  band('fh-b-walk', 'fh-walk', C1, 2 * (M.walkHalf + R('walk')), 's1');
+  band('fh-b-cross', 'fh-cross', C1, 2 * R('cross'), 's1');
+  src('fh-junc', ptFC(f.junc)); disc('fh-b-junc', 'fh-junc', C1, R('junc'), 's1', 0.25);
+  band('fh-b-fence', 'fh-fence', C2, 2 * R('fence'), 's2');
+  lay('fh-b-bld', 'line', 'fh-bld', { 'line-color': C2, 'line-width': mw(2 * R('bld')), 'line-opacity': 0.3 }, round, 's2');
+  band('fh-b-drain', 'fh-drain', C2, 2 * R('drain'), 's2');
+  src('fh-tree', ptFC(f.tree)); disc('fh-b-tree', 'fh-tree', C2, R('tree'), 's2', 0.28);
+  src('fh-wire', lineFC(f.wire.concat(f.ohp))); band('fh-b-wire', 'fh-wire', C3, 2 * R('wire'), 's3', 0.2);
+  src('fh-pole', ptFC(f.pole)); disc('fh-b-pole', 'fh-pole', C3, R('pole'), 's3', 0.5);
+  src('fh-lamp', ptFC(f.lamp)); disc('fh-b-lamp', 'fh-lamp', C3, R('lamp'), 's3', 0.2);
+  const UC = { gas: '#f2d21b', water: '#3f7bff', sewer: '#b0563f', cable: '#ff4a3d', tel: '#3fbf5f' };
+  ['sewer', 'gas', 'water', 'cable', 'tel'].forEach(k => { src('fh-' + k, lineFC(f[k])); band('fh-b-' + k, 'fh-' + k, UC[k], 2 * R(k), 's4', k === 'tel' ? 0.12 : 0.3); });
+  src('fh-manhole', ptFC(f.manhole)); disc('fh-b-manhole', 'fh-manhole', '#b0563f', R('manhole'), 's4', 0.4);
+  band('fh-b-culv', 'fh-culv', '#3d8fd1', 2 * R('culv'), 's4', 0.25);
+  /* a szabad terület: az addig megismert szabályok után megmaradt rész, a megengedett korona szerint színezve */
+  src('fh-free', FC([])); lay('fh-free', 'fill', 'fh-free', { 'fill-color': ['match', ['get', 'c'], 3, '#2ad1b5', 2, '#8fe07a', '#e3e85a'], 'fill-opacity': 0.82, 'fill-antialias': false }, null, 'free');
+  /* a vonalak maguk (a védősávok fölött) */
+  ['sewer', 'gas', 'water', 'cable', 'tel'].forEach(k => lay('fh-l-' + k, 'line', 'fh-' + k, { 'line-color': UC[k], 'line-width': k === 'tel' ? 1 : 1.6, 'line-opacity': 0.95 }, round, 's4'));
+  lay('fh-l-wire', 'line', 'fh-wire', { 'line-color': '#ffd166', 'line-width': 1.4, 'line-dasharray': [3, 2] }, null, 's3');
+  lay('fh-l-pole', 'circle', 'fh-pole', { 'circle-color': '#ffd166', 'circle-radius': mw(0.35), 'circle-stroke-color': '#2b1400', 'circle-stroke-width': 1, 'circle-pitch-alignment': 'map' }, null, 's3');
+  lay('fh-l-tree', 'circle', 'fh-tree', { 'circle-color': '#2f9e62', 'circle-radius': mw(2.2), 'circle-opacity': 0.75, 'circle-stroke-color': '#0b3d25', 'circle-stroke-width': 1, 'circle-pitch-alignment': 'map' });
+  /* a végén: ahol a fák ténylegesen elférnek (gyűrű a korona méretével) */
+  src('fh-final', FC(D.trees.map(t => ({ type: 'Feature', properties: { c: t[2] }, geometry: { type: 'Point', coordinates: LL(t[0] / 10, t[1] / 10) } }))));
+  lay('fh-final', 'circle', 'fh-final', { 'circle-color': 'rgba(0,0,0,0)', 'circle-radius': ['interpolate', ['exponential', 2], ['zoom'], 14, ['*', ['match', ['get', 'c'], 3, 6, 2, 3.5, 2], PXM14], 22, ['*', ['match', ['get', 'c'], 3, 6, 2, 3.5, 2], PXM14 * 256]],
+    'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1.5, 'circle-stroke-opacity': 0.9, 'circle-pitch-alignment': 'map' }, null, 'final');
+}
+function freeFC(stage) {
+  const feats = [], st = M.step;
+  ['L', 'R'].forEach(side => { const F = D.free[side], r = F.runs[stage];
+    for (let i = 0; i < r.length; i += 4) { const it = r[i], a = r[i + 1], b = r[i + 2], c = r[i + 3];
+      const t0 = F.sign * (F.tMin + (it - 0.52) * st), t1 = F.sign * (F.tMin + (it + 0.52) * st), sa = M.s0 + (a - 0.5) * st, sb = M.s0 + (b + 0.5) * st, n = Math.max(1, Math.ceil((sb - sa) / 4)), ring = [];
+      for (let k = 0; k <= n; k++) ring.push(LLst(sa + (sb - sa) * k / n, t0)); for (let k = n; k >= 0; k--) ring.push(LLst(sa + (sb - sa) * k / n, t1)); ring.push(ring[0]);
+      feats.push({ type: 'Feature', properties: { c }, geometry: { type: 'Polygon', coordinates: [ring] } }); } });
+  return FC(feats);
+}
+let freeShown = -1;
+function setVis(grp, on) { (VIS[grp] || []).forEach(id => { try { map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'); } catch (e) {} }); }
+/* a rétegek állapota mindig a chipekből és a játékállásból következik (bármikor újrahívható) */
+function applyStage() {
+  if (!mapReady || !layersAdded || !LC) return;
+  ['s1', 's2', 's3', 's4', 'free', 'final'].forEach(g => setVis(g, LC.get(g)));
+  const fs = (S.st === 'step') ? S.stage : (S.st === 'intro' || S.st === 'blind' || S.st === 'loading') ? 0 : 4;
+  if (fs !== freeShown) { freeShown = fs; try { map.getSource('fh-free').setData(freeFC(fs)); } catch (e) {} }
+}
+
+/* ---------- rétegkapcsoló: a közös chip-sor (jelmagyarázat + kapcsoló) ---------- */
+const LAYERS = [
+  { id: 's1', label: 'Közlekedés', icon: '🚗', color: '#ff9f45', title: 'Kapubehajtók, útcsatlakozások, gyalogátkelők, járda, szegély — OpenStreetMap' },
+  { id: 's2', label: 'Telek, felszín', icon: '🏡', color: '#c77bff', title: 'Kerítések, homlokzatok, meglévő fák, nyílt árok — OpenStreetMap' },
+  { id: 's3', label: 'Föld fölött', icon: '⚡', color: '#ffd166', title: '400 V-os légvezeték, oszlopok, közvilágítás — OpenStreetMap' },
+  { id: 's4', label: 'Föld alatt', icon: '🔧', color: '#5fb4ff', title: 'Gáz, víz, csatorna, földkábel, hírközlés — az e-közmű lakossági térképe alapján (tájékoztató)' },
+  { id: 'free', label: 'Szabad hely', icon: '✅', color: '#2ad1b5', title: 'Ami az eddig megismert szabályok után marad: zöld = nagy, világoszöld = közepes, sárga = csak kis koronájú fa' },
+  { id: 'final', label: 'Elférő fák', icon: '⭕', color: '#eaf4f4', title: 'Ahová a fák ténylegesen elférnek, egymástól legalább 6 méterre — a kör a kifejlett korona mérete' },
+  { id: 'ghost', label: 'Vak fáim', icon: '📍', color: '#9bb7bc', title: 'Ahová az első körben, adat nélkül ültettél' }];
+LC = GV.layerControl({ container: 'layers', title: 'Rétegek', hint: (matchMedia('(hover:hover) and (pointer:fine)').matches ? 'kattintásra' : 'koppintásra') + ' be / ki',
+  layers: LAYERS.map(l => Object.assign({ apply: on => { if (l.id === 'ghost') S.ghosts.forEach(t => on ? t.mk.addTo(map) : t.mk.remove()); else applyStage(); } }, l)),
+  onChange: (id, on, user) => { if (user) S.toggles[id] = (S.toggles[id] || 0) + 1; } });
+
+/* ---------- kamera: az utca vízszintesen, a panel fölötti térképrészben ---------- */
+function fitStreet(anim) {
+  if (!mapReady) return;
+  const sheet = document.querySelector('.sheet'), wide = innerWidth >= 900;
+  const pad = wide ? { top: 60, bottom: 20, left: 470, right: 20 } : { top: 60, bottom: Math.min(innerHeight * 0.6, (sheet ? sheet.offsetHeight : 260) + 14), left: 12, right: 12 };
+  const w = Math.max(120, innerWidth - pad.left - pad.right), h = Math.max(100, innerHeight - pad.top - pad.bottom);
+  const pxm = Math.min(w / (AX.L + 16), h / 44), z = Math.log2(pxm / PXM14) + 14;
+  map.easeTo({ center: LLst(AX.L / 2, 2), zoom: Math.max(15, Math.min(20, z)), bearing: M.az - 90, pitch: 0, padding: pad, duration: anim ? 700 : 0, essential: true });
+}
+window.addEventListener('resize', () => { if (S.st !== 'inf' && S.st !== 'blind') fitStreet(true); });
+
+/* ---------- ültetés és vizsgálat ---------- */
+function mkTree(x, y, cls, txt) { const el = document.createElement('div'); el.className = 'mk'; el.innerHTML = '<div class="tree ' + (cls || '') + '">' + (txt || '') + '</div>';
+  return { el, mk: new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat(LL(x, y)) }; }
+function setTree(t, cls, txt) { const d = t.el.querySelector('.tree'); d.className = 'tree ' + (cls || ''); d.textContent = txt || ''; }
+function onTap(e) {
+  if (!EN) return; const xy = XY(e.lngLat.lng, e.lngLat.lat);
+  if (S.st === 'blind') return tapBlind(xy);
+  if (S.st === 'inf') return tapInformed(xy);
+  if (S.st === 'final' || S.st === 'mid') return probe(xy);
+}
+function inPublic(ev) { if (!ev.inStrip) return 'A fa csak a közterületi sávba kerülhet: az úttest és a kerítések közé.'; if (Math.abs(ev.t) < M.half) return 'Az úttestre nem ültethetsz — koppints a szegély és a kerítés közé.'; return ''; }
+function tapBlind(xy) {
+  if (S.trees.length >= N) return; const ev = FH.evalPoint(EN, xy[0], xy[1]); const why = inPublic(ev); if (why) return flash(why);
+  if (S.trees.some(t => Math.hypot(t.x - xy[0], t.y - xy[1]) < 3)) return flash('Ez túl közel van egy másik fádhoz.');
+  const t = Object.assign(mkTree(xy[0], xy[1], '', String(S.trees.length + 1)), { x: xy[0], y: xy[1], ev });
+  t.el.addEventListener('click', ev2 => { ev2.stopPropagation(); if (S.st !== 'blind') return; removeTree(t); });
+  t.mk.addTo(map); S.trees.push(t); render();
+}
+function removeTree(t) { const i = S.trees.indexOf(t); if (i < 0) return; t.mk.remove(); S.trees.splice(i, 1); S.trees.forEach((q, k) => { if (S.st === 'blind') setTree(q, '', String(k + 1)); }); render(); }
+function undo() { const t = S.trees[S.trees.length - 1]; if (t) removeTree(t); }
+/* 2. kör: a koppintás a legközelebbi szabad ponthoz igazodik, ha az ujjnyi távolságon (≥ 14 képpont, legalább 1,5 m) belül van */
+function tapInformed(xy) {
+  if (S.trees.length >= N) return; let ev = FH.evalPoint(EN, xy[0], xy[1]); const why = inPublic(ev); if (why) return flash(why);
+  S.tries++;
+  if (ev.kill) { const tol = Math.max(1.5, 14 / (PXM14 * Math.pow(2, map.getZoom() - 14))); let best = null, bd = tol;
+    for (const p of S.freePts) { const d = Math.hypot(p[0] - xy[0], p[1] - xy[1]); if (d < bd && !S.trees.some(t => Math.hypot(t.x - p[0], t.y - p[1]) < M.spacing)) { bd = d; best = p; } }
+    if (best) { xy = [best[0], best[1]]; ev = FH.evalPoint(EN, xy[0], xy[1]); } }
+  if (ev.kill) { S.last = { ev, ok: false }; showProbe(xy, ev); return render(); }
+  if (S.trees.some(t => Math.hypot(t.x - xy[0], t.y - xy[1]) < M.spacing)) { S.last = { ev, ok: false, own: true }; return render(); }
+  clearProbe();
+  const t = Object.assign(mkTree(xy[0], xy[1], ev.crown < 3 ? 'lim' : 'ok', CROWN[ev.crown][0].toUpperCase()), { x: xy[0], y: xy[1], ev });
+  t.el.addEventListener('click', ev2 => { ev2.stopPropagation(); if (S.st !== 'inf') return; removeTree(t); });
+  t.mk.addTo(map); S.trees.push(t); S.last = { ev, ok: true }; render();
+}
+function clearProbe() { if (S.probe) { S.probe.mk.remove(); S.probe = null; } }
+function showProbe(xy, ev) { clearProbe(); const cls = ev.kill ? 'x' : ev.crown < 3 ? 'lim' : 'ok'; S.probe = mkTree(xy[0], xy[1], cls, ev.kill ? '✕' : '?'); S.probe.el.classList.add('probe'); S.probe.mk.addTo(map); }
+function probe(xy) { const ev = FH.evalPoint(EN, xy[0], xy[1]); if (!ev.inStrip) { clearProbe(); S.last = null; return render(); } showProbe(xy, ev); S.last = { ev, ok: !ev.kill, probe: true }; render(); P.scrollTop = 0; }
+let flashT = null;
+function flash(m) { const h = P.querySelector('.hint'); if (!h) return; if (h.dataset.base == null) h.dataset.base = h.innerHTML; h.innerHTML = '<span class="bad">' + esc(m) + '</span>'; clearTimeout(flashT); flashT = setTimeout(() => { h.innerHTML = h.dataset.base; delete h.dataset.base; }, 2600); }
+
+/* ---------- vizsgálólap: mi történik pontosan ezen a helyen ---------- */
+function reasons(ev, upTo, max) {
+  const st = FH.stateAt(ev, upTo), rows = [];
+  ev.checks.filter(c => c.stage <= upTo && c.res === 'K').sort((a, b) => (b.need - b.d) - (a.need - a.d)).forEach(c => rows.push('<li class="x">' + failText(c) + '</li>'));
+  ev.checks.filter(c => c.stage <= upTo && c.res === 'L').sort((a, b) => a.cap - b.cap).forEach(c => rows.push('<li class="l">' + limText(c) + '</li>'));
+  if (ev.flags.park) rows.push('<li class="l"><b>Parkolóhely</b>: itt egy parkoló szűnne meg</li>');
+  const okN = ev.checks.filter(c => c.stage <= upTo && c.res === 'ok').length;
+  const shown = rows.slice(0, max || 4), more = rows.length - shown.length;
+  return { st, html: shown.join('') + (more > 0 ? '<li>… és még ' + more + ' ok</li>' : '') + '<li class="o">' + okN + ' szempont rendben</li>' };
+}
+/* keresztmetszet a pont síkjában: bal szél az úttengely, jobb szél a kerítés; a föld alatt a közművek és védősávjuk */
+function section(ev, upTo) {
+  const lim = FH.limAt(EN, ev.s, ev.side), W = 340, H = 132, X0 = 8, span = lim + 3.5, k = (W - 16) / span, gy = 62;
+  const x = t => X0 + t * k, at = Math.abs(ev.t), sgn = ev.side === 'L' ? 1 : -1;
+  const lat = c => { if (!c.pt) return null; const q = AX.st(c.pt[0], c.pt[1]); return { t: q.t * sgn, ds: q.s - ev.s }; };
+  let o = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Keresztmetszet"><rect x="0" y="' + gy + '" width="' + W + '" height="' + (H - gy) + '" fill="#10232a"/>';
+  o += '<rect x="' + x(0) + '" y="' + (gy - 3) + '" width="' + (M.half * k) + '" height="6" fill="#39474d"/><text x="' + (x(0) + 3) + '" y="' + (gy - 7) + '" class="sl">úttest</text>';
+  o += '<line x1="' + x(lim) + '" y1="' + (gy - 16) + '" x2="' + x(lim) + '" y2="' + gy + '" stroke="#8a7350" stroke-width="2"/><text x="' + (x(lim) - 2) + '" y="' + (gy - 20) + '" class="sl" text-anchor="end">kerítés</text>';
+  const DEP = { gas: 22, water: 30, sewer: 46, cable: 16, tel: 12, culv: 40 }, UCOL = { gas: '#f2d21b', water: '#3f7bff', sewer: '#b0563f', cable: '#ff4a3d', tel: '#3fbf5f', culv: '#3d8fd1' };
+  const NM = { gas: 'gáz', water: 'víz', sewer: 'csatorna', cable: 'kábel', tel: 'hírközlés', culv: 'patak' };
+  ev.checks.forEach(c => { if (c.stage > upTo) return; const q = lat(c); if (!q || q.t < -0.5 || q.t > span) return; const r = rule(c.id);
+    if (UCOL[c.id]) { const col = UCOL[c.id], need = r.d[0], near = Math.abs(q.ds) <= 0.8;
+      o += '<rect x="' + x(Math.max(0, q.t - need)) + '" y="' + gy + '" width="' + ((Math.min(span, q.t + need) - Math.max(0, q.t - need)) * k) + '" height="' + (DEP[c.id] + 8) + '" fill="' + col + '" opacity="' + (c.res === 'ok' ? 0.1 : 0.26) + '"/>';
+      o += '<circle cx="' + x(q.t) + '" cy="' + (gy + DEP[c.id]) + '" r="3.4" fill="' + (near ? col : 'none') + '" stroke="' + col + '" stroke-width="1.4"/>';
+      o += '<text x="' + (x(q.t) + 6) + '" y="' + (gy + DEP[c.id] + 3.5) + '" class="sl" fill="' + col + '">' + NM[c.id] + (near ? '' : ' ↕' + hu(Math.abs(q.ds), 0) + ' m') + '</text>'; }
+    else if (c.id === 'wire') { o += '<rect x="' + x(Math.max(0, q.t - 3)) + '" y="6" width="' + ((Math.min(span, q.t + 3) - Math.max(0, q.t - 3)) * k) + '" height="' + (gy - 6) + '" fill="#ffd166" opacity="0.1"/><circle cx="' + x(q.t) + '" cy="16" r="2.6" fill="#ffd166"/><text x="' + (x(q.t) + 5) + '" y="19" class="sl" fill="#ffd166">légvezeték</text>'; }
+    else if (c.id === 'pole' && Math.abs(q.ds) < 8) o += '<line x1="' + x(q.t) + '" y1="14" x2="' + x(q.t) + '" y2="' + gy + '" stroke="#caa85a" stroke-width="1.6" opacity="' + (Math.abs(q.ds) < 2 ? 1 : 0.4) + '"/>';
+    else if (c.id === 'walk' && Math.abs(q.ds) < 3) o += '<rect x="' + x(q.t - M.walkHalf) + '" y="' + (gy - 2.5) + '" width="' + (2 * M.walkHalf * k) + '" height="5" fill="#74868d"/><text x="' + x(q.t) + '" y="' + (gy - 6) + '" class="sl" text-anchor="middle">járda</text>';
+    else if (c.id === 'drive' && Math.abs(q.ds) < M.driveHalf + r.d[0]) o += '<text x="' + x(Math.min(at + 1.2, span - 4)) + '" y="' + (gy - 26) + '" class="sl" fill="#ff9f45">kapubehajtó ↕' + hu(Math.max(0, c.d)) + ' m</text>';
+    else if (c.id === 'tree' && c.d < r.d[2]) o += '<text x="' + x(Math.min(at + 1.2, span - 4)) + '" y="' + (gy - 36) + '" class="sl" fill="#c77bff">meglévő fa ' + hu(c.d) + ' m</text>';
+  });
+  const st = FH.stateAt(ev, upTo), cr = st.alive ? st.crown : 1, rad = [0, 2, 3.5, 6][cr] * k, col = st.alive ? (st.crown < 3 ? '#ff9f45' : '#2ad1b5') : '#ff6b4a';
+  o += '<line x1="' + x(at) + '" y1="' + gy + '" x2="' + x(at) + '" y2="' + (gy - 22) + '" stroke="' + col + '" stroke-width="2.4"/><circle cx="' + x(at) + '" cy="' + (gy - 22 - Math.min(rad, 20) * 0.7) + '" r="' + Math.min(rad, 30) + '" fill="' + col + '" opacity="0.22" stroke="' + col + '" stroke-width="1.2"/>';
+  if (!st.alive) o += '<text x="' + x(at) + '" y="' + (gy - 26) + '" text-anchor="middle" font-size="15" font-weight="700" fill="#ff6b4a">✕</text>';
+  o += '<line x1="' + x(0) + '" y1="' + (H - 9) + '" x2="' + x(Math.floor(span)) + '" y2="' + (H - 9) + '" stroke="#5e7a80" stroke-width="0.8"/>';
+  for (let m = 0; m <= span; m += 5) o += '<line x1="' + x(m) + '" y1="' + (H - 12) + '" x2="' + x(m) + '" y2="' + (H - 6) + '" stroke="#5e7a80" stroke-width="0.8"/><text x="' + x(m) + '" y="' + (H - 0.5) + '" class="sl" text-anchor="middle">' + m + ' m</text>';
+  return o + '<style>.sl{font:500 8.5px Roboto Mono,monospace;fill:#9bb7bc}</style></svg>';
+}
+function inspHTML(ev, upTo, title) {
+  const r = reasons(ev, upTo, 4), st = r.st, cls = st.alive ? (st.crown < 3 ? 'lim' : 'ok') : 'x';
+  const head = title || (st.alive ? 'Itt elfér egy fa — ' + CROWN[st.crown] + ' koronával (kb. ' + CROWN_M2[st.crown] + ' m² árnyék)' : 'Itt nem állhat fa');
+  return '<div class="insp"><h3 class="' + cls + '">' + head + '</h3>' + section(ev, upTo) + '<ul>' + r.html + '</ul><div class="fn">A távolságok jellemző értékek — településenként és üzemeltetőnként eltérhetnek.</div></div>';
+}
+
+/* ---------- a játékos fáinak sorsa a lépcsőkön ---------- */
+function fateRows(upTo, full) {
+  return S.ghosts.map((t, i) => { const st = FH.stateAt(t.ev, upTo);
+    if (!st.alive) { const by = st.by, sn = STAGE_TXT[by.stage].name.toLowerCase(); return '<div class="x"><span class="t">' + (i + 1) + '</span><span>' + failText(by) + (full ? ' <span style="color:var(--faint)">· ' + sn + '</span>' : '') + '</span></div>'; }
+    if (st.crown < 3) return '<div class="lim"><span class="t">' + (i + 1) + '</span><span>áll, de legfeljebb <b>' + CROWN[st.crown] + ' koronával</b></span></div>';
+    return '<div class="ok"><span class="t">' + (i + 1) + '</span><span>áll</span></div>'; }).join('');
+}
+function markGhosts(upTo) { S.ghosts.forEach((t, i) => { const st = FH.stateAt(t.ev, upTo); setTree(t, st.alive ? (st.crown < 3 ? 'lim' : 'ok') : 'x', st.alive ? String(i + 1) : '✕'); }); }
+const aliveN = upTo => S.ghosts.filter(t => FH.stateAt(t.ev, upTo).alive).length;
+function funnelHTML(cur) { const lab = ['Papíron', 'Közlekedés', 'Telek, felszín', 'Föld fölött', 'Föld alatt'];
+  return '<div class="fun">' + M.pct.map((p, i) => (cur != null && i > cur) ? '' : '<div class="' + (i === cur ? 'cur' : '') + '"><span>' + lab[i] + '</span><i><u style="width:' + Math.max(1.5, p) + '%"></u></i><b>' + Math.round(p) + '%</b></div>').join('') + '</div>'; }
+
+/* ---------- képernyők ---------- */
+function showChips(v) { LC.show(v); }
+function render() {
+  if (!LC) return; const n = S.trees.length;
+  showChips(S.st === 'step' || S.st === 'mid' || S.st === 'inf' || S.st === 'final');
+  if (S.st === 'loading') { P.innerHTML = '<span class="eyebrow">Döntésjáték · 4–5 perc</span><h1>Hol fér el <em>egy fa</em>?</h1><p><span class="spin"></span>Az utca adatainak betöltése…</p>'; return; }
+  const c = M.counts;
+  if (S.st === 'intro') { TB.innerHTML = 'Diósd · <b>Kossuth Lajos utca</b>';
+    P.innerHTML = `<span class="eyebrow">Döntésjáték · 4–5 perc</span><h1>Hol fér el <em>egy fa</em>?</h1>
+    <div class="prob"><div><span class="n">1</span><span>${esc(M.town)}, ${esc(M.street)}: ${Math.round(M.len)} méter, a házak előtt ${M.stripW.L} méter széles közterületi sáv.</span></div>
+    <div><span class="n">2</span><span>Ránézésre bárhová fér fa. Megnézzük, mit enged az utca: a felszínen, fölötte és alatta.</span></div>
+    <div><span class="n">3</span><span>Előbb egy tipp: <b>a közterületi sáv mekkora részén állhat fa?</b></span></div></div>
+    <div class="guess">${[90, 70, 50, 30, 10].map(g => `<button type="button" onclick="guess(${g})">${g}%</button>`).join('')}</div>
+    <div class="src">Utca, behajtók, kerítések, oszlopok, fák: OpenStreetMap (${esc(M.osmDate)}) · Közművek: az e-közmű lakossági térképe alapján, egyszerűsítve — tájékoztató jellegű</div>`; return; }
+  if (S.st === 'blind') { TB.innerHTML = '1. kör · adat nélkül · <b>' + n + '/' + N + '</b>';
+    P.innerHTML = `<span class="eyebrow">1. kör — adat nélkül</span><h1>Koppints ${N} helyre, ahová fát ültetnél</h1>
+    <div class="cnt">${Array.from({ length: N }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="row"><button class="btn btn-ghost" onclick="undo()" ${n ? '' : 'disabled'}>Vissza</button><button class="btn" onclick="startFunnel()" ${n === N ? '' : 'disabled'}>Megnézzük</button></div>
+    <div class="hint">${n < N ? 'A világosabb sáv a közterület az úttest és a kerítések között. Nagyíts bátran; egy fára koppintva visszaveszed.' : 'Mind az ' + N + ' fa a helyén — nézzük, mit szól hozzá az utca.'}</div>`; return; }
+  if (S.st === 'step') { const i = S.stage, T = STAGE_TXT[i], pct = Math.round(M.pct[i]), al = aliveN(i), lost = S.ghosts.filter(t => { const a = FH.stateAt(t.ev, i - 1).alive, b = FH.stateAt(t.ev, i).alive; return a && !b; }).length;
+    TB.innerHTML = i + '/4 · ' + T.name + ' · <b>' + pct + '%</b>';
+    const body = { 1: `${c.drive} kapubehajtó, ${c.junc} útcsatlakozás, ${c.cross} gyalogátkelő. A behajtó szélétől legalább 1 méter, a saroktól 10 méter kell; a járdából és a szegély mellől sem vehetünk el.`,
+      2: `A kerítéstől és a homlokzattól 2 méter, a meglévő fától 5 méter, a nyílt ároktól 3 méter kell. ${c.tree} fa már áll a sávban.`,
+      3: `${nf(c.wireLen)} méter légvezeték és ${c.pole} oszlop. A vezeték 3 méteres sávjában csak alacsony fa maradhat: a még szabad terület ${M.smallPct[3]}%-án legfeljebb kis koronájú fa fér el.`,
+      4: `${nf(c.utilLen)} méter vezeték fut ${Math.round(M.len)} méter utca alatt: gáz ${nf(c.gasLen)} m, víz ${nf(c.waterLen)} m, csatorna ${nf(c.sewerLen)} m, földkábel ${nf(c.cableLen)} m, hírközlés ${nf(c.telLen)} m. Gáztól és víztől 2, csatornától 3, kábeltől 1 méter kell.` }[i];
+    const h1 = i === 3 ? 'A hely megvan — <em>a lombkorona nem</em>' : 'A sáv <em>' + pct + '%</em>-a maradt szabad';
+    let worst = null; if (i === 4) { worst = S.ghosts.find(t => { const st = FH.stateAt(t.ev, 4); return !st.alive && st.by.stage === 4; }) || null; }
+    P.innerHTML = `<span class="eyebrow">${i}/4 · ${T.name} <i>· ${T.src}</i></span><h1>${h1}</h1><p>${body}</p>
+    <div class="fate">${fateRows(i)}</div>
+    <div class="row"><button class="btn" onclick="nextStep()">${i < 4 ? 'Tovább' : 'Mérleg'}</button></div>
+    <div class="hint">${N} fádból <b>${al}</b> áll még${lost ? ' · ebben a lépésben <span class="bad">' + lost + ' esett ki</span>' : ''}.${i === 4 ? ' Az e-közmű lakossági térképe tájékoztató jellegű.' : ' Jellemző értékek — a helyi rendelet eltérhet.'}</div>
+    ${funnelHTML(i)}
+    ${worst ? inspHTML(worst.ev, 4, (S.ghosts.indexOf(worst) + 1) + '. fád helye a föld alatt') : ''}`; return; }
+  if (S.st === 'mid') { const al = aliveN(4); TB.innerHTML = 'Vakon · <b>' + al + '/' + N + '</b>';
+    P.innerHTML = `<span class="eyebrow">1. kör — eredmény</span><h1>Adat nélkül: <em>${al}</em> / ${N} fa maradt</h1>
+    <p>A közterületi sáv <b>${Math.round(M.pct[4])}%</b>-án állhat fa — a tipped <b>${S.guess}%</b> volt.</p>
+    <div class="fate">${fateRows(4, true)}</div>
+    ${S.last && S.last.probe ? inspHTML(S.last.ev, 4) : ''}
+    <div class="row"><button class="btn" onclick="startInformed()">Újra, adattal</button></div>
+    <div class="hint">A zöld foltok a szabad helyek. Koppints bárhová a sávban: megmutatjuk, mi van ott.</div>`; return; }
+  if (S.st === 'inf') { TB.innerHTML = '2. kör · adattal · <b>' + n + '/' + N + '</b>';
+    let msg = 'Koppints a zöld foltokra. Nagyíts rá: a szabad helyek kicsik.';
+    if (S.last) { if (S.last.own) msg = '<span class="bad">Túl közel van egy másik fádhoz — legalább ' + M.spacing + ' méter kell.</span>';
+      else if (S.last.ok) msg = 'Elfér: <b>' + CROWN[S.last.ev.crown] + ' koronájú</b> fa, kb. ' + CROWN_M2[S.last.ev.crown] + ' m² árnyék' + (S.last.ev.flags.park ? ' · <span class="warn">−1 parkolóhely</span>' : '') + '.';
+      else { const st = FH.stateAt(S.last.ev, 4); msg = '<span class="bad">Itt nem lehet:</span> ' + failText(st.by) + '.'; } }
+    P.innerHTML = `<span class="eyebrow">2. kör — adattal</span><h1>Ültess ${N} fát a szabad helyekre</h1>
+    <div class="cnt">${Array.from({ length: N }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="row"><button class="btn btn-ghost" onclick="undo()" ${n ? '' : 'disabled'}>Vissza</button><button class="btn" onclick="finish()" ${n === N ? '' : 'disabled'}>Kiértékelés</button></div>
+    <div class="hint">${msg}</div>
+    ${S.last && !S.last.ok && !S.last.own ? inspHTML(S.last.ev, 4) : ''}`; return; }
+  if (S.st === 'final') { const f = M.final, truth = Math.round(M.pct[4]), diff = S.guess - truth; TB.innerHTML = 'Vakon <b>' + S.r1 + '</b> · adattal <b>' + n + '</b>';
+    const h1 = diff >= 15 ? `Tipped: ${S.guess}%. A valóság: <em>${truth}%</em>.` : `A sáv <em>${truth}%</em>-án állhat fa — jól érezted.`;
+    const groups = [['elo', 'Itt, ezen az utcán mérve'], ['papir', 'Papíron dől el — ültetés előtt tisztázni kell'], ['godor', 'Csak a próbagödör mutatja meg'], ['faj', 'Nem a helyet, hanem a fajt és a méretet szűkíti'], ['opt', 'Rangsorol: hol ér a legtöbbet a fa'], ['nincs', 'Ezen az utcán nincs ilyen'], ['videk', 'Csak vidéken és erdőben számít']];
+    const cat = groups.map(([k, t]) => { const it = D.catalog.filter(q => q[4] === k); return it.length ? '<h4>' + t + ' · ' + it.length + '</h4><p>' + it.map(q => esc(q[1])).join(' · ') + '</p>' : ''; }).join('');
+    P.innerHTML = `<span class="eyebrow">Az utca mérlege</span><h1>${h1}</h1>
+    ${S.last && S.last.probe ? inspHTML(S.last.ev, 4) : ''}
+    <div class="score"><div class="sc b1"><span>1. kör · adat nélkül</span><b>${S.r1}/${N}</b></div><div class="sc b2"><span>2. kör · adattal</span><b>${n}/${N}</b></div></div>
+    ${funnelHTML(null)}
+    <p>Ezen a ${Math.round(M.len)} méteren <b>${f.n} új fa</b> férne el — ha pontosan oda kerülnek. Közülük ${f.small} csak kis koronájú lehet a légvezeték miatt, ${f.park} parkolóhelyet vinne el.</p>
+    <p>A szabad ${truth}%-ot az találja meg elsőre, aki a behajtókat, a légvezetéket, a meglévő fákat és a közműveket egy térképen látja — még az ígéret előtt, nem a gödör mellett.</p>
+    <p style="font-size:13.5px">Ásás előtt: az e-közmű lakossági térképe tájékoztató jellegű; hiteles adatot a közműegyeztetés ad, és a házi bekötések egy része a nyilvántartásból is hiányozhat.</p>
+    <details class="cat"><summary>${D.catalog.length} szempontból ${M.roles.elo} dőlt el itt a térképen — a többi</summary>${cat}</details>
+    <p style="margin-top:12px;color:var(--text);font-size:14px">Melyik lépcső lepett meg a legjobban?</p>
+    <div class="poll">${[1, 2, 3, 4].map(i => `<button type="button" class="${S.poll === i ? 'on' : ''}" onclick="poll(${i})">${STAGE_TXT[i].name}</button>`).join('')}</div>
+    <div class="src">Koppints bárhová a sávban: megmutatjuk, mi van ott. Az ⭕ Elférő fák réteg a ${f.n} lehetséges helyet mutatja.</div>
+    ${GV.endPanel({ game: 'fahely' })}`; return; }
+}
+
+/* ---------- lépések ---------- */
+function guess(g) { S.guess = g; S.st = 'blind'; render(); fitStreet(true); }
+function startFunnel() { S.ghosts = S.trees; S.trees = []; S.ghosts.forEach(t => t.el.classList.add('ghost')); LC.set('ghost', true); S.stage = 0; nextStep(); }
+function nextStep() {
+  if (S.stage < 4) { S.stage++; S.st = 'step'; [1, 2, 3, 4].forEach(i => LC.set('s' + i, i === S.stage)); LC.set('free', true); markGhosts(S.stage); render(); applyStage(); fitStreet(true); P.scrollTop = 0; return; }
+  S.r1 = aliveN(4); S.st = 'mid'; S.last = null; [1, 2, 3].forEach(i => LC.set('s' + i, false)); LC.set('s4', false); LC.set('free', true); render(); applyStage(); fitStreet(true); P.scrollTop = 0;
+}
+function startInformed() { clearProbe(); S.st = 'inf'; S.last = null; S.tries = 0; LC.set('ghost', false); LC.set('free', true); render(); applyStage(); zoomToFree(); }
+/* a 2. kör elején ráközelítünk az utca egy olyan részére, ahol több szabad folt is van */
+function zoomToFree() { if (!mapReady) return; let best = 0, bs = AX.L / 2; for (let s = 30; s < AX.L - 30; s += 10) { let nn = 0; for (const p of S.freePts) { const q = AX.st(p[0], p[1]); if (Math.abs(q.s - s) < 28) nn++; } if (nn > best) { best = nn; bs = s; } }
+  const sheet = document.querySelector('.sheet'), wide = innerWidth >= 900, pad = wide ? { top: 60, bottom: 20, left: 470, right: 20 } : { top: 60, bottom: Math.min(innerHeight * 0.6, sheet.offsetHeight + 14), left: 12, right: 12 };
+  const w = Math.max(120, innerWidth - pad.left - pad.right); const z = Math.log2((w / 62) / PXM14) + 14;
+  map.easeTo({ center: LLst(bs, 4), zoom: Math.min(20, z), bearing: M.az - 90, padding: pad, duration: 900, essential: true }); }
+function finish() { clearProbe(); S.st = 'final'; S.last = null; LC.set('final', true); LC.set('ghost', true);
+  GV.record('fahely', { ds: M.id, score: S.r1, guess: S.guess, truth: M.pct[4],
+    blind: { alive: S.r1, pts: S.ghosts.map(t => { const st = FH.stateAt(t.ev, 4); return [+t.x.toFixed(1), +t.y.toFixed(1), st.alive ? 0 : st.by.stage, st.alive ? '' : st.by.id, st.crown]; }) },
+    informed: { score: S.trees.length, tries: S.tries, pts: S.trees.map(t => [+t.x.toFixed(1), +t.y.toFixed(1), t.ev.crown, t.ev.flags.park ? 1 : 0]) },
+    layers: LC.all(), toggles: S.toggles, dur: Math.round((Date.now() - S.t0) / 1000), vw: innerWidth });
+  render(); applyStage(); fitStreet(true); P.scrollTop = 0; }
+function poll(i) { if (S.poll) return; S.poll = i; GV.record('velemeny', { game: 'fahely', q: 'meglepett', a: STAGE_TXT[i].name }); render(); }
+</script>
+<script>window.addEventListener('pageshow',function(){document.body.style.opacity='';document.body.classList.add('in');});</script>
+</body>
+</html>

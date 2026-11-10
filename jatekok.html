@@ -12,7 +12,7 @@
 <!-- End Google Tag Manager -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GEOVERN — Játékok: döntésjátékok a lakosságnak</title>
-<meta name="description" content="Nyolc döntésjáték önkormányzatoknak, a lakosság szemléletformálására: hőhullám, esőkert, iskolautca, fák, költségvetés, 12 hónapos városrész-szimuláció és egy Pipedrive-szerű ügymenet. Előbb az adat, aztán a beruházás.">
+<meta name="description" content="Kilenc döntésjáték önkormányzatoknak, a lakosság szemléletformálására: hőhullám, esőkert, iskolautca, fák, költségvetés, 12 hónapos városrész-szimuláció és egy Pipedrive-szerű ügymenet. Előbb az adat, aztán a beruházás.">
 <meta name="theme-color" content="#0F4A57">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,8 +20,8 @@
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap"></noscript>
-<script src="jatekok/config.js?v=14"></script>
-<script src="jatekok/gv.js?v=14"></script>
+<script src="jatekok/config.js?v=15"></script>
+<script src="jatekok/gv.js?v=15"></script>
 <style>
 :root{--bg:#050f14;--petrol:#0F4A57;--teal:#2AD1B5;--amber:#FF9F45;--text:#EAF4F4;--muted:#8FB0B5;--faint:#5E7A80;
   --card:rgba(5,15,20,.68);--cardline:rgba(42,209,181,.22);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace}
@@ -86,14 +86,14 @@ h2{font-size:clamp(22px,3vw,30px);font-weight:900;line-height:1.12;margin:54px 0
 <header>
   <a class="logo" href="index.html"><img src="/logo/geovern-wm.svg" alt="GEOVERN"></a>
   <div class="spacer"></div>
-  <a class="navlink" href="jatek-swipe.html?v=14">Krízisjáték</a>
+  <a class="navlink" href="jatek-swipe.html?v=15">Krízisjáték</a>
   <a class="navlink" href="index.html">← Vissza a főoldalra</a>
 </header>
 
 <div class="wrap">
   <span class="eyebrow">GEOVERN · JÁTÉKOK ÖNKORMÁNYZATOKNAK</span>
   <h1>Döntésjátékok <em>a lakosságnak.</em></h1>
-  <p class="sub">Nyolc döntési helyzet — hőhullám, villámárvíz, iskolautca, fák, költségvetés — a saját település nevével, a lakók telefonján. Mindegyik ugyanazt mutatja meg játszva, amit egy testületi ülésen nehéz elmondani: <b>előbb az adat, aztán a beruházás.</b></p>
+  <p class="sub">Kilenc döntési helyzet — hőhullám, villámárvíz, iskolautca, fák, költségvetés — a saját település nevével, a lakók telefonján. Mindegyik ugyanazt mutatja meg játszva, amit egy testületi ülésen nehéz elmondani: <b>előbb az adat, aztán a beruházás.</b></p>
   <div class="town" data-town-hide><span>📍 Ez a játékcsomag <b data-town></b> lakóinak készült</span> <button class="town-x" type="button" onclick="GV.clearTown()" title="Település törlése — a név a böngészőben marad, amíg nem törlöd" aria-label="Település törlése">✕</button></div>
   <div class="ctas"><a class="btn btn-primary" id="cta1" href="jatekok/fak.html">Kezdd az elsővel →</a><a class="btn btn-ghost" id="cta2" href="jatekok/zold-varosresz.html">A 12 hónapos játék</a></div>
 
@@ -144,6 +144,8 @@ const GAMES=[
   design:'szenzor-műszerfal',mode:'döntés → 12 hetes szimuláció → újradöntés',data:'idősor-diagram',coll:'mérési hajlandóság, eszközválasztás'}
 ];
 const BIG=[
+ {f:'jatekok/fahely.html',img:'jatekok/img/fahely.jpg',t:'Hol fér el egy fa?',min:'4–5 perc',hook:'Egy valós utca, 13 méter széles zöldsáv — ránézésre bárhová fér fa. Aztán jönnek a kapubehajtók, a légvezeték és 2,5 kilométer közmű a föld alatt. A sáv 8 százalékán marad hely: megtalálod adat nélkül?',
+  design:'GEOVERN sötét térkép, keresztmetszettel',mode:'két kör (vakon → adattal), négy lépcsős tölcsér',data:'valós utca: OpenStreetMap + az e-közmű lakossági térképe alapján vektorizált közművek',coll:'tipp a szabad terület arányára, vak és adatos fahelyek, mi zárta ki őket'},
  {f:'jatekok/zold-varosresz.html',img:'jatekok/img/zold.jpg',t:'Zöld városrész — 12 hónap',min:'5–8 perc',hook:'120 millió forint, 48 tömb, három kockázat — és egy térkép, amin eleinte semmi nem látszik. Öt eszköz: fa, esőkert, csillapítás, szenzor, felmérés. A tavasz, a nyár és az ősz megmutatja, mit ért a döntés.',
   design:'sim-nézet, nyugodt HUD',mode:'építés + havi események + rejtett rétegek',data:'rácsos városrész, mérés fedi fel',coll:'adattal vs. vakon költött arány, elhelyezések, károk'},
  {f:'jatekok/ugymenet.html',img:'jatekok/img/hub.jpg',t:'Ügymenet',min:'3–4 perc',hook:'Minden lakossági kérés egy kártya. Húzd balról jobbra a lépcsőkön — beérkezett, adat, döntés, végrehajtás, mérve —, mint egy CRM-táblán. Itt a lakók türelme a határidő. Hat hét, 300 millió, tizenkét ügy: a hangos nem mindig a fontos.',
