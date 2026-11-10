@@ -105,7 +105,7 @@
   /* ---- játéklista (a hub és a „következő játék” gomb ebből él) ---- */
   const GAMES=[
     {id:'fak',file:'jatekok/fak.html',n:'Hová ültetnél 5 fát?',min:'2–3 perc'},
-    {id:'fahely',file:'jatekok/fahely.html',n:'Hol fér el egy fa?',min:'4–5 perc'},
+    {id:'fahely',file:'jatekok/fahely.html',n:'Hol fér el egy fa?',min:'kb. 6 perc'},
     {id:'esokert',file:'jatekok/esokert.html',n:'Esőkert vagy csatorna?',min:'2–3 perc'},
     {id:'iskolautca',file:'jatekok/iskolautca.html',n:'Iskolautca',min:'2–3 perc'},
     {id:'ugyanaz',file:'jatekok/ugyanaz-az-utca.html',n:'Ugyanaz az utca',min:'2 perc'},
@@ -116,7 +116,7 @@
   ];
   const inSub=/\/jatekok\//.test(location.pathname);
   /* a játékok közti linkek verziószámot kapnak (?v=…), hogy a GitHub Pages 10 perces gyorsítótára ne a régi HTML-t adja */
-  const VER='15';
+  const VER='16';
   function qs(){return '?'+(TOWN.name?'telepules='+encodeURIComponent(TOWN.name)+'&':'')+'v='+VER;}
   function urlFor(file){return (inSub?'../':'')+file+qs();}
   function hubUrl(){return (inSub?'../':'')+'jatekok.html'+qs();}

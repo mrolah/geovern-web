@@ -12,7 +12,7 @@
 <!-- End Google Tag Manager -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hol fér el egy fa? — GEOVERN játékok</title>
-<meta name="description" content="Egy valós utca, 13 méter széles zöldsáv — ránézésre bárhová fér fa. Aztán jönnek a kapubehajtók, a légvezeték és a föld alatti közművek. Döntésjáték valós térképi és közműadatokon.">
+<meta name="description" content="Egy valós utca 3D-ben, akár 13 méter széles közterületi sávval — ránézésre bárhová fér fa. Aztán rétegenként jönnek a kapubehajtók, a légvezeték és a föld alatti vezetékek. Döntésjáték valós térképi és közműadatokon.">
 <meta name="theme-color" content="#050f14">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23FF9F45' stroke-width='5'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF9F45'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,13 +24,13 @@
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"></noscript>
 
-<script src="config.js?v=15"></script>
-<script src="gv.js?v=15"></script>
-<script src="gvmap.js?v=15"></script>
-<script src="fahely-engine.js?v=15"></script>
+<script src="config.js?v=16"></script>
+<script src="gv.js?v=16"></script>
+<script src="gvmap.js?v=16"></script>
+<script src="fahely-engine.js?v=16"></script>
 <style>
 :root{--bg:#050f14;--teal:#2AD1B5;--amber:#FF9F45;--red:#ff6b4a;--text:#EAF4F4;--muted:#9BB7BC;--faint:#5E7A80;
-  --card:rgba(6,17,22,.92);--line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
+  --card:rgba(6,17,22,.94);--line:rgba(42,209,181,.25);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace;
   --gv-accent:var(--teal);--gv-accent-ink:#04211d;--gv-line:var(--line);--sab:env(safe-area-inset-bottom,0px);--sat:env(safe-area-inset-top,0px)}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden;overscroll-behavior:none}
@@ -41,46 +41,66 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16
 .topbar{position:fixed;top:calc(10px + var(--sat));right:10px;z-index:40;display:flex;align-items:center;gap:8px;background:var(--card);
   border:1px solid var(--line);border-radius:100px;padding:8px 14px;backdrop-filter:blur(12px);font:500 13px var(--mono);color:var(--muted);max-width:calc(100vw - 132px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topbar b{color:var(--amber);font-weight:500}
-.fitbtn{position:fixed;top:calc(54px + var(--sat));right:10px;z-index:40;font:500 12px var(--mono);color:var(--muted);background:var(--card);border:1px solid var(--line);
-  border-radius:100px;padding:7px 12px;cursor:pointer;backdrop-filter:blur(10px);touch-action:manipulation}
-.sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:30;width:100%;max-width:540px;padding:0 12px calc(12px + var(--sab))}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px 20px 16px;backdrop-filter:blur(16px);
-  box-shadow:0 -10px 50px rgba(0,0,0,.55);max-height:58vh;overflow:auto}
-h1{font-size:23px;font-weight:900;line-height:1.16;margin-bottom:6px}
+/* második sor a tetején: áttekintő sáv (keskeny képernyőn) és a nézetgombok */
+.tools{position:fixed;top:calc(52px + var(--sat));left:10px;right:10px;z-index:40;display:none;gap:6px;align-items:center;justify-content:flex-end;pointer-events:none}
+.tools>*{pointer-events:auto}
+.tools button{font:500 12px var(--mono);color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:100px;padding:8px 12px;cursor:pointer;
+  backdrop-filter:blur(10px);touch-action:manipulation;min-height:40px;flex:none}
+#mini{display:none;flex:1;min-width:0;height:40px;border-radius:10px;border:1px solid var(--line);background:rgba(6,17,22,.9);touch-action:none;cursor:pointer}
+.tools.seg #mini{display:block}.tools.seg #fitbtn{display:none}
+button:focus-visible,a:focus-visible{outline:2px solid #fff;outline-offset:2px}
+/* a panel: mindig alul, vízszintesen középen (telefonon teljes szélességű lap) */
+.sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:30;width:100%;max-width:580px;padding:0 10px calc(10px + var(--sab))}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px 18px 14px;backdrop-filter:blur(16px);
+  box-shadow:0 -10px 50px rgba(0,0,0,.55);max-height:62vh;max-height:62dvh;overflow:auto}
+/* a záróképernyőn a panel alacsonyabb, hogy a rétegkapcsolókkal együtt se takarja el az utcát */
+.sheet.fin .panel{max-height:38vh;max-height:38dvh}
+h1{font-size:22px;font-weight:900;line-height:1.18;margin-bottom:6px}
 h1 em{font-style:normal;color:var(--teal)}
-.eyebrow{font:500 11px var(--mono);letter-spacing:.14em;color:var(--teal);text-transform:uppercase;margin-bottom:8px;display:block}
-.eyebrow i{font-style:normal;color:var(--faint)}
+h1 .sw{display:inline-block;width:12px;height:12px;border-radius:4px;background:var(--c,var(--teal));margin-right:9px;vertical-align:1px}
+.eyebrow{font:500 11px var(--mono);letter-spacing:.12em;color:var(--teal);text-transform:uppercase;margin-bottom:8px;display:block}
 p{color:var(--muted);font-size:15px}p+p{margin-top:8px}
 p b{color:var(--text);font-weight:700}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 22px;border-radius:14px;font-weight:700;font-size:16px;cursor:pointer;
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:13px 20px;border-radius:14px;font-weight:700;font-size:16px;cursor:pointer;
   border:none;transition:.2s;font-family:var(--font);background:var(--teal);color:#04211d;min-height:50px;touch-action:manipulation}
 .btn:active{transform:scale(.97)}.btn[disabled]{opacity:.4;cursor:default}
 .btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--text)}
-.row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}.row .btn{flex:1}
-.cnt{display:flex;gap:6px;margin:12px 0 2px}.cnt i{flex:1;height:8px;border-radius:4px;background:rgba(143,176,181,.25)}.cnt i.on{background:var(--teal)}
-.hint{font:500 12.5px var(--mono);color:var(--faint);margin-top:10px;min-height:17px;line-height:1.5}
+.row{display:flex;gap:10px;margin-top:12px}.row .btn{flex:1}.row .btn.sm{flex:0 0 auto;min-width:104px;padding-left:14px;padding-right:14px}
+.cnt{display:flex;gap:6px;margin:10px 0 2px}.cnt i{flex:1;height:8px;border-radius:4px;background:rgba(143,176,181,.25)}.cnt i.on{background:var(--teal)}
+.hint{font:500 12.5px var(--mono);color:var(--muted);margin-top:10px;min-height:17px;line-height:1.5}
 .hint b{color:var(--teal)}.hint .bad{color:var(--red)}.hint .warn{color:var(--amber)}
-.prob{display:grid;gap:8px;margin:4px 0 2px}
-.prob>div{display:flex;gap:10px;align-items:flex-start;font-size:15px;color:var(--text);line-height:1.4}
-.prob .n{flex:none;width:24px;height:24px;border-radius:8px;background:rgba(42,209,181,.12);display:flex;align-items:center;justify-content:center;font:700 12px var(--mono);color:var(--teal)}
-.guess{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}
+.lnk{background:none;border:none;color:var(--teal);font:500 12.5px var(--mono);cursor:pointer;padding:13px 0;text-decoration:underline;text-underline-offset:3px}
+.guess{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
 .guess button{font:700 16px var(--mono);padding:13px 0;border-radius:12px;border:1.5px solid var(--line);background:rgba(15,74,87,.25);color:var(--text);cursor:pointer;touch-action:manipulation;min-height:50px}
 .guess button:active{background:var(--teal);color:#04211d}
 .score{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
-.sc{border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(15,74,87,.2)}
+.sc{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:rgba(15,74,87,.2)}
 .sc span{display:block;font:500 11px var(--mono);letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
-.sc b{display:block;font:500 32px var(--mono);line-height:1.1;margin-top:4px}
+.sc b{display:block;font:500 30px var(--mono);line-height:1.1;margin-top:4px}
 .sc.b1 b{color:var(--amber)}.sc.b2 b{color:var(--teal)}
 .src{font:500 11px var(--mono);color:var(--faint);margin-top:10px;line-height:1.5}
-/* a tölcsér sávja: a szabad terület aránya lépcsőnként */
-.fun{display:grid;gap:5px;margin:12px 0 4px}
-.fun div{display:grid;grid-template-columns:104px 1fr 44px;gap:8px;align-items:center;font:500 11.5px var(--mono);color:var(--muted)}
-.fun i{display:block;height:10px;border-radius:5px;background:rgba(143,176,181,.16);overflow:hidden}
-.fun i u{display:block;height:100%;border-radius:5px;background:var(--teal)}
-.fun b{color:var(--text);font-weight:500;text-align:right}
-.fun .cur{color:var(--text)}.fun .cur u{background:var(--amber)}
+/* varázsló: egy réteg = egy kártya (asztali gépen a rajz a szöveg mellett) */
+.wiz-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.wiz-top .eyebrow{margin:0;color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dots{display:flex;gap:3px;align-items:center;margin:0 0 10px}
+.dots i{flex:1;height:5px;border-radius:3px;background:rgba(143,176,181,.22)}.dots i.d{background:var(--muted)}.dots i.c{background:var(--c,var(--teal))}.dots i.g{margin-left:7px}
+.skip{background:none;border:none;color:var(--faint);font:500 11.5px var(--mono);cursor:pointer;padding:13px 0 13px 10px;margin:-9px 0;text-decoration:underline;text-underline-offset:3px;flex:none}
+.wz-body{display:grid;gap:8px}
+.wz-body p{font-size:14.5px;line-height:1.42}
+.art{display:block;width:100%;height:auto;border-radius:12px;background:#0b1d24;border:1px solid var(--line)}
+.eff{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:10px;font:500 12px var(--mono);color:var(--muted)}
+.eff .bar{height:10px;border-radius:5px;background:rgba(143,176,181,.16);position:relative;overflow:hidden}
+.eff .bar u{position:absolute;left:0;top:0;bottom:0;border-radius:5px;transition:width .5s ease}
+.eff .bar u.p{background:var(--c,var(--amber));opacity:.75}.eff .bar u.n{background:var(--teal)}
+.eff b{color:var(--text);font-weight:500;white-space:nowrap}
+.eff.note{display:block;color:var(--text);font:500 12.5px var(--mono);line-height:1.45}
+/* egyetlen halmozott sáv: mi vitte el a helyet */
+.stack{display:flex;height:22px;border-radius:7px;overflow:hidden;margin:12px 0 6px;background:rgba(143,176,181,.16)}
+.stack i{display:block;height:100%;min-width:2px}
+.stkl{display:flex;flex-wrap:wrap;gap:4px 12px;font:500 11.5px var(--mono);color:var(--muted)}
+.stkl span{white-space:nowrap}.stkl i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}.stkl b{color:var(--text);font-weight:500}
 /* a játékos fáinak sorsa */
-.fate{display:grid;gap:5px;margin-top:10px}
+.fate{display:grid;gap:4px;margin-top:8px}
 .fate div{display:flex;gap:8px;align-items:baseline;font-size:13.5px;color:var(--muted);line-height:1.35}
 .fate .t{flex:none;font:700 11px var(--mono);border-radius:100px;padding:1px 7px;background:rgba(143,176,181,.2);color:var(--text)}
 .fate .x .t{background:var(--red);color:#fff}.fate .ok .t{background:var(--teal);color:#04211d}.fate .lim .t{background:var(--amber);color:#2b1400}
@@ -102,41 +122,55 @@ details.cat summary::after{content:' ›'}details.cat[open] summary::after{conte
 .poll{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .poll button{font:500 13.5px var(--font);padding:10px 8px;border-radius:12px;border:1.5px solid var(--line);background:transparent;color:var(--text);cursor:pointer;touch-action:manipulation}
 .poll button.on{background:var(--teal);color:#04211d;border-color:var(--teal)}
-/* fa-jelölők (a külső elemet a MapLibre pozicionálja, azon nincs saját transform) */
-.mk{width:30px;height:30px;cursor:pointer}
-.tree{width:30px;height:30px;border-radius:50%;background:rgba(6,17,22,.88);border:2px solid var(--teal);display:flex;align-items:center;justify-content:center;
-  font:700 12px var(--mono);color:var(--text);box-shadow:0 4px 14px rgba(0,0,0,.6);animation:pop .3s cubic-bezier(.2,.8,.3,1.3)}
+/* a fák sorszáma a törzs tövénél (a külső elemet a MapLibre pozicionálja, azon nincs saját transform) */
+.mk{width:24px;height:24px;cursor:pointer}
+.tree{width:24px;height:24px;border-radius:50%;background:rgba(6,17,22,.92);border:2px solid #eafaf7;display:flex;align-items:center;justify-content:center;
+  font:700 11px var(--mono);color:var(--text);box-shadow:0 3px 12px rgba(0,0,0,.6);animation:pop .3s cubic-bezier(.2,.8,.3,1.3)}
 @keyframes pop{0%{transform:scale(.2)}100%{transform:scale(1)}}
-.tree.x{border-color:var(--red);color:var(--red);background:rgba(40,8,4,.9)}
+.tree.x{border-color:var(--red);color:var(--red);background:rgba(40,8,4,.92)}
+.tree.x.now{animation:shake .5s ease-in-out 2}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 .tree.lim{border-color:var(--amber);color:var(--amber)}
 .tree.ok{border-color:var(--teal);color:var(--teal)}
-.mk.ghost{pointer-events:none}.mk.ghost .tree{opacity:.5;animation:none;width:24px;height:24px;margin:3px;font-size:10px}
+.mk.ghost{pointer-events:none}.mk.ghost .tree{animation:none}.mk.ghost .tree.x.now{animation:shake .5s ease-in-out 2}
 .mk.probe .tree{border-style:dashed;animation:none}
+.tip{background:rgba(40,8,4,.96);border:1px solid var(--red);color:#fff;font:500 13px var(--font);padding:7px 11px;border-radius:10px;white-space:normal;width:max-content;max-width:min(78vw,300px);text-align:center;line-height:1.35;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.6)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(100px + var(--sat));z-index:45;max-width:min(92vw,430px);background:rgba(6,17,22,.96);border:1px solid var(--line);color:#fff;
+  font:500 14px var(--font);padding:10px 14px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .2s;text-align:center}
+.toast.on{opacity:1}
 .maplibregl-ctrl-attrib{font-size:10px!important}
+.maplibregl-ctrl-top-left{top:calc(98px + var(--sat))!important;z-index:35}
 .err{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
 body.maperr .err{display:flex}
 .err div{max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--faint);border-top-color:var(--teal);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes sp{to{transform:rotate(360deg)}}
-@media(min-width:900px){.sheet{left:18px;transform:none;max-width:430px;bottom:6px}.panel{max-height:78vh}}
-@media(prefers-reduced-motion:reduce){.tree{animation:none}}
+@media(min-width:820px){.sheet{bottom:12px}.sheet.wide{max-width:780px}.panel{padding:18px 22px 16px}.sheet.fin .panel{max-height:34vh}.insp svg{max-height:132px;width:auto;max-width:100%;margin-left:auto;margin-right:auto}
+  .sheet.wide .wz-body{grid-template-columns:320px 1fr;gap:16px;align-items:start;min-height:100px}}
+@media(max-width:819px){.art{max-height:88px;width:auto;max-width:100%;margin:0 auto}.wz-body p{font-size:14px}.src.cav{display:none}.src.cav.keep{display:block}.panel{padding:14px 16px 12px}}
+@media(prefers-reduced-motion:reduce){.tree,.tree.x.now,.mk.ghost .tree.x.now{animation:none}.eff .bar u{transition:none}}
 </style>
 </head>
 <body>
 <div id="map"></div>
 <a class="homelink" id="homelink" href="../jatekok.html">← JÁTÉKOK</a>
 <div class="topbar" id="topbar"><span id="tb-round">Diósd · Kossuth Lajos utca</span></div>
-<button class="fitbtn" id="fitbtn" type="button" style="display:none" onclick="fitStreet(true)">Teljes utca</button>
+<div class="tools" id="tools"><canvas id="mini" aria-label="Az utca áttekintő sávja: koppints, hogy odaugorj"></canvas><button id="fitbtn" type="button" onclick="overview()">Teljes utca</button><button id="dimbtn" type="button" onclick="toggle3D()">2D</button></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="err"><div><h1>A játék adatai nem töltöttek be</h1><p>Próbáld újra egy kicsit később, vagy válassz egy másik játékot.</p>
 <div class="row"><a class="btn" id="err-next" href="../jatekok.html">Másik játék</a></div></div></div>
-<div class="sheet"><div id="layers" style="display:none"></div><div class="panel" id="panel"></div></div>
+<div class="sheet" id="sheet"><div id="layers" style="display:none"></div><div class="panel" id="panel"></div></div>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 /* =====================================================================
-   HOL FÉR EL EGY FA? — egy valós utca (Diósd, Kossuth Lajos utca), valós adatokon.
-   Két kör, mint a testvérjátékban: előbb adat nélkül ültetsz, aztán négy lépcsőben megnézzük, mit enged az utca
-   (közlekedés → telek és felszín → föld fölött → föld alatt), végül ugyanezt adattal.
+   HOL FÉR EL EGY FA? — egy valós utca (Diósd, Kossuth Lajos utca), valós adatokon, 3D-ben.
+   Menet: bemutatkozik az utca → tipp → 5 fa adat nélkül → rétegenként (egy kattintás = egy réteg) kiderül,
+   mit enged az utca → eredmény → 5 fa adattal → az utca mérlege.
+   Elvek: · ami az utcán szemmel látszik (úttest, szegély, járda, behajtó, kerítés, ház, fa), az kezdettől látszik, semleges színnel;
+            a szabályok távolságai, a légvezeték és a föld alatti vezetékek rétegenként jönnek;
+          · a zöld egyet jelent: ide fér fa. A sáv zölden indul, és minden réteg kiharap belőle;
+          · minden megjelenített adat a térképen kap feliratot (nincs külön jelmagyarázat).
    Adatok (data/fahely-diosd-kossuth.json, előre kiszámolva):
      · utca, behajtók, kerítések, járdák, parkolók, oszlopok, légvezeték, fák: OpenStreetMap
      · közművek: az e-közmű lakossági térképe alapján, egyszerűsítve — tájékoztató jellegű
@@ -144,16 +178,23 @@ body.maperr .err{display:flex}
    ugyanaz a kód számolta az adatcsomag számait, mint ami itt a koppintásokat vizsgálja.
    ===================================================================== */
 const N = 5;                                   /* fák száma körönként */
-const P = document.getElementById('panel'), TB = document.getElementById('tb-round');
+const P = document.getElementById('panel'), TB = document.getElementById('tb-round'), SHEET = document.getElementById('sheet'), TOOLS = document.getElementById('tools');
 document.getElementById('homelink').href = GV.hubUrl();
 document.getElementById('err-next').href = GV.hubUrl();
 const esc = GV.esc;
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches, FINE = matchMedia('(hover:hover) and (pointer:fine)').matches;
 const hu = (v, d = 1) => (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toFixed(d).replace('.', ',');   /* tizedesvessző */
+const hm = v => Math.abs(v - Math.round(v)) < 0.005 ? String(Math.round(v)) : hu(v, Math.abs(v * 10 - Math.round(v * 10)) > 0.01 ? 2 : 1);   /* 2 · 1,5 · 1,25 */
+const dateHu = d => String(d).replace(/-/g, '. ') + '.';
 const nf = v => String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+const pc = v => String(Math.round(v)) + '%';
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-let D = null, M = null, G = null, EN = null, AX = null;      /* adatcsomag, meta, motor-bemenet, előkészített motor, tengely */
-let map = null, mapReady = false, layersAdded = false, LC = null;
-let S = { st: 'loading', guess: null, stage: 0, trees: [], ghosts: [], r1: null, tries: 0, toggles: {}, t0: Date.now(), last: null, probe: null, poll: null };
+let D = null, M = null, G = null, EN = null, AX = null, STEPS = [], CH = [], NST = 0;
+let map = null, mapReady = false, layersAdded = false, LC = null, FONT = ['Noto Sans Regular'], hasGlyphs = true;
+const GRP = {}, LAB = {}, GRID = {}, SHOW = [];
+let S = { st: 'loading', intro: 0, guess: null, step: 0, trees: [], ghosts: [], r1: null, tries: 0, toggles: {}, t0: Date.now(), last: null, probe: null, poll: null, d3: true, skipped: false,
+  segS: null, flash: 0, sec: false, dwell: [], tStep: 0 };
 
 /* ---------- koordináták: helyi méter ↔ földrajzi ---------- */
 const LL = (x, y) => [M.lon0 + M.inv[0] * x + M.inv[1] * y, M.lat0 + M.inv[2] * x + M.inv[3] * y];
@@ -161,197 +202,411 @@ const XY = (lon, lat) => { const a = lon - M.lon0, b = lat - M.lat0; return [M.f
 const LLst = (s, t) => { const p = AX.xy(s, t); return LL(p[0], p[1]); };
 const unflat = a => { const o = []; for (let i = 0; i < a.length; i += 2) o.push([a[i] / 10, a[i + 1] / 10]); return o; };
 const FC = f => ({ type: 'FeatureCollection', features: f });
-const lineFC = (arr, props) => FC(arr.map(l => ({ type: 'Feature', properties: props || {}, geometry: { type: 'LineString', coordinates: l.map(p => LL(p[0], p[1])) } })));
-const polyFC = (arr, props) => FC(arr.map(l => ({ type: 'Feature', properties: props || {}, geometry: { type: 'Polygon', coordinates: [l.map(p => LL(p[0], p[1]))] } })));
-const ptFC = (arr, fn) => FC(arr.map((p, i) => ({ type: 'Feature', properties: fn ? fn(p, i) : {}, geometry: { type: 'Point', coordinates: LL(p[0], p[1]) } })));
-/* méterhű vonalvastagság / körsugár: képpont = méter · 2^z · 512 / (40 075 017 · cos φ) */
+const lineFC = arr => FC(arr.map(l => ({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: l.map(p => LL(p[0], p[1])) } })));
+const polyFC = arr => FC(arr.map(l => ({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [l.map(p => LL(p[0], p[1]))] } })));
+const ptFC = arr => FC(arr.map(p => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: LL(p[0], p[1]) } })));
+/* méterhű vonalvastagság / körsugár (dőlt nézetben is a térkép síkjában marad): képpont = méter · 2^z · 512 / (40 075 017 · cos φ) */
 let PXM14 = 0.3093;
 const mw = m => ['interpolate', ['exponential', 2], ['zoom'], 14, m * PXM14, 22, m * PXM14 * 256];
 
-/* ---------- szabályok szövege ---------- */
-const STAGE_TXT = {
-  1: { name: 'Közlekedés', src: 'adat: OpenStreetMap', chip: 's1' },
-  2: { name: 'Telek és felszín', src: 'adat: OpenStreetMap', chip: 's2' },
-  3: { name: 'Föld fölött', src: 'adat: OpenStreetMap', chip: 's3' },
-  4: { name: 'Föld alatt', src: 'adat: e-közmű lakossági térkép', chip: 's4' } };
-const CROWN = ['', 'kis', 'közepes', 'nagy'], CROWN_M2 = [0, 12, 38, 113];
+/* ---------- színek: a zöld csak azt jelenti, „ide fér fa”; minden rétegnek saját, nem zöld színe van ---------- */
+const COL = { road: '#c5d1d6', drive: '#ff8a4c', sight: '#ff5d8f', walk: '#e6d3a3', plot: '#d9a66b', tree: '#a3c644', drain: '#4cc9f0', wire: '#d0a6ff',
+  cable: '#ff4a3d', tel: '#8aa596', water: '#4f8dff', sewer: '#c0694f', gas: '#f5e663' };
+const CHCOL = ['', '#ff8a4c', '#d9a66b', '#d0a6ff', '#4f8dff'];
+const NEUT = '#6f8188', FREE = '#2ad1b5', FREE1 = '#a8ecdf';
+const CROWN = ['', 'kis', 'közepes', 'nagy'], CROWN_M2 = [0, 12, 38, 113], CROWN_R = [0, 2, 3.5, 6], CROWN_H = [0, 5.5, 8.5, 12];
 const rule = id => EN.rules[id];
-function failText(c) { const r = rule(c.id); return '<b>' + esc(r.n) + '</b> ' + hu(Math.max(0, c.d)) + ' m — kell ' + hu(c.need) + ' m'; }
-function limText(c) { const r = rule(c.id);
-  if (c.id === 'tel') return '<b>' + esc(r.n) + '</b> ' + hu(Math.max(0, c.d)) + ' m-re: csak védelemmel, kézi földmunkával';
-  return '<b>' + esc(r.n) + '</b> ' + hu(Math.max(0, c.d)) + ' m-re: legfeljebb ' + CROWN[c.cap] + ' koronájú fa'; }
+const chOf = id => CH[rule(id).ch - 1];
+const stepOf = id => STEPS[rule(id).stage - 1];
+/* a mért távolságot lefelé kerekítjük egy tizedesre: 1,96 m ne látsszon 2,0-nak, ha 2 m kell */
+const dTxt = d => d < 0.05 ? 'éppen rajta' : hu(Math.floor(d * 10 + 1e-9) / 10) + ' m-re';
+function failText(c) { const r = rule(c.id); return '<b>' + esc(r.n) + '</b> ' + dTxt(Math.max(0, c.d)) + ' — kell ' + hm(c.need) + ' m'; }
+function limText(c) { const r = rule(c.id), d = dTxt(Math.max(0, c.d));
+  if (c.id === 'tel') return '<b>' + esc(r.n) + '</b> ' + d + ': csak kézi földmunkával, védőcsővel';
+  return '<b>' + esc(r.n) + '</b> ' + d + ': legfeljebb ' + CROWN[c.cap] + ' koronájú fa'; }
 
-/* ---------- indulás: adat → motor → térkép ---------- */
-render();
-fetch('data/fahely-diosd-kossuth.json?v=15').then(r => { if (!r.ok) throw new Error('adat'); return r.json(); }).then(init).catch(() => document.body.classList.add('maperr'));
+/* ---------- a 12 réteg szövege (a távolságok a rules táblából jönnek) ---------- */
+function stepTxt(key) { const c = M.counts, R = id => rule(id).d, EK = 'Tájékoztató jellegű adat (e-közmű lakossági térkép).';
+  const d3 = id => hm(R(id)[0]) + ' m kis, ' + hm(R(id)[1]) + ' m közepes, ' + hm(R(id)[2]) + ' m nagy koronájú fánál';
+  return ({
+    road: { t: 'Úttest és szegély', p: 'A szegély mellett álló törzset elkapja az autók tükre, ajtaja és a kukásautó oldala.',
+      r: 'Jellemző érték: a szegélytől ' + hm(R('road')[0]) + ' m.', cav: 'Az úttest szélessége feltételezett (6 m): az OpenStreetMap csak a tengelyét adja meg.' },
+    drive: { t: 'Kapubehajtók', p: c.drive + ' kapubehajtó keresztezi a sávot. A ki- és beforduló autónak hely és kilátás kell, a kereke pedig letapossa a gyökeret.',
+      r: 'Jellemző érték: a behajtó szélétől ' + d3('drive') + '.', cav: 'A behajtók szélessége feltételezett (3 m).' },
+    sight: { t: 'Kereszteződés és zebra', p: c.junc + ' helyen csatlakozik másik út, és ' + (c.cross === 1 ? 'egy' : c.cross) + ' zebra vezet át az utcán. A törzs és a lomb eltakarja a kikanyarodó sofőr elől az érkező autót és az átkelő gyereket.',
+      r: 'Ökölszabály: a kereszteződés középpontjától ' + hm(R('junc')[0]) + ' m, a zebrától ' + hm(R('cross')[0]) + ' m.', cav: 'A valódi látómezőt a megengedett sebességhez méretezi a forgalomtechnikai terv.' },
+    walk: { t: 'Járda', p: 'A járdán babakocsival és kerekesszékkel is el kell férni, a burkolathoz túl közel nőtt gyökér pedig felnyomja.',
+      r: 'Jellemző érték: a járda szélétől ' + hm(R('walk')[0]) + ' m, így megmarad az 1,5 m szabad szélesség.', cav: 'A járda szélessége feltételezett (1,5 m).' },
+    plot: { t: 'Kerítés és homlokzat', p: 'A korona átnő a szomszéd telek fölé és nekinő a falnak, a gyökér megemeli a kerítés lábazatát.',
+      r: 'Jellemző érték: kerítéstől és homlokzattól ' + d3('fence') + '.', cav: 'A telekhatárt a kerítés vonalával közelítjük.' },
+    tree: { t: 'Meglévő fák', p: c.tree + ' fa már áll a sávban és a szélén. A túl közel ültetett fák koronája összenő, a gyökereik ugyanazért a vízért versenyeznek.',
+      r: 'Jellemző tőtávolság: meglévő fától ' + d3('tree') + '.', cav: 'A fák helye az OpenStreetMapből származik; a fasorok fáit 7 méterenként becsültük.' },
+    drain: { t: 'Vízelvezető árok', p: 'Az úttest mellett nyílt vízelvezető árok fut (' + nf(c.drainLen) + ' m), helyenként csőben, a föld alatt folytatódik. Géppel kotorják és kaszálják, ehhez szabad sáv kell.',
+      r: 'Jellemző érték: az árok tengelyétől ' + hm(R('drain')[0]) + ' m, az aknafedlaptól ' + hm(R('manhole')[0]) + ' m.', cav: 'A 3 m a vízfolyások parti sávjának mintájára vett érték; út menti ároknál nem előírás.' },
+    wire: { t: 'Légvezeték és oszlopok', p: 'Kisfeszültségű légvezeték fut oszlopról oszlopra. A vezetékbe növő ágat újra és újra vissza kell vágni.',
+      r: 'Jellemző érték: a vezeték közelében csak alacsonyra növő, kis koronájú fa nőhet — közepes koronájú ' + hm(R('wire')[1]) + ' m-től, nagy ' + hm(R('wire')[2]) + ' m-től. Oszloptól ' + hm(R('pole')[0]) + ' m.',
+      cav: 'A közvilágítási lámpák ' + hm(R('lamp')[0]) + ' m-es körzetében is csak kis koronájú fa fér el. A házi csatlakozók nyomvonala az e-közmű térképéből becsült.' },
+    cable: { t: 'Kábelek a föld alatt', p: 'Az utcában ' + nf(c.cableLen) + ' m elektromos földkábel és ' + nf(c.telLen) + ' m hírközlési kábel fut — a felszínen semmi sem jelzi őket.',
+      r: 'Jellemző érték: a földkábeltől ' + hm(R('cable')[0]) + ' m. A hírközlési kábel ' + hm(R('tel')[0]) + ' m-es sávjában csak kézi földmunkával ültethető fa.',
+      cav: 'Az e-közmű térképe nem különíti el a légvezetéket és a földkábelt: ami az oszlopsor mentén fut, azt légvezetéknek vettük — ez becslés.', cs: EK },
+    water: { t: 'Ivóvízvezeték', p: 'Nyomás alatti cső, amelyről minden telekre bekötés ágazik le; az utcában ' + nf(c.waterLen) + ' m. Csőtöréskor azonnal ásni kell, akkor is, ha ott fa áll.',
+      r: 'Jellemző üzemeltetői érték: a vezetéktől ' + hm(R('water')[0]) + ' m.', cav: 'Tájékoztató jellegű adat; a házi bekötések egy része a nyilvántartásból is hiányozhat.', cs: EK },
+    sewer: { t: 'Csatorna', p: 'Föld alatti csatorna, az utcában ' + nf(c.sewerLen) + ' m, részben az úttest alatt. A gyökér a nedvesség felé nő, a csőkötéseknél benő a csatornába, és eltömi.',
+      r: 'Jellemző üzemeltetői érték: a csatornától ' + hm(R('sewer')[0]) + ' m.', cav: 'Tájékoztató jellegű adat; a térkép nem különíti el a szenny- és a csapadékvíz-csatornát, és az aknák nem szerepelnek benne.', cs: EK },
+    gas: { t: 'Gázvezeték', p: 'A házakat ellátó, föld alatti cső; az utcában ' + nf(c.gasLen) + ' m. A gyökér megsértheti a csövet, javításkor pedig a fa a munkaárok útjában áll.',
+      r: 'Jellemző érték, jogszabályi eredetű: a vezetéktől ' + hm(R('gas')[0]) + ' m.', cav: 'A föld alatti vezetékek helye tájékoztató jellegű: az e-közmű lakossági térképéről rajzoltuk át, hiteles adatot a közműegyeztetés ad.', cs: EK }
+  })[key]; }
 
+/* ---------- adat → motor → térkép (az indítás a szkript végén van) ---------- */
 function init(data) {
-  D = data; M = D.meta;
+  D = data; M = D.meta; STEPS = D.steps; CH = D.chapters; NST = M.nstep;
   PXM14 = 16384 * 512 / (40075016.686 * Math.cos(M.lat0 * Math.PI / 180));
   const f = {}; Object.keys(D.f).forEach(k => f[k] = D.f[k].map(unflat));
   ['pole', 'lamp', 'tree', 'manhole', 'junc'].forEach(k => f[k] = D.pt[k].map(p => [p[0] / 10, p[1] / 10, p[2] || 0]));
   G = { meta: { half: M.half, driveHalf: M.driveHalf, walkHalf: M.walkHalf, limStep: M.limStep }, axis: unflat(D.axis), rules: D.rules, f, lim: { L: D.lim.L.map(v => v / 10), R: D.lim.R.map(v => v / 10) } };
   EN = FH.prepare(G); AX = EN.axis;
-  /* a 4. lépcső utáni szabad rácspontok — a 2. körben a koppintás ehhez igazodik (ujjnyi pontatlanságon belül) */
-  S.freePts = []; ['L', 'R'].forEach(side => { const F = D.free[side], r = F.runs[4]; for (let i = 0; i < r.length; i += 4) for (let is = r[i + 1]; is <= r[i + 2]; is++) { const p = AX.xy(M.s0 + is * M.step, F.sign * (F.tMin + r[i] * M.step)); S.freePts.push([p[0], p[1], r[i + 3]]); } });
-  S.st = 'intro'; render(); initMap();
+  /* a rács lépésenként: melyik cellában mekkora korona fér el (0 = nem állhat fa) */
+  ['L', 'R'].forEach(side => { const F = D.free[side], ns = M.ns, arr = [];
+    for (let st = 0; st <= NST; st++) { const g = new Uint8Array(F.nt * ns), r = F.runs[st]; for (let i = 0; i < r.length; i += 4) for (let is = r[i + 1]; is <= r[i + 2]; is++) g[r[i] * ns + is] = r[i + 3]; arr.push(g); }
+    GRID[side] = { nt: F.nt, sign: F.sign, tMin: F.tMin, crown: arr }; });
+  /* a végső szabad rácspontok — a 2. körben a koppintás ehhez igazodik (ujjnyi pontatlanságon belül) */
+  S.freePts = []; ['L', 'R'].forEach(side => { const g = GRID[side], c = g.crown[NST], ns = M.ns; for (let i = 0; i < c.length; i++) if (c[i]) { const p = AX.xy(M.s0 + (i % ns) * M.step, g.sign * (g.tMin + Math.floor(i / ns) * M.step)); S.freePts.push([p[0], p[1], c[i]]); } });
+  /* lépésenként: hol a legtöbb a kieső terület (keskeny képernyőn oda csúszunk) */
+  for (let k = 1; k <= NST; k++) { const bins = new Map();
+    ['L', 'R'].forEach(side => { const g = GRID[side], a = g.crown[k - 1], b = g.crown[k], ns = M.ns; for (let i = 0; i < a.length; i++) if (a[i] && (!b[i] || (b[i] === 1 && a[i] > 1))) { const key = Math.floor((M.s0 + (i % ns) * M.step) / 12); bins.set(key, (bins.get(key) || 0) + 1); } });
+    let best = null; bins.forEach((n, key) => { const m = n + (bins.get(key - 1) || 0) + (bins.get(key + 1) || 0); if (!best || m > best.n) best = { n: m, s: key * 12 + 6 }; });
+    SHOW[k] = best ? clamp(best.s, 28, AX.L - 28) : (SHOW[k - 1] || AX.L / 2); }
+  S.st = 'intro'; S.intro = 0; render(); initMap();
 }
 
-const BLANK = { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#050f14' } }] };
+const BLANK = { version: 8, glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf', sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#050f14' } }] };
 let blankTried = false;
+/* keskeny képernyőn a teljes utca túl apró lenne a játékhoz: ott utcaszakaszt mutatunk, fölötte áttekintő sávval */
+const seg = () => !!AX && (innerWidth - 48) / (AX.L + 16) < 4.2;
+const segPx = () => Math.max(5.6, innerWidth / 60);
+const pitchNow = () => S.d3 ? 42 : 0;
+function pickFont(m) { try { const st = m.getStyle() || {}; if (!st.glyphs) return null;
+  const A = (st.layers || []).filter(l => l.type === 'symbol' && l.layout && Array.isArray(l.layout['text-font']) && typeof l.layout['text-font'][0] === 'string').map(l => l.layout['text-font']).filter(s => !/italic/i.test(s[0]));
+  return A.find(s => /bold/i.test(s[0])) || A.find(s => /medium|regular/i.test(s[0])) || A[0] || ['Noto Sans Regular']; } catch (e) { return ['Noto Sans Regular']; } }
 function initMap() {
-  const opts = { container: 'map', theme: 'dark', center: [M.lon0, M.lat0], zoom: 17, bearing: M.az - 90, pitch: 0, minZoom: 15, maxZoom: 21, dragRotate: false, pitchWithRotate: false, touchPitch: false };
-  const ready = m => { map = m; mapReady = true; try { m.touchZoomRotate.disableRotation(); } catch (e) {} addLayers(); applyStage(); fitStreet(false); m.on('click', onTap); document.getElementById('fitbtn').style.display = ''; };
+  const opts = { container: 'map', theme: 'dark', center: [M.lon0, M.lat0], zoom: 16.2, bearing: M.az - 90, pitch: 0, minZoom: 15, maxZoom: 21, maxPitch: 60, dragRotate: false, pitchWithRotate: false, touchPitch: false,
+    pixelRatio: Math.min(devicePixelRatio || 1, 2), antialias: FINE, attributionControl: false };
+  const ready = m => { map = m; mapReady = true;
+    try { m.touchZoomRotate.disableRotation(); m.keyboard.disableRotation(); m.doubleClickZoom.disable(); } catch (e) {}
+    try { m.setLight({ anchor: 'viewport', intensity: 0.25 }); } catch (e) {}
+    m.on('error', e => { try { console.warn('[fahely]', e && e.error && e.error.message); } catch (x) {} });
+    const fo = pickFont(m); hasGlyphs = !!fo; if (fo) FONT = fo;
+    /* az alaptérkép lapos épületei és POI-feliratai a saját 3D-s jelenet alatt csak zavarnának */
+    try { (m.getStyle().layers || []).forEach(l => { const sl = l['source-layer'] || ''; if (/^buildings?$/.test(sl) || (l.type === 'symbol' && /poi|housenum/i.test(l.id + ' ' + sl))) m.setLayoutProperty(l.id, 'visibility', 'none'); }); } catch (e) {}
+    TOOLS.style.display = 'flex'; try { m.addControl(new maplibregl.AttributionControl({ compact: true }), 'top-left');   /* a forrásmegjelölés néhány másodpercig kinyitva látszik, aztán az (i) gombba húzódik */
+      setTimeout(() => { const a = document.querySelector('.maplibregl-ctrl-attrib'); if (a) { a.classList.remove('maplibregl-compact-show'); a.removeAttribute('open'); } }, 6000); } catch (e) {}
+    addLayers(); applyScene(); cam(true); m.on('click', onTap); m.on('move', miniFrame); m.on('moveend', segSnap); if (FINE) m.on('mousemove', onHover); };
   /* ha az alaptérkép nem jön, üres stílussal megyünk tovább: a játék minden rétege a saját adatcsomagból rajzolódik */
-  const fail = () => { if (mapReady || blankTried) return; blankTried = true; try { map && map.remove(); } catch (e) {}
-    try { const m = new maplibregl.Map(Object.assign({}, opts, { style: BLANK, attributionControl: false })); m.on('load', () => ready(m)); } catch (e) { document.body.classList.add('maperr'); } };
+  const fail = () => { if (mapReady || blankTried) return;
+    /* háttérben lévő lapon a térkép nem tud betölteni: ilyenkor nem váltunk tartalékra, megvárjuk, amíg a lap előtérbe kerül */
+    if (document.hidden) { const h = () => { document.removeEventListener('visibilitychange', h); setTimeout(fail, 7000); }; document.addEventListener('visibilitychange', h); return; }
+    blankTried = true; try { map && map.remove(); } catch (e) {}
+    try { const o = Object.assign({}, opts, { style: BLANK }); delete o.theme; const m = new maplibregl.Map(o); m.on('load', () => ready(m)); } catch (e) { document.body.classList.add('maperr'); } };
   try { map = GVMAP.createMap(opts, ready, fail); } catch (e) { fail(); }
 }
 
-/* ---------- a térkép saját rétegei (mind fh- előtaggal) ---------- */
-const VIS = {};      /* chip-azonosító → [réteg-azonosítók] */
+/* ---------- geometria a 3D-s elemekhez (helyi méterből) ---------- */
+const ringLL = (x, y, r, n) => { const o = []; for (let i = 0; i <= n; i++) { const a = i / n * 6.283185307; o.push(LL(x + r * Math.cos(a), y + r * Math.sin(a))); } return o; };
+const ext = (ring, base, h, col) => ({ type: 'Feature', properties: { b: base, h: h, c: col }, geometry: { type: 'Polygon', coordinates: [ring] } });
+function treeF(x, y, R, H, pal) { const th = Math.min(3, H * 0.36), tr = Math.max(0.16, R * 0.085), c1 = th + (H - th) * 0.5, c2 = th + (H - th) * 0.82;
+  return [ext(ringLL(x, y, tr, 6), 0, th, pal[0]), ext(ringLL(x, y, R, 14), th, c1, pal[1]), ext(ringLL(x, y, R * 0.8, 14), c1, c2, pal[2]), ext(ringLL(x, y, R * 0.48, 10), c2, H, pal[3])]; }
+const stump = (x, y) => [ext(ringLL(x, y, 0.55, 8), 0, 1.5, '#ff6b4a')];
+const ribbon = (a, b, w) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l * w / 2, ny = dx / l * w / 2; return [LL(a[0] + nx, a[1] + ny), LL(b[0] + nx, b[1] + ny), LL(b[0] - nx, b[1] - ny), LL(a[0] - nx, a[1] - ny), LL(a[0] + nx, a[1] + ny)]; };
+const ribbonF = (lines, w, base, h, col) => { const o = []; lines.forEach(l => { for (let i = 0; i + 1 < l.length; i++) if (Math.hypot(l[i + 1][0] - l[i][0], l[i + 1][1] - l[i][1]) > 0.05) o.push(ext(ribbon(l[i], l[i + 1], w), base, h, col)); }); return o; };
+const PAL_OLD = ['#5a4631', '#3f6b33', '#4a7a3b', '#57893f'], PAL_NEW = ['#8a6a48', '#c9f3ea', '#dff8f2', '#f2fdfa'], PAL_LIM = ['#8a6a48', '#f0c36a', '#f6d48c', '#fbe6b5'], PAL_FIN = ['#8aa0a6', '#bfeee6', '#d5f5ef', '#eafaf7'];
+const lineMid = l => { let L = 0; for (let i = 1; i < l.length; i++) L += Math.hypot(l[i][0] - l[i - 1][0], l[i][1] - l[i - 1][1]); let a = L / 2; for (let i = 1; i < l.length; i++) { const d = Math.hypot(l[i][0] - l[i - 1][0], l[i][1] - l[i - 1][1]); if (a <= d && d > 0) return { p: [l[i - 1][0] + (l[i][0] - l[i - 1][0]) * a / d, l[i - 1][1] + (l[i][1] - l[i - 1][1]) * a / d], L }; a -= d; } return { p: l[0], L }; };
+/* a vonal sávba eső, a sáv közepéhez legközelebbi pontja (felirat helye) */
+function inStripPt(l) { let best = null; for (let i = 0; i + 1 < l.length; i++) { const d = Math.hypot(l[i + 1][0] - l[i][0], l[i + 1][1] - l[i][1]), n = Math.max(1, Math.ceil(d / 1.5)); for (let k = 0; k <= n; k++) { const p = [l[i][0] + (l[i + 1][0] - l[i][0]) * k / n, l[i][1] + (l[i + 1][1] - l[i][1]) * k / n], q = AX.st(p[0], p[1]);
+    if (q.s < 2 || q.s > AX.L - 2) continue; const lim = FH.limAt(EN, q.s, q.t >= 0 ? 'L' : 'R'), at = Math.abs(q.t); if (at < M.half || at > lim) continue; const e = Math.abs(at - (M.half + lim) / 2); if (!best || e < best.e) best = { e, p }; } } return best ? best.p : null; }
+
+/* ---------- a térkép saját rétegei (mind fh előtaggal), csoportokba rendezve ----------
+   Sorrend = mélység: előbb minden síkbeli réteg, utána a 3D-s elemek (azok takarják a síkbelieket), legfelül a feliratok. */
 function addLayers() {
   if (layersAdded || !mapReady) return; layersAdded = true;
-  const f = G.f, src = (id, data) => map.addSource(id, { type: 'geojson', data, buffer: 256, tolerance: 0.1 });
-  const lay = (id, type, source, paint, layout, grp) => { map.addLayer({ id, type, source, paint, layout: Object.assign({ visibility: grp ? 'none' : 'visible' }, layout || {}) }); if (grp) (VIS[grp] = VIS[grp] || []).push(id); };
-  const round = { 'line-cap': 'round', 'line-join': 'round' };
-  /* a közterületi sáv (szőnyeg) és az utca saját rajza */
-  const strip = []; ['L', 'R'].forEach(side => { const sg = side === 'L' ? 1 : -1, a = [], b = []; const lim = G.lim[side];
-    for (let i = 0; i < lim.length; i++) { const s = Math.min(i * M.limStep, AX.L); a.push(AX.xy(s, sg * M.half)); b.push(AX.xy(s, sg * lim[i])); }
-    strip.push(a.concat(b.reverse(), [a[0]])); });
-  src('fh-strip', polyFC(strip)); lay('fh-strip', 'fill', 'fh-strip', { 'fill-color': '#0d2a31', 'fill-opacity': 0.94 });
-  src('fh-grass', polyFC(f.grass)); lay('fh-grass', 'fill', 'fh-grass', { 'fill-color': '#1d4a3a', 'fill-opacity': 0.55 });
-  src('fh-park', polyFC(f.park)); lay('fh-park', 'fill', 'fh-park', { 'fill-color': '#33454d', 'fill-opacity': 0.9 }); lay('fh-park-l', 'line', 'fh-park', { 'line-color': '#5d747c', 'line-width': 0.7 });
-  src('fh-road', lineFC([G.axis].concat(f.side))); lay('fh-road', 'line', 'fh-road', { 'line-color': '#27343a', 'line-width': mw(2 * M.half) }, { 'line-cap': 'butt', 'line-join': 'round' });
-  src('fh-drive', lineFC(f.drive)); lay('fh-drive', 'line', 'fh-drive', { 'line-color': '#3a4a50', 'line-width': mw(2 * M.driveHalf) }, { 'line-cap': 'butt' });
-  src('fh-walk', lineFC(f.walk)); lay('fh-walk', 'line', 'fh-walk', { 'line-color': '#5f7178', 'line-width': mw(2 * M.walkHalf) }, round);
-  src('fh-cross', lineFC(f.cross)); lay('fh-cross', 'line', 'fh-cross', { 'line-color': '#e8eef0', 'line-width': mw(3), 'line-dasharray': [0.25, 0.25], 'line-opacity': 0.8 }, { 'line-cap': 'butt' });
-  src('fh-drain', lineFC(f.drain)); lay('fh-drain', 'line', 'fh-drain', { 'line-color': '#3d8fd1', 'line-width': mw(1.2) }, round);
-  src('fh-culv', lineFC(f.culv)); lay('fh-culv', 'line', 'fh-culv', { 'line-color': '#3d8fd1', 'line-width': mw(1), 'line-dasharray': [1, 1.2], 'line-opacity': 0.8 });
-  src('fh-bld', polyFC(f.bld)); lay('fh-bld', 'fill', 'fh-bld', { 'fill-color': '#1a3b47', 'fill-opacity': 0.95 }); lay('fh-bld-l', 'line', 'fh-bld', { 'line-color': '#3f6672', 'line-width': 1 });
-  src('fh-fence', lineFC(f.fence)); lay('fh-fence', 'line', 'fh-fence', { 'line-color': '#8a7350', 'line-width': 1.2 });
-  /* védősávok (kizáró: telt sáv; korlátozó: halványabb), lépcsőnként — a sáv szélessége a szabály távolságának kétszerese, méterhűen */
-  const R = id => rule(id).d[0];
-  const band = (id, source, color, meters, grp, op) => lay(id, 'line', source, { 'line-color': color, 'line-width': mw(meters), 'line-opacity': op == null ? 0.3 : op }, round, grp);
-  const disc = (id, source, color, radius, grp, op) => lay(id, 'circle', source, { 'circle-color': color, 'circle-radius': mw(radius), 'circle-opacity': op == null ? 0.3 : op, 'circle-pitch-alignment': 'map' }, null, grp);
-  const C1 = '#ff9f45', C2 = '#c77bff', C3 = '#ffd166';
-  src('fh-axis', lineFC([G.axis])); src('fh-side', lineFC(f.side));
-  band('fh-b-road', 'fh-road', C1, 2 * (M.half + R('road')), 's1', 0.22);
-  band('fh-b-drive', 'fh-drive', C1, 2 * (M.driveHalf + R('drive')), 's1');
-  band('fh-b-walk', 'fh-walk', C1, 2 * (M.walkHalf + R('walk')), 's1');
-  band('fh-b-cross', 'fh-cross', C1, 2 * R('cross'), 's1');
-  src('fh-junc', ptFC(f.junc)); disc('fh-b-junc', 'fh-junc', C1, R('junc'), 's1', 0.25);
-  band('fh-b-fence', 'fh-fence', C2, 2 * R('fence'), 's2');
-  lay('fh-b-bld', 'line', 'fh-bld', { 'line-color': C2, 'line-width': mw(2 * R('bld')), 'line-opacity': 0.3 }, round, 's2');
-  band('fh-b-drain', 'fh-drain', C2, 2 * R('drain'), 's2');
-  src('fh-tree', ptFC(f.tree)); disc('fh-b-tree', 'fh-tree', C2, R('tree'), 's2', 0.28);
-  src('fh-wire', lineFC(f.wire.concat(f.ohp))); band('fh-b-wire', 'fh-wire', C3, 2 * R('wire'), 's3', 0.2);
-  src('fh-pole', ptFC(f.pole)); disc('fh-b-pole', 'fh-pole', C3, R('pole'), 's3', 0.5);
-  src('fh-lamp', ptFC(f.lamp)); disc('fh-b-lamp', 'fh-lamp', C3, R('lamp'), 's3', 0.2);
-  const UC = { gas: '#f2d21b', water: '#3f7bff', sewer: '#b0563f', cable: '#ff4a3d', tel: '#3fbf5f' };
-  ['sewer', 'gas', 'water', 'cable', 'tel'].forEach(k => { src('fh-' + k, lineFC(f[k])); band('fh-b-' + k, 'fh-' + k, UC[k], 2 * R(k), 's4', k === 'tel' ? 0.12 : 0.3); });
-  src('fh-manhole', ptFC(f.manhole)); disc('fh-b-manhole', 'fh-manhole', '#b0563f', R('manhole'), 's4', 0.4);
-  band('fh-b-culv', 'fh-culv', '#3d8fd1', 2 * R('culv'), 's4', 0.25);
-  /* a szabad terület: az addig megismert szabályok után megmaradt rész, a megengedett korona szerint színezve */
-  src('fh-free', FC([])); lay('fh-free', 'fill', 'fh-free', { 'fill-color': ['match', ['get', 'c'], 3, '#2ad1b5', 2, '#8fe07a', '#e3e85a'], 'fill-opacity': 0.82, 'fill-antialias': false }, null, 'free');
-  /* a vonalak maguk (a védősávok fölött) */
-  ['sewer', 'gas', 'water', 'cable', 'tel'].forEach(k => lay('fh-l-' + k, 'line', 'fh-' + k, { 'line-color': UC[k], 'line-width': k === 'tel' ? 1 : 1.6, 'line-opacity': 0.95 }, round, 's4'));
-  lay('fh-l-wire', 'line', 'fh-wire', { 'line-color': '#ffd166', 'line-width': 1.4, 'line-dasharray': [3, 2] }, null, 's3');
-  lay('fh-l-pole', 'circle', 'fh-pole', { 'circle-color': '#ffd166', 'circle-radius': mw(0.35), 'circle-stroke-color': '#2b1400', 'circle-stroke-width': 1, 'circle-pitch-alignment': 'map' }, null, 's3');
-  lay('fh-l-tree', 'circle', 'fh-tree', { 'circle-color': '#2f9e62', 'circle-radius': mw(2.2), 'circle-opacity': 0.75, 'circle-stroke-color': '#0b3d25', 'circle-stroke-width': 1, 'circle-pitch-alignment': 'map' });
-  /* a végén: ahol a fák ténylegesen elférnek (gyűrű a korona méretével) */
-  src('fh-final', FC(D.trees.map(t => ({ type: 'Feature', properties: { c: t[2] }, geometry: { type: 'Point', coordinates: LL(t[0] / 10, t[1] / 10) } }))));
-  lay('fh-final', 'circle', 'fh-final', { 'circle-color': 'rgba(0,0,0,0)', 'circle-radius': ['interpolate', ['exponential', 2], ['zoom'], 14, ['*', ['match', ['get', 'c'], 3, 6, 2, 3.5, 2], PXM14], 22, ['*', ['match', ['get', 'c'], 3, 6, 2, 3.5, 2], PXM14 * 256]],
-    'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1.5, 'circle-stroke-opacity': 0.9, 'circle-pitch-alignment': 'map' }, null, 'final');
-}
-function freeFC(stage) {
-  const feats = [], st = M.step;
-  ['L', 'R'].forEach(side => { const F = D.free[side], r = F.runs[stage];
-    for (let i = 0; i < r.length; i += 4) { const it = r[i], a = r[i + 1], b = r[i + 2], c = r[i + 3];
-      const t0 = F.sign * (F.tMin + (it - 0.52) * st), t1 = F.sign * (F.tMin + (it + 0.52) * st), sa = M.s0 + (a - 0.5) * st, sb = M.s0 + (b + 0.5) * st, n = Math.max(1, Math.ceil((sb - sa) / 4)), ring = [];
-      for (let k = 0; k <= n; k++) ring.push(LLst(sa + (sb - sa) * k / n, t0)); for (let k = n; k >= 0; k--) ring.push(LLst(sa + (sb - sa) * k / n, t1)); ring.push(ring[0]);
-      feats.push({ type: 'Feature', properties: { c }, geometry: { type: 'Polygon', coordinates: [ring] } }); } });
-  return FC(feats);
-}
-let freeShown = -1;
-function setVis(grp, on) { (VIS[grp] || []).forEach(id => { try { map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'); } catch (e) {} }); }
-/* a rétegek állapota mindig a chipekből és a játékállásból következik (bármikor újrahívható) */
-function applyStage() {
-  if (!mapReady || !layersAdded || !LC) return;
-  ['s1', 's2', 's3', 's4', 'free', 'final'].forEach(g => setVis(g, LC.get(g)));
-  const fs = (S.st === 'step') ? S.stage : (S.st === 'intro' || S.st === 'blind' || S.st === 'loading') ? 0 : 4;
-  if (fs !== freeShown) { freeShown = fs; try { map.getSource('fh-free').setData(freeFC(fs)); } catch (e) {} }
-}
+  const f = G.f, src = (id, data, o) => { try { map.addSource(id, Object.assign({ type: 'geojson', data, buffer: 128, tolerance: 0.1 }, o || {})); } catch (e) {} };
+  /* add(csoport, azonosító, típus, forrás, festés, elrendezés, {always: kiemelés nélkül is látszik, op/hi/dim: átlátszóság, cp/chi/cdim: szín}) */
+  const add = (grp, id, type, source, paint, layout, o) => { try { map.addLayer({ id, type, source, paint: paint || {}, layout: Object.assign({ visibility: grp === 'base' ? 'visible' : 'none' }, layout || {}) }); (GRP[grp] = GRP[grp] || []).push(Object.assign({ id }, o || {})); return true; } catch (e) { return false; } };
+  const round = { 'line-cap': 'round', 'line-join': 'round' }, butt = { 'line-cap': 'butt', 'line-join': 'round' };
+  const line = (grp, id, source, width, o, layout, extra) => add(grp, id, 'line', source, Object.assign({ 'line-color': o.cdim || o.chi, 'line-width': width, 'line-opacity': o.dim }, extra || {}), layout || round, Object.assign({ op: 'line-opacity', cp: 'line-color' }, o));
+  const ex = (grp, id, source, op, o) => add(grp, id, 'fill-extrusion', source, { 'fill-extrusion-color': ['get', 'c'], 'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-base': ['get', 'b'], 'fill-extrusion-opacity': op }, null, o);
+  const circ = (grp, id, source, color, radius, o) => add(grp, id, 'circle', source, { 'circle-color': color, 'circle-radius': radius, 'circle-opacity': o.dim, 'circle-stroke-color': '#06141a', 'circle-stroke-width': 1, 'circle-pitch-alignment': 'map', 'circle-pitch-scale': 'map' }, null, Object.assign({ op: 'circle-opacity' }, o));
 
-/* ---------- rétegkapcsoló: a közös chip-sor (jelmagyarázat + kapcsoló) ---------- */
+  /* --- a közterületi sáv alapja és az úttest --- */
+  const strip = [];
+  ['L', 'R'].forEach(side => { const sg = side === 'L' ? 1 : -1, a = [], b = [], lim = G.lim[side];
+    for (let i = 0; i < lim.length; i++) { const s = Math.min(i * M.limStep, AX.L); if (s < M.s0 - M.step / 2 || s > M.s0 + (M.ns - 0.5) * M.step) continue; a.push(AX.xy(s, sg * M.half)); b.push(AX.xy(s, sg * lim[i])); }
+    strip.push(a.concat(b.slice().reverse(), [a[0]])); });
+  src('fh-strip', polyFC(strip), { attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> közreműködők · közművek: az e-közmű lakossági térképe alapján (tájékoztató)' });
+  add('base', 'fh-strip', 'fill', 'fh-strip', { 'fill-color': '#0b2a2c', 'fill-opacity': 0.94 });
+  src('fh-road', lineFC([G.axis].concat(f.side)), { buffer: 256 });
+  add('base', 'fh-road', 'line', 'fh-road', { 'line-color': '#2a3439', 'line-width': mw(2 * M.half) }, butt);
+  /* --- ami szemmel is látszik: kezdettől ott van semleges színnel, a saját lépésében a réteg színével világít --- */
+  src('fh-park', polyFC(f.park));
+  add('road', 'fh-park', 'fill', 'fh-park', { 'fill-color': '#465a63', 'fill-opacity': 0.5 }, null, { op: 'fill-opacity', hi: 0.9, dim: 0.5 });
+  /* --- a szabad terület (zöld = ide fér fa; halványzöld, csíkozva = csak kis koronájú fa) és amit az aktuális réteg elvett --- */
+  src('fh-free', FC([]));
+  add('free', 'fh-free', 'fill', 'fh-free', { 'fill-color': ['match', ['get', 'c'], 1, FREE1, FREE], 'fill-opacity': ['match', ['get', 'c'], 1, 0.5, 0.66], 'fill-antialias': false });
+  try { const cv = document.createElement('canvas'); cv.width = cv.height = 12; const cx = cv.getContext('2d'); cx.strokeStyle = 'rgba(6,40,36,.6)'; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(-3, 15); cx.lineTo(15, -3); cx.moveTo(-9, 15); cx.lineTo(9, -3); cx.moveTo(3, 15); cx.lineTo(21, -3); cx.stroke();
+    map.addImage('fh-hatch', cx.getImageData(0, 0, 12, 12)); add('free', 'fh-free-h', 'fill', 'fh-free', { 'fill-pattern': 'fh-hatch', 'fill-opacity': 0.9 }); map.setFilter('fh-free-h', ['==', ['get', 'c'], 1]); } catch (e) {}
+  src('fh-lost', FC([]));
+  add('lost', 'fh-lost', 'fill', 'fh-lost', { 'fill-color': '#ff6b4a', 'fill-opacity': 0.72, 'fill-antialias': false });
+  src('fh-walk', lineFC(f.walk), { buffer: 256 }); line('walk', 'fh-walk', 'fh-walk', mw(2 * M.walkHalf), { always: true, hi: 0.95, dim: 0.9, chi: COL.walk, cdim: '#56646a' }, butt);
+  src('fh-drive', lineFC(f.drive), { buffer: 256 }); line('drive', 'fh-drive', 'fh-drive', mw(2 * M.driveHalf), { always: true, hi: 0.95, dim: 0.9, chi: COL.drive, cdim: '#414d53' }, butt);
+  src('fh-cross', lineFC(f.cross), { buffer: 256 }); line('sight', 'fh-cross', 'fh-cross', mw(3), { always: true, hi: 0.95, dim: 0.4, chi: '#ffffff', cdim: '#dfe7ea' }, butt, { 'line-dasharray': [0.25, 0.25] });
+  src('fh-drain', lineFC(f.drain)); line('drain', 'fh-drain', 'fh-drain', mw(1.4), { hi: 0.95, dim: 0.5, chi: COL.drain, cdim: '#3f7f96' });
+  src('fh-culv', lineFC(f.culv)); line('drain', 'fh-culv', 'fh-culv', 2.4, { hi: 0.9, dim: 0.45, chi: COL.drain, cdim: '#3f7f96' }, butt, { 'line-dasharray': [1.6, 1.2] });
+  /* --- föld alatti vonalak: szaggatott, sötét szegéllyel; a hírközlés halvány és vékony --- */
+  ['tel', 'cable', 'sewer', 'water', 'gas'].forEach(k => { src('fh-' + k, lineFC(f[k])); const grp = k === 'tel' ? 'cable' : k;
+    line(grp, 'fh-c-' + k, 'fh-' + k, k === 'tel' ? 2.6 : 5, { hi: 0.9, dim: 0.0, chi: '#06141a', cdim: '#06141a' });
+    line(grp, 'fh-l-' + k, 'fh-' + k, k === 'tel' ? 1.3 : 2.8, { hi: 1, dim: k === 'tel' ? 0.25 : 0.45, chi: COL[k], cdim: NEUT }, butt, { 'line-dasharray': k === 'tel' ? [1.5, 1.5] : [2.4, 1.1] }); });
+  src('fh-manhole', ptFC(f.manhole)); circ('drain', 'fh-manhole', 'fh-manhole', COL.drain, mw(0.6), { hi: 1, dim: 0.5 });
+  /* --- kiemelések a talajon: szegély, kerítésvonal, a meglévő fák köre, útcsatlakozás, a légvezeték nyoma --- */
+  src('fh-kerb', lineFC([1, -1].map(sg => { const o = []; for (let s = 0; s <= AX.L; s += 3) o.push(AX.xy(s, sg * M.half)); return o; })));
+  line('road', 'fh-kerb', 'fh-kerb', 2.2, { always: true, hi: 1, dim: 0.75, chi: '#ffffff', cdim: '#8fa1a8' }, butt);
+  src('fh-fence-l', lineFC(f.fence)); line('plot', 'fh-fence-g', 'fh-fence-l', 4, { hi: 0.9, dim: 0, chi: COL.plot, cdim: COL.plot });
+  src('fh-tree-p', ptFC(f.tree)); add('tree', 'fh-tree-ring', 'circle', 'fh-tree-p', { 'circle-color': COL.tree, 'circle-opacity': 0.16, 'circle-radius': mw(2.6), 'circle-stroke-color': COL.tree, 'circle-stroke-width': 1.6, 'circle-stroke-opacity': 0.9, 'circle-pitch-alignment': 'map', 'circle-pitch-scale': 'map' }, null, { hiOnly: true });
+  src('fh-junc', ptFC(f.junc)); circ('sight', 'fh-junc', 'fh-junc', COL.sight, mw(1.5), { hi: 0.95, dim: 0 });
+  src('fh-wire', lineFC(f.wire.concat(f.drop || f.ohp))); line('wire', 'fh-wire-g', 'fh-wire', 1.4, { hi: 0.8, dim: 0.0, chi: COL.wire, cdim: NEUT }, butt, { 'line-dasharray': [1.2, 2] });
+  add('base', 'fh-strip-o', 'line', 'fh-strip', { 'line-color': FREE, 'line-width': 1.4, 'line-opacity': 0.7 }, round);
+  /* --- 3D: előbb az átlátszatlanok, aztán az áttetszők (távolabbitól a közelebbiig) --- */
+  const bl = [[], []]; f.bld.forEach((r, i) => { const ring = r.slice(); if (ring.length < 3) return; const a = ring[0], z = ring[ring.length - 1]; if (a[0] !== z[0] || a[1] !== z[1]) ring.push(a);
+    const cx = ring.reduce((q, p) => q + p[0], 0) / ring.length, cy = ring.reduce((q, p) => q + p[1], 0) / ring.length, far = AX.st(cx, cy).t >= 0;
+    /* a néző felőli (jobb oldali) házak csak alacsony lapok: nem takarják a sávot, és a koppintás oda esik, ahová látszik */
+    bl[far ? 0 : 1].push(ext(ring.map(p => LL(p[0], p[1])), 0, far ? 4.6 + (i * 37 % 28) / 10 : 0.9, far ? '#24495b' : '#1d3e4c')); });
+  const X0 = { tolerance: 0 };
+  src('fh3-bld-n', FC(bl[1]), X0); ex('base', 'fh3-bld-n', 'fh3-bld-n', 0.95);
+  src('fh3-bld-f', FC(bl[0]), X0); ex('base', 'fh3-bld-f', 'fh3-bld-f', 0.95);
+  src('fh3-fence', FC(ribbonF(f.fence, 0.26, 0, 1.4, '#8f7650')), X0); ex('base', 'fh3-fence', 'fh3-fence', 0.95);
+  src('fh3-pole', FC([].concat(f.pole.map(p => ext(ringLL(p[0], p[1], 0.2, 6), 0, 8.2, '#b9a8d6')),
+    [].concat.apply([], f.lamp.map(p => [ext(ringLL(p[0], p[1], 0.12, 6), 0, 6.6, '#9fb1b8'), ext(ringLL(p[0], p[1], 0.5, 8), 6.6, 6.9, '#fff1b8')])))), X0);
+  ex('wire', 'fh3-pole', 'fh3-pole', 1, { op: 'fill-extrusion-opacity', hi: 1, dim: 0.35 });
+  src('fh3-wire', FC(ribbonF(f.wire, 0.5, 7.4, 7.8, COL.wire).concat(ribbonF(f.drop || f.ohp, 0.4, 6.5, 6.8, COL.wire))), X0);
+  ex('wire', 'fh3-wire', 'fh3-wire', 1, { op: 'fill-extrusion-opacity', hi: 1, dim: 0.2 });
+  src('fh3-etree', FC([].concat.apply([], f.tree.map(t => treeF(t[0], t[1], 2.3, 7.2, PAL_OLD)))), X0); ex('base', 'fh3-etree', 'fh3-etree', 0.82);
+  src('fh3-ptree', FC([]), X0); ex('base', 'fh3-ptree', 'fh3-ptree', 0.97);
+  src('fh3-ftree', FC([].concat.apply([], D.trees.map(t => treeF(t[0] / 10, t[1] / 10, CROWN_R[t[2]], CROWN_H[t[2]], PAL_FIN)))), X0); ex('final', 'fh3-ftree', 'fh3-ftree', 0.42);
+  /* --- feliratok: külön forrásból, pontonként (a talajon fekvők az utca irányába forgatva, a többi a néző felé fordul) --- */
+  if (hasGlyphs) { src('fh-lab', buildLabels(f), { tolerance: 0 });
+    const ground = (g, color, size) => { const base = { 'text-color': color, 'text-halo-color': 'rgba(3,12,16,.94)', 'text-halo-width': 1.6 }, lay = { 'text-field': ['get', 't'], 'text-font': FONT, 'text-size': ['interpolate', ['linear'], ['zoom'], 16, size - 4, 18, size, 20, size + 6], 'text-transform': 'uppercase', 'text-letter-spacing': 0.12, 'text-pitch-alignment': 'map', 'text-rotation-alignment': 'map', 'text-rotate': ['get', 'r'], 'text-allow-overlap': true, 'text-ignore-placement': true };
+      LAB[g] = [];
+      [0, 1].forEach(z => { const id = 'fh-n-' + g + (z ? '-1' : ''); try { map.addLayer(Object.assign({ id, type: 'symbol', source: 'fh-lab', paint: base, layout: Object.assign({ visibility: 'none' }, lay), filter: ['all', ['==', ['get', 'g'], g], ['==', ['get', 'z'], z]] }, { minzoom: z ? 18.22 : 17 })); LAB[g].push(id); } catch (e) {} }); };
+    const groundOld = (g, color, size) => { if (add('lab', 'fh-n-' + g + '-x', 'symbol', 'fh-lab', { 'text-color': color, 'text-halo-color': 'rgba(3,12,16,.94)', 'text-halo-width': 1.6 },
+      { 'text-field': ['get', 't'], 'text-font': FONT, 'text-size': ['interpolate', ['linear'], ['zoom'], 16, size - 4, 18, size, 20, size + 6], 'text-transform': 'uppercase', 'text-letter-spacing': 0.12, 'text-pitch-alignment': 'map', 'text-rotation-alignment': 'map',
+        'text-rotate': ['get', 'r'], 'text-allow-overlap': true, 'text-ignore-placement': true })) { map.setFilter('fh-n-' + g, ['==', ['get', 'g'], g]); LAB[g] = 'fh-n-' + g; } };
+    const call = (g, color, up) => { if (add('lab', 'fh-n-' + g, 'symbol', 'fh-lab', { 'text-color': color, 'text-halo-color': 'rgba(3,12,16,.96)', 'text-halo-width': 1.8 },
+      { 'text-field': ['get', 't'], 'text-font': FONT, 'text-size': 12.5, 'text-letter-spacing': 0.02, 'text-anchor': 'bottom', 'text-offset': [0, up || -0.5], 'text-pitch-alignment': 'viewport', 'text-rotation-alignment': 'viewport', 'text-padding': 4 })) { map.setFilter('fh-n-' + g, ['==', ['get', 'g'], g]); try { map.setLayerZoomRange('fh-n-' + g, 17.2, 24); } catch (e) {} LAB[g] = ['fh-n-' + g]; } };
+    ground('road0', '#a5b6bc', 14); ground('plot0', '#8ba3aa', 14); ground('strip', '#b9fbee', 16); ground('hint', '#ffffff', 14);
+    call('kerb', '#e3ecef'); call('fence', '#f0d2a8', -1.2); call('walk', '#f3e6c4'); call('drive', '#ffc3a0'); call('tree', '#d5ec8f', -3.4);
+    call('park', '#d5e0e4'); call('sight', '#ffb0c8'); call('drain', '#a9e9fb'); call('wire', '#e6cfff', -3.6);
+    call('cable', '#ffb3ac'); call('tel', '#c3d6cb'); call('water', '#b3ceff'); call('sewer', '#f0b7a6'); call('gas', '#fbf3a8'); }
+}
+/* a feliratok pontjai: a talajon fekvők ~60 méterenként, a többi típusonként ritkítva (nagyjából 50 méterenként és oldalanként egy) */
+function buildLabels(f) { const out = [], rot = M.az - 90;
+  const put = (g, t, p, z) => out.push({ type: 'Feature', properties: { g, t, r: rot, z: z || 0 }, geometry: { type: 'Point', coordinates: LL(p[0], p[1]) } });
+  for (let s = 44, i = 0; s < AX.L - 12; s += 64, i++) put('road0', 'úttest', AX.xy(s, 0), i % 2);
+  ['L', 'R'].forEach(side => { const sg = side === 'L' ? 1 : -1;
+    for (let s = 26, i = 0; s < AX.L - 14; s += 28, i++) { const lim = FH.limAt(EN, s, side); if (lim - M.half < 5) continue; const p = AX.xy(s, sg * (M.half + lim) / 2), ev = FH.evalPoint(EN, p[0], p[1]), sr = ev.checks.find(q => q.id === 'sideroad'); if (!ev.inStrip || (sr && sr.d < 1.5)) continue;   /* keresztutcára nem kerül felirat */
+      put(i % 2 ? 'hint' : 'strip', i % 2 ? 'ide ültethetsz' : 'közterületi sáv', p, (i >> 1) % 2); }
+    /* a sáv külső széle az első kerítés vagy ház; ahol nincs ilyen (park, tér), ott a sáv mesterséges határig tart */
+    const cap = Math.max.apply(null, G.lim[side]) - 0.05; for (let s = 40; s < AX.L - 10; s += 68) { const lim = FH.limAt(EN, s, side), open = lim >= cap; if (open && side === 'L') continue; put('plot0', open ? 'zöldfelület' : 'telek', AX.xy(s, sg * (lim + (open ? 5 : 8)))); } });
+  const thin = (g, t, pts, bin) => { const seen = new Set(); pts.forEach(p => { if (!p) return; const q = AX.st(p[0], p[1]); if (q.s < -6 || q.s > AX.L + 6 || q.d > 26) return; const key = Math.floor(q.s / (bin || 50)) + (q.t >= 0 ? 'L' : 'R'); if (seen.has(key)) return; seen.add(key); put(g, t, p); }); };
+  thin('kerb', 'szegély', [35, 110, 185].map(s => AX.xy(s, M.half)).concat([70, 150].map(s => AX.xy(s, -M.half))), 30);
+  thin('fence', 'kerítés', f.fence.map(l => lineMid(l)).filter(m => m.L > 5).map(m => m.p), 60);
+  thin('walk', 'járda', f.walk.map(inStripPt), 55);
+  thin('drive', 'kapubehajtó', f.drive.map(inStripPt), 48);
+  thin('tree', 'meglévő fa', f.tree, 48);
+  thin('park', 'parkoló', f.park.map(r => [r.reduce((q, p) => q + p[0], 0) / r.length, r.reduce((q, p) => q + p[1], 0) / r.length]), 50);
+  thin('sight', 'zebra', f.cross.map(l => lineMid(l).p), 12); thin('sight', 'kereszteződés', f.junc, 12);
+  thin('drain', 'nyílt árok', f.drain.map(l => inStripPt(l) || lineMid(l).p), 40); thin('drain', 'befedett árok', f.culv.map(l => lineMid(l).p), 40); thin('drain', 'aknafedlap', f.manhole, 20);
+  thin('wire', 'oszlop', f.pole, 70); thin('wire', 'légvezeték', f.wire.map(inStripPt).concat(f.wire.map(l => lineMid(l).p)), 46); thin('wire', 'lámpa', f.lamp, 70);
+  const UN = { cable: 'földkábel', tel: 'hírközlési kábel', water: 'ivóvízvezeték', sewer: 'csatorna', gas: 'gázvezeték' };
+  Object.keys(UN).forEach(k => thin(k, UN[k], f[k].filter(l => lineMid(l).L > 6).map(inStripPt), 46));
+  return FC(out); }
+
+/* ---------- cellák → sokszögek (soronként összevont futamok, átfedés nélkül) ---------- */
+function cellsFC(pick) { const feats = [], st = M.step, ns = M.ns;
+  ['L', 'R'].forEach(side => { const g = GRID[side];
+    for (let it = 0; it < g.nt; it++) { let is = 0; while (is < ns) { const v = pick(side, it * ns + is); if (!v) { is++; continue; } let j = is; while (j + 1 < ns && pick(side, it * ns + j + 1) === v) j++;
+      const t0 = g.sign * (g.tMin + (it - 0.5) * st), t1 = g.sign * (g.tMin + (it + 0.5) * st), sa = M.s0 + (is - 0.5) * st, sb = M.s0 + (j + 0.5) * st, n = Math.max(1, Math.ceil((sb - sa) / 4)), ring = [];
+      for (let k = 0; k <= n; k++) ring.push(LLst(sa + (sb - sa) * k / n, t0)); for (let k = n; k >= 0; k--) ring.push(LLst(sa + (sb - sa) * k / n, t1)); ring.push(ring[0]);
+      feats.push({ type: 'Feature', properties: { c: v }, geometry: { type: 'Polygon', coordinates: [ring] } }); is = j + 1; } } });
+  return FC(feats); }
+let freeShown = -2, lostShown = -2;
+function setData(id, fc) { try { map.getSource(id).setData(fc); } catch (e) {} }
+function setProp(id, k, v) { try { map.setPaintProperty(id, k, v); } catch (e) {} }
+
+/* ---------- a jelenet: mi látszik, kiemelve vagy semlegesen — mindig a játékállásból következik ---------- */
+function setMode(grp, mode) { (GRP[grp] || []).forEach(L => { try { const hi = mode === 'hi', vis = hi || (!L.hiOnly && (mode === 'dim' || (mode === 'off' && L.always)));
+  map.setLayoutProperty(L.id, 'visibility', vis ? 'visible' : 'none'); if (!vis) return;
+  if (L.op) map.setPaintProperty(L.id, L.op, hi ? L.hi : L.dim); if (L.cp) map.setPaintProperty(L.id, L.cp, hi ? L.chi : L.cdim); } catch (e) {} }); }
+function setLabs(on) { Object.keys(LAB).forEach(g => LAB[g].forEach(id => { try { map.setLayoutProperty(id, 'visibility', on[g] ? 'visible' : 'none'); } catch (e) {} })); }
+const freeStep = () => S.st === 'wiz' ? S.step : (S.st === 'mid' || S.st === 'inf' || S.st === 'final') ? NST : (S.st === 'intro' && S.intro < 2) ? -1 : 0;
+const LABS_OF = { road: ['kerb', 'park'], drive: ['drive'], sight: ['sight'], walk: ['walk'], plot: ['fence'], tree: ['tree'], drain: ['drain'], wire: ['wire'], cable: ['cable', 'tel'], water: ['water'], sewer: ['sewer'], gas: ['gas'] };
+function applyScene() {
+  if (!mapReady || !layersAdded) return; const st = S.st, k = S.step, fin = st === 'final', on = { road0: 1 };
+  const cur = st === 'wiz' ? STEPS[k - 1] : null;
+  STEPS.forEach(sp => { let mode = 'off';
+    if (st === 'wiz') mode = sp.id === k ? 'hi' : sp.id < k ? 'dim' : 'off';
+    else if (st === 'mid') mode = 'dim';
+    else if (fin) mode = LC && LC.get('c' + sp.ch) ? 'hi' : 'off';
+    if (S.flash === sp.id) mode = 'hi';
+    setMode(sp.key, mode); if (mode === 'hi') LABS_OF[sp.key].forEach(g => on[g] = 1); });
+  /* feliratok: az úttest mindig; a bemutatkozásnál és a vak körben a szemmel látható dolgok; a varázslóban csak az aktuális réteg */
+  if (st === 'intro' && S.intro === 1) { on.plot0 = on.kerb = on.fence = 1; }
+  if ((st === 'intro' && S.intro === 2) || st === 'blind') { on.strip = on.hint = on.walk = on.drive = on.tree = 1; if (st === 'blind') on.plot0 = 1; }
+  if (st === 'wiz' || st === 'mid' || st === 'inf' || fin) on.strip = 1;
+  setLabs(on);
+  /* a föld alatti rétegeknél a felszín fölötti elemek áttetszővé válnak, hogy a vonalak látsszanak */
+  const xray = (cur && cur.ch === 4) || (S.flash && STEPS[S.flash - 1].ch === 4) || (fin && LC && LC.get('c4'));
+  setProp('fh3-bld-f', 'fill-extrusion-opacity', xray ? 0.3 : 0.95); setProp('fh3-fence', 'fill-extrusion-opacity', xray ? 0.4 : 0.95); setProp('fh3-etree', 'fill-extrusion-opacity', xray ? 0.3 : 0.82);
+  /* szabad terület és a most kieső cellák */
+  const fs = freeStep();
+  if (fs !== freeShown) { freeShown = fs; setData('fh-free', fs < 0 ? FC([]) : cellsFC((side, i) => { const c = GRID[side].crown[fs][i]; return c ? (c === 1 ? 1 : 3) : 0; })); }
+  setMode('free', fs < 0 || (fin && LC && !LC.get('free')) ? 'off' : 'hi');
+  const ls = st === 'wiz' ? k : -1;
+  if (ls !== lostShown) { lostShown = ls; setData('fh-lost', ls < 1 ? FC([]) : cellsFC((side, i) => { const g = GRID[side]; return g.crown[ls - 1][i] && !g.crown[ls][i] ? 9 : 0; }));
+    if (ls >= 1) setProp('fh-lost', 'fill-color', COL[STEPS[ls - 1].key]); }
+  setMode('lost', ls >= 1 ? 'hi' : 'off');
+  setMode('final', fin && LC && LC.get('final') ? 'hi' : 'off');
+  const ghostsOn = st === 'wiz' || st === 'mid' || (fin && LC && LC.get('ghost'));
+  S.ghosts.forEach(t => { if (ghostsOn) { if (!t.on) { t.mk.addTo(map); t.on = true; } } else if (t.on) { t.mk.remove(); t.on = false; } });
+  drawTrees(ghostsOn);
+  const sg = seg() && ((st === 'intro' && S.intro >= 1) || st === 'blind' || st === 'wiz' || st === 'inf' || fin); TOOLS.classList.toggle('seg', sg); if (sg) miniBase();
+}
+/* a játékos fái 3D-ben: a vak kör fái (élő = fa, kiesett = csonk) és az aktuális kör fái */
+function drawTrees(ghostsOn) { const feats = [], upTo = S.st === 'wiz' ? S.step : NST;
+  if (ghostsOn) S.ghosts.forEach(t => { const q = FH.stateAt(t.ev, upTo); [].push.apply(feats, q.alive ? treeF(t.x, t.y, 2, 6.2, q.crown === 1 ? PAL_LIM : PAL_NEW) : stump(t.x, t.y)); });
+  S.trees.forEach(t => { const c = S.st === 'blind' ? 0 : t.ev.crown; [].push.apply(feats, c ? treeF(t.x, t.y, CROWN_R[c], CROWN_H[c], c === 1 ? PAL_LIM : PAL_NEW) : treeF(t.x, t.y, 2, 6.2, PAL_NEW)); });
+  setData('fh3-ptree', FC(feats)); }
+
+/* ---------- rétegkapcsoló: csak a végén, szabad nézelődéshez (a nevek a fejezetek nevei) ---------- */
 const LAYERS = [
-  { id: 's1', label: 'Közlekedés', icon: '🚗', color: '#ff9f45', title: 'Kapubehajtók, útcsatlakozások, gyalogátkelők, járda, szegély — OpenStreetMap' },
-  { id: 's2', label: 'Telek, felszín', icon: '🏡', color: '#c77bff', title: 'Kerítések, homlokzatok, meglévő fák, nyílt árok — OpenStreetMap' },
-  { id: 's3', label: 'Föld fölött', icon: '⚡', color: '#ffd166', title: '400 V-os légvezeték, oszlopok, közvilágítás — OpenStreetMap' },
-  { id: 's4', label: 'Föld alatt', icon: '🔧', color: '#5fb4ff', title: 'Gáz, víz, csatorna, földkábel, hírközlés — az e-közmű lakossági térképe alapján (tájékoztató)' },
-  { id: 'free', label: 'Szabad hely', icon: '✅', color: '#2ad1b5', title: 'Ami az eddig megismert szabályok után marad: zöld = nagy, világoszöld = közepes, sárga = csak kis koronájú fa' },
-  { id: 'final', label: 'Elférő fák', icon: '⭕', color: '#eaf4f4', title: 'Ahová a fák ténylegesen elférnek, egymástól legalább 6 méterre — a kör a kifejlett korona mérete' },
-  { id: 'ghost', label: 'Vak fáim', icon: '📍', color: '#9bb7bc', title: 'Ahová az első körben, adat nélkül ültettél' }];
-LC = GV.layerControl({ container: 'layers', title: 'Rétegek', hint: (matchMedia('(hover:hover) and (pointer:fine)').matches ? 'kattintásra' : 'koppintásra') + ' be / ki',
-  layers: LAYERS.map(l => Object.assign({ apply: on => { if (l.id === 'ghost') S.ghosts.forEach(t => on ? t.mk.addTo(map) : t.mk.remove()); else applyStage(); } }, l)),
+  { id: 'final', label: 'Elférő fák', color: '#d5f5ef', title: 'Ahová a fák ténylegesen elférnek, egymástól legalább 6 méterre — a kifejlett korona méretével' },
+  { id: 'free', label: 'Szabad hely', color: '#2ad1b5', title: 'Ami minden réteg után marad: zöld = ide fér fa, csíkozott halványzöld = csak kis koronájú fa' },
+  { id: 'c1', label: 'Közlekedés', color: CHCOL[1], title: 'Szegély, kapubehajtók, kereszteződések, zebra, járda — OpenStreetMap' },
+  { id: 'c2', label: 'Telkek, fák, árok', color: CHCOL[2], title: 'Kerítések, meglévő fák, vízelvezető árok — OpenStreetMap' },
+  { id: 'c3', label: 'A fejünk fölött', color: CHCOL[3], title: 'Légvezeték, oszlopok — OpenStreetMap' },
+  { id: 'c4', label: 'A föld alatt', color: CHCOL[4], title: 'Kábelek, ivóvíz, csatorna, gáz — az e-közmű lakossági térképe alapján (tájékoztató)' },
+  { id: 'ghost', label: '1. kör fái', color: '#9bb7bc', title: 'Ahová az első körben, adat nélkül ültettél' }];
+LC = GV.layerControl({ container: 'layers', title: 'Rétegek', hint: (FINE ? 'kattintásra' : 'koppintásra') + ' be / ki',
+  layers: LAYERS.map(l => Object.assign({ apply: () => applyScene() }, l)),
   onChange: (id, on, user) => { if (user) S.toggles[id] = (S.toggles[id] || 0) + 1; } });
 
-/* ---------- kamera: az utca vízszintesen, a panel fölötti térképrészben ---------- */
-function fitStreet(anim) {
-  if (!mapReady) return;
-  const sheet = document.querySelector('.sheet'), wide = innerWidth >= 900;
-  const pad = wide ? { top: 60, bottom: 20, left: 470, right: 20 } : { top: 60, bottom: Math.min(innerHeight * 0.6, (sheet ? sheet.offsetHeight : 260) + 14), left: 12, right: 12 };
-  const w = Math.max(120, innerWidth - pad.left - pad.right), h = Math.max(100, innerHeight - pad.top - pad.bottom);
-  const pxm = Math.min(w / (AX.L + 16), h / 44), z = Math.log2(pxm / PXM14) + 14;
-  map.easeTo({ center: LLst(AX.L / 2, 2), zoom: Math.max(15, Math.min(20, z)), bearing: M.az - 90, pitch: 0, padding: pad, duration: anim ? 700 : 0, essential: true });
-}
-window.addEventListener('resize', () => { if (S.st !== 'inf' && S.st !== 'blind') fitStreet(true); });
+/* ---------- kamera ----------
+   Az utca vízszintesen fut. Az alsó térköz állapotonként rögzített (nem a panel pillanatnyi magasságából számoljuk),
+   így a térkép nem ugrál, amikor a panel tartalma változik. */
+function padNow() { const small = S.st === 'blind' || S.st === 'inf'; const wide = innerWidth >= 820;
+  const fin = S.st === 'final';   /* a záróképernyőn a panel fölött a rétegkapcsolók sora is ott van */
+  return { top: seg() ? 100 : 58, bottom: Math.round(Math.min(innerHeight * 0.56, small ? (wide ? 190 : 210) : fin ? (wide ? innerHeight * 0.34 + 150 : innerHeight * 0.38 + 90) : (wide ? 330 : innerHeight * 0.5))), left: 12, right: 12 }; }
+function fly(center, pxm, anim, dur) { if (!mapReady) return;
+  map.easeTo({ center, zoom: clamp(Math.log2(pxm / PXM14) + 14, 15, 20.5), bearing: M.az - 90, pitch: pitchNow(), padding: padNow(), duration: anim && !RM ? (dur || 850) : 0, essential: true }); }
+/* a teljes utca befér: zárt alakú illesztés a dőlésszöggel (a közelebbi szél a szűk keresztmetszet) */
+function fitStreet(anim) { if (!mapReady) return; const p = padNow(), W = innerWidth, H = innerHeight, w = Math.max(120, W - p.left - p.right), th = pitchNow() * Math.PI / 180, Dc = 1.5 * H;
+  const a = AX.L / 2 + 8, vN = 17, hN = 1.5, vF = 23, hF = 7.5;
+  let s = (w / 2) / (a + (w / 2) * (vN * Math.sin(th) + hN * Math.cos(th)) / Dc);
+  const hAvail = Math.max(60, (H - p.top - p.bottom) / 2), kF = Dc / (Dc + vF * s * Math.sin(th) - hF * s * Math.cos(th)), yF = (vF * Math.cos(th) + hF * Math.sin(th)) * s * kF; if (yF > hAvail) s *= hAvail / yF;
+  fly(LLst(AX.L / 2, 3), s, anim); }
+function focusSeg(s, anim, dur) { if (!mapReady) return; S.segS = clamp(s, 26, AX.L - 26); fly(LLst(S.segS, 3), segPx(), anim, dur); }
+/* kamera az állapothoz: áttekintés az olvasós képernyőkön; keskeny képernyőn játék közben utcaszakasz */
+function cam(anim) { if (!mapReady) return; const st = S.st;
+  if (!seg() || (st === 'intro' && S.intro === 0) || st === 'mid') return fitStreet(anim);
+  if (st === 'intro') return focusSeg(S.segS == null ? AX.L * 0.3 : S.segS, anim, 1000);   /* keskeny képernyőn a bemutatkozás is közelről: ott látszanak a feliratok */
+  if (st === 'blind') return focusSeg(S.segS == null ? AX.L * 0.3 : S.segS, anim, 1200);
+  if (st === 'wiz') return focusStep(anim);
+  if (st === 'inf') return focusSeg(bestFreeS(), anim);
+  fitStreet(anim); }
+function overview() { fitStreet(true); }
+function toggle3D() { S.d3 = !S.d3; document.getElementById('dimbtn').textContent = S.d3 ? '2D' : '3D'; if (mapReady) map.easeTo({ pitch: pitchNow(), duration: RM ? 0 : 500 }); }
+let rsT = null;
+window.addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { SHEET.classList.toggle('wide', S.st === 'wiz'); applyScene(); if (S.st !== 'inf' && S.st !== 'blind') cam(false); }, 180); });
+/* szakasznézetben a térkép az utca mentén marad: ha elhúzták oldalra, visszaigazítjuk a tengelyre */
+function segSnap(e) { if (!e || !e.originalEvent || !seg() || !(S.st === 'intro' || S.st === 'blind' || S.st === 'wiz' || S.st === 'inf')) return; const c = map.getCenter(), q = AX.st.apply(null, XY(c.lng, c.lat));
+  S.segS = clamp(q.s, 26, AX.L - 26); if (Math.abs(q.t - 3) > 16 || q.s < 10 || q.s > AX.L - 10) map.easeTo({ center: LLst(S.segS, 3), duration: RM ? 0 : 350 }); }
+
+/* ---------- áttekintő sáv (keskeny képernyőn): az egész utca egy csíkban, a látható szakasz keretével ---------- */
+const MINI = document.getElementById('mini'); let MB = null;
+function miniBase() { const dpr = Math.min(devicePixelRatio || 1, 2), w = Math.max(60, Math.round(MINI.clientWidth * dpr)), h = Math.round(40 * dpr); if (!MINI.clientWidth) { if (!miniBase.retry) { miniBase.retry = 1; requestAnimationFrame(() => { miniBase.retry = 0; if (MINI.clientWidth) miniBase(); }); } return; }
+  if (MINI.width !== w || MINI.height !== h) { MINI.width = w; MINI.height = h; }
+  MB = document.createElement('canvas'); MB.width = w; MB.height = h; const c = MB.getContext('2d'), kx = w / AX.L, mid = h * 0.58, ky = (h * 0.5) / 20;
+  c.fillStyle = '#2a3439'; c.fillRect(0, mid - M.half * ky, w, 2 * M.half * ky);
+  const fs = Math.max(0, freeStep()), ls = S.st === 'wiz' ? S.step : -1, lc = ls >= 1 ? COL[STEPS[ls - 1].key] : null, st = M.step, cw = Math.max(1, st * kx + 0.6), chh = Math.max(1, st * ky + 0.6);
+  ['L', 'R'].forEach(side => { const g = GRID[side], ns = M.ns; for (let it = 0; it < g.nt; it++) { const t = g.tMin + it * st, y = side === 'L' ? mid - (t + st / 2) * ky : mid + (t - st / 2) * ky;
+    for (let is = 0; is < ns; is++) { const i = it * ns + is; if (!g.crown[0][i]) continue; const cur = g.crown[fs][i]; c.fillStyle = cur ? (cur === 1 ? FREE1 : FREE) : (lc && g.crown[ls - 1][i] ? lc : '#103234'); c.fillRect((M.s0 + (is - 0.5) * st) * kx, y, cw, chh); } } });
+  miniFrame(); }
+let miniRaf = 0;
+function miniFrame() { if (!MB || !TOOLS.classList.contains('seg')) return; if (miniRaf) return; miniRaf = requestAnimationFrame(() => { miniRaf = 0; const c = MINI.getContext('2d'), w = MINI.width, h = MINI.height, kx = w / AX.L, mid = h * 0.58, ky = (h * 0.5) / 20;
+  c.clearRect(0, 0, w, h); c.drawImage(MB, 0, 0);
+  const dot = (t, col) => { const q = AX.st(t.x, t.y); c.fillStyle = col; c.beginPath(); c.arc(q.s * kx, mid - q.t * ky, Math.max(2.2, h * 0.09), 0, 6.3); c.fill(); c.strokeStyle = '#06141a'; c.lineWidth = 1; c.stroke(); };
+  if (S.st === 'wiz' || S.st === 'final') S.ghosts.forEach(t => dot(t, FH.stateAt(t.ev, S.st === 'wiz' ? S.step : NST).alive ? '#ffffff' : '#ff6b4a')); S.trees.forEach(t => dot(t, '#ffffff'));
+  try { const p = padNow(), y = (p.top + innerHeight - p.bottom) / 2, a = map.unproject([0, y]), b = map.unproject([innerWidth, y]), sa = AX.st.apply(null, XY(a.lng, a.lat)).s, sb = AX.st.apply(null, XY(b.lng, b.lat)).s;
+    const x0 = clamp(Math.min(sa, sb), 0, AX.L) * kx, x1 = clamp(Math.max(sa, sb), 0, AX.L) * kx; c.strokeStyle = '#ffffff'; c.lineWidth = Math.max(2, h * 0.06); c.strokeRect(x0 + 1, 1.5, Math.max(6, x1 - x0 - 2), h - 3); } catch (e) {} }); }
+(function () { let down = false; const go = e => { const r = MINI.getBoundingClientRect(); focusSeg((e.clientX - r.left) / r.width * AX.L, false); };
+  MINI.addEventListener('pointerdown', e => { down = true; try { MINI.setPointerCapture(e.pointerId); } catch (x) {} go(e); });
+  MINI.addEventListener('pointermove', e => { if (down) go(e); }); ['pointerup', 'pointercancel'].forEach(n => MINI.addEventListener(n, () => { down = false; })); })();
 
 /* ---------- ültetés és vizsgálat ---------- */
 function mkTree(x, y, cls, txt) { const el = document.createElement('div'); el.className = 'mk'; el.innerHTML = '<div class="tree ' + (cls || '') + '">' + (txt || '') + '</div>';
-  return { el, mk: new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat(LL(x, y)) }; }
+  return { el, mk: new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(LL(x, y)) }; }
 function setTree(t, cls, txt) { const d = t.el.querySelector('.tree'); d.className = 'tree ' + (cls || ''); d.textContent = txt || ''; }
+const pxm = () => PXM14 * Math.pow(2, map.getZoom() - 14);
+function ownNear(xy) { const tol = Math.min(2.4, Math.max(1.3, 12 / pxm())); let best = null, bd = tol; S.trees.forEach(t => { const d = Math.hypot(t.x - xy[0], t.y - xy[1]); if (d < bd) { bd = d; best = t; } }); return best; }
 function onTap(e) {
   if (!EN) return; const xy = XY(e.lngLat.lng, e.lngLat.lat);
-  if (S.st === 'blind') return tapBlind(xy);
-  if (S.st === 'inf') return tapInformed(xy);
+  if (S.st === 'blind' || S.st === 'inf') { const own = ownNear(xy); if (own) { const i = S.trees.indexOf(own) + 1; removeTree(own); return toast(i + '. fa visszavéve.'); } return S.st === 'blind' ? tapBlind(xy, e.lngLat) : tapInformed(xy, e.lngLat); }
   if (S.st === 'final' || S.st === 'mid') return probe(xy);
 }
-function inPublic(ev) { if (!ev.inStrip) return 'A fa csak a közterületi sávba kerülhet: az úttest és a kerítések közé.'; if (Math.abs(ev.t) < M.half) return 'Az úttestre nem ültethetsz — koppints a szegély és a kerítés közé.'; return ''; }
-function tapBlind(xy) {
-  if (S.trees.length >= N) return; const ev = FH.evalPoint(EN, xy[0], xy[1]); const why = inPublic(ev); if (why) return flash(why);
-  if (S.trees.some(t => Math.hypot(t.x - xy[0], t.y - xy[1]) < 3)) return flash('Ez túl közel van egy másik fádhoz.');
+function where(ev) {
+  if (!ev.inStrip) return ev.why === 'vege' ? 'Itt már véget ér a vizsgált utcaszakasz' : 'Ez már a közterületi sávon kívül esik';
+  if (Math.abs(ev.t) < M.half) return 'Ez az úttest';
+  const sr = ev.checks.find(c => c.id === 'sideroad'); if (sr && sr.d < 0) return 'Ez egy keresztutca úttestje';
+  if (ev.s < M.s0 - M.step / 2 || ev.s > M.s0 + (M.ns - 0.5) * M.step) return 'Itt már véget ér a vizsgált utcaszakasz';
+  return ''; }
+function onHover(e) { if (!EN || !(S.st === 'blind' || S.st === 'inf')) { map.getCanvas().style.cursor = ''; return; } const xy = XY(e.lngLat.lng, e.lngLat.lat), ev = FH.evalPoint(EN, xy[0], xy[1]); map.getCanvas().style.cursor = where(ev) ? 'not-allowed' : 'crosshair'; }
+let tipM = null, tipT = null;
+function tip(lngLat, text) { try { if (tipM) tipM.remove(); const el = document.createElement('div'); el.className = 'tip'; el.textContent = text; tipM = new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [0, -10] }).setLngLat(lngLat).addTo(map); clearTimeout(tipT); tipT = setTimeout(() => { if (tipM) { tipM.remove(); tipM = null; } }, 2200); } catch (e) { toast(text); } }
+function tapBlind(xy, ll) {
+  if (S.trees.length >= N) return toast('Megvan mind az öt fa. Egy fára koppintva visszaveheted.'); const ev = FH.evalPoint(EN, xy[0], xy[1]); const why = where(ev); if (why) return tip(ll, why + '. Fát csak a zöld sávba ültethetsz.');
+  if (S.trees.some(t => Math.hypot(t.x - xy[0], t.y - xy[1]) < 3)) return tip(ll, 'Túl közel van egy másik fádhoz');
   const t = Object.assign(mkTree(xy[0], xy[1], '', String(S.trees.length + 1)), { x: xy[0], y: xy[1], ev });
   t.el.addEventListener('click', ev2 => { ev2.stopPropagation(); if (S.st !== 'blind') return; removeTree(t); });
-  t.mk.addTo(map); S.trees.push(t); render();
+  t.mk.addTo(map); S.trees.push(t); drawTrees(false); miniFrame(); render();
 }
-function removeTree(t) { const i = S.trees.indexOf(t); if (i < 0) return; t.mk.remove(); S.trees.splice(i, 1); S.trees.forEach((q, k) => { if (S.st === 'blind') setTree(q, '', String(k + 1)); }); render(); }
+function removeTree(t) { const i = S.trees.indexOf(t); if (i < 0) return; t.mk.remove(); S.trees.splice(i, 1); S.trees.forEach((q, k) => setTree(q, S.st === 'blind' ? '' : (q.ev.crown < 2 ? 'lim' : 'ok'), String(k + 1))); S.last = null; clearProbe(); drawTrees(false); miniFrame(); render(); }
 function undo() { const t = S.trees[S.trees.length - 1]; if (t) removeTree(t); }
-/* 2. kör: a koppintás a legközelebbi szabad ponthoz igazodik, ha az ujjnyi távolságon (≥ 14 képpont, legalább 1,5 m) belül van */
-function tapInformed(xy) {
-  if (S.trees.length >= N) return; let ev = FH.evalPoint(EN, xy[0], xy[1]); const why = inPublic(ev); if (why) return flash(why);
-  S.tries++;
-  if (ev.kill) { const tol = Math.max(1.5, 14 / (PXM14 * Math.pow(2, map.getZoom() - 14))); let best = null, bd = tol;
+/* 2. kör: a koppintás a legközelebbi szabad ponthoz igazodik, ha az ujjnyi távolságon (≥ 16 képpont, legalább 1,5 m) belül van */
+function tapInformed(xy, ll) {
+  if (S.trees.length >= N) return toast('Megvan mind az öt fa. Egy fára koppintva visszaveheted.'); let ev = FH.evalPoint(EN, xy[0], xy[1]); const why = where(ev); if (why) return tip(ll, why);
+  S.tries++; S.sec = false;
+  if (ev.kill) { const tol = Math.max(1.5, 16 / pxm()); let best = null, bd = tol;
     for (const p of S.freePts) { const d = Math.hypot(p[0] - xy[0], p[1] - xy[1]); if (d < bd && !S.trees.some(t => Math.hypot(t.x - p[0], t.y - p[1]) < M.spacing)) { bd = d; best = p; } }
     if (best) { xy = [best[0], best[1]]; ev = FH.evalPoint(EN, xy[0], xy[1]); } }
-  if (ev.kill) { S.last = { ev, ok: false }; showProbe(xy, ev); return render(); }
+  if (ev.kill) { S.last = { ev, ok: false }; showProbe(xy, ev); flashStep(stepOf(FH.stateAt(ev, NST).by.id).id); return render(); }
   if (S.trees.some(t => Math.hypot(t.x - xy[0], t.y - xy[1]) < M.spacing)) { S.last = { ev, ok: false, own: true }; return render(); }
   clearProbe();
-  const t = Object.assign(mkTree(xy[0], xy[1], ev.crown < 3 ? 'lim' : 'ok', CROWN[ev.crown][0].toUpperCase()), { x: xy[0], y: xy[1], ev });
+  const t = Object.assign(mkTree(xy[0], xy[1], ev.crown < 2 ? 'lim' : 'ok', String(S.trees.length + 1)), { x: xy[0], y: xy[1], ev });
   t.el.addEventListener('click', ev2 => { ev2.stopPropagation(); if (S.st !== 'inf') return; removeTree(t); });
-  t.mk.addTo(map); S.trees.push(t); S.last = { ev, ok: true }; render();
+  t.mk.addTo(map); S.trees.push(t); S.last = { ev, ok: true }; drawTrees(false); miniFrame(); render();
 }
-function clearProbe() { if (S.probe) { S.probe.mk.remove(); S.probe = null; } }
-function showProbe(xy, ev) { clearProbe(); const cls = ev.kill ? 'x' : ev.crown < 3 ? 'lim' : 'ok'; S.probe = mkTree(xy[0], xy[1], cls, ev.kill ? '✕' : '?'); S.probe.el.classList.add('probe'); S.probe.mk.addTo(map); }
-function probe(xy) { const ev = FH.evalPoint(EN, xy[0], xy[1]); if (!ev.inStrip) { clearProbe(); S.last = null; return render(); } showProbe(xy, ev); S.last = { ev, ok: !ev.kill, probe: true }; render(); P.scrollTop = 0; }
+/* sikertelen koppintás után a tiltó réteg két másodpercre felvillan a térképen, a feliratával együtt */
 let flashT = null;
-function flash(m) { const h = P.querySelector('.hint'); if (!h) return; if (h.dataset.base == null) h.dataset.base = h.innerHTML; h.innerHTML = '<span class="bad">' + esc(m) + '</span>'; clearTimeout(flashT); flashT = setTimeout(() => { h.innerHTML = h.dataset.base; delete h.dataset.base; }, 2600); }
+function flashStep(id) { S.flash = id; applyScene(); clearTimeout(flashT); flashT = setTimeout(() => { S.flash = 0; applyScene(); }, 2600); }
+function clearProbe() { if (S.probe) { S.probe.mk.remove(); S.probe = null; } }
+function showProbe(xy, ev) { clearProbe(); const cls = ev.kill ? 'x' : ev.crown < 2 ? 'lim' : 'ok'; S.probe = mkTree(xy[0], xy[1], cls, ev.kill ? '✕' : '?'); S.probe.el.classList.add('probe'); S.probe.mk.addTo(map); }
+function probe(xy) { const ev = FH.evalPoint(EN, xy[0], xy[1]); if (!ev.inStrip || Math.abs(ev.t) < M.half) return; showProbe(xy, ev); S.last = { ev, ok: !ev.kill, probe: true }; render(); P.scrollTop = 0; }
+function closeProbe() { clearProbe(); S.last = null; render(); }
+let toastT = null;
+function toast(m) { const el = document.getElementById('toast'); el.textContent = m; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2600); }
 
 /* ---------- vizsgálólap: mi történik pontosan ezen a helyen ---------- */
 function reasons(ev, upTo, max) {
   const st = FH.stateAt(ev, upTo), rows = [];
   ev.checks.filter(c => c.stage <= upTo && c.res === 'K').sort((a, b) => (b.need - b.d) - (a.need - a.d)).forEach(c => rows.push('<li class="x">' + failText(c) + '</li>'));
-  ev.checks.filter(c => c.stage <= upTo && c.res === 'L').sort((a, b) => a.cap - b.cap).forEach(c => rows.push('<li class="l">' + limText(c) + '</li>'));
+  ev.checks.filter(c => c.stage <= upTo && c.res === 'L' && (c.cap < 3 || c.id === 'tel')).sort((a, b) => a.cap - b.cap).forEach(c => rows.push('<li class="l">' + limText(c) + '</li>'));
   if (ev.flags.park) rows.push('<li class="l"><b>Parkolóhely</b>: itt egy parkoló szűnne meg</li>');
   const okN = ev.checks.filter(c => c.stage <= upTo && c.res === 'ok').length;
   const shown = rows.slice(0, max || 4), more = rows.length - shown.length;
@@ -364,21 +619,22 @@ function section(ev, upTo) {
   const lat = c => { if (!c.pt) return null; const q = AX.st(c.pt[0], c.pt[1]); return { t: q.t * sgn, ds: q.s - ev.s }; };
   let o = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Keresztmetszet"><rect x="0" y="' + gy + '" width="' + W + '" height="' + (H - gy) + '" fill="#10232a"/>';
   o += '<rect x="' + x(0) + '" y="' + (gy - 3) + '" width="' + (M.half * k) + '" height="6" fill="#39474d"/><text x="' + (x(0) + 3) + '" y="' + (gy - 7) + '" class="sl">úttest</text>';
-  o += '<line x1="' + x(lim) + '" y1="' + (gy - 16) + '" x2="' + x(lim) + '" y2="' + gy + '" stroke="#8a7350" stroke-width="2"/><text x="' + (x(lim) - 2) + '" y="' + (gy - 20) + '" class="sl" text-anchor="end">kerítés</text>';
-  const DEP = { gas: 22, water: 30, sewer: 46, cable: 16, tel: 12, culv: 40 }, UCOL = { gas: '#f2d21b', water: '#3f7bff', sewer: '#b0563f', cable: '#ff4a3d', tel: '#3fbf5f', culv: '#3d8fd1' };
-  const NM = { gas: 'gáz', water: 'víz', sewer: 'csatorna', cable: 'kábel', tel: 'hírközlés', culv: 'patak' };
+  { const open = lim >= Math.max.apply(null, G.lim[ev.side]) - 0.05;   /* ahol nincs kerítés (park, tér), ott a sáv a játékbeli határig tart */
+    o += '<line x1="' + x(lim) + '" y1="' + (gy - 16) + '" x2="' + x(lim) + '" y2="' + gy + '" stroke="' + (open ? '#5e7a80' : '#8f7650') + '" stroke-width="2"' + (open ? ' stroke-dasharray="3 3"' : '') + '/><text x="' + (x(lim) - 2) + '" y="' + (gy - 20) + '" class="sl" text-anchor="end">' + (open ? 'a sáv széle' : 'kerítés') + '</text>'; }
+  const DEP = { gas: 22, water: 30, sewer: 46, cable: 16, tel: 12, culv: 40 }, NM = { gas: 'gáz', water: 'víz', sewer: 'csatorna', cable: 'kábel', tel: 'hírközlés', culv: 'befedett árok' };
+  const UCOL = { gas: COL.gas, water: COL.water, sewer: COL.sewer, cable: COL.cable, tel: COL.tel, culv: COL.drain };
   ev.checks.forEach(c => { if (c.stage > upTo) return; const q = lat(c); if (!q || q.t < -0.5 || q.t > span) return; const r = rule(c.id);
     if (UCOL[c.id]) { const col = UCOL[c.id], need = r.d[0], near = Math.abs(q.ds) <= 0.8;
       o += '<rect x="' + x(Math.max(0, q.t - need)) + '" y="' + gy + '" width="' + ((Math.min(span, q.t + need) - Math.max(0, q.t - need)) * k) + '" height="' + (DEP[c.id] + 8) + '" fill="' + col + '" opacity="' + (c.res === 'ok' ? 0.1 : 0.26) + '"/>';
       o += '<circle cx="' + x(q.t) + '" cy="' + (gy + DEP[c.id]) + '" r="3.4" fill="' + (near ? col : 'none') + '" stroke="' + col + '" stroke-width="1.4"/>';
-      o += '<text x="' + (x(q.t) + 6) + '" y="' + (gy + DEP[c.id] + 3.5) + '" class="sl" fill="' + col + '">' + NM[c.id] + (near ? '' : ' ↕' + hu(Math.abs(q.ds), 0) + ' m') + '</text>'; }
-    else if (c.id === 'wire') { o += '<rect x="' + x(Math.max(0, q.t - 3)) + '" y="6" width="' + ((Math.min(span, q.t + 3) - Math.max(0, q.t - 3)) * k) + '" height="' + (gy - 6) + '" fill="#ffd166" opacity="0.1"/><circle cx="' + x(q.t) + '" cy="16" r="2.6" fill="#ffd166"/><text x="' + (x(q.t) + 5) + '" y="19" class="sl" fill="#ffd166">légvezeték</text>'; }
-    else if (c.id === 'pole' && Math.abs(q.ds) < 8) o += '<line x1="' + x(q.t) + '" y1="14" x2="' + x(q.t) + '" y2="' + gy + '" stroke="#caa85a" stroke-width="1.6" opacity="' + (Math.abs(q.ds) < 2 ? 1 : 0.4) + '"/>';
-    else if (c.id === 'walk' && Math.abs(q.ds) < 3) o += '<rect x="' + x(q.t - M.walkHalf) + '" y="' + (gy - 2.5) + '" width="' + (2 * M.walkHalf * k) + '" height="5" fill="#74868d"/><text x="' + x(q.t) + '" y="' + (gy - 6) + '" class="sl" text-anchor="middle">járda</text>';
-    else if (c.id === 'drive' && Math.abs(q.ds) < M.driveHalf + r.d[0]) o += '<text x="' + x(Math.min(at + 1.2, span - 4)) + '" y="' + (gy - 26) + '" class="sl" fill="#ff9f45">kapubehajtó ↕' + hu(Math.max(0, c.d)) + ' m</text>';
-    else if (c.id === 'tree' && c.d < r.d[2]) o += '<text x="' + x(Math.min(at + 1.2, span - 4)) + '" y="' + (gy - 36) + '" class="sl" fill="#c77bff">meglévő fa ' + hu(c.d) + ' m</text>';
+      o += '<text x="' + (x(q.t) + 6) + '" y="' + (gy + DEP[c.id] + 3.5) + '" class="sl" style="fill:' + col + '">' + NM[c.id] + (near ? '' : ' (' + hu(Math.abs(q.ds), 0) + ' m-rel arrébb)') + '</text>'; }
+    else if (c.id === 'wire') { const wb = r.d[1]; o += '<rect x="' + x(Math.max(0, q.t - wb)) + '" y="6" width="' + ((Math.min(span, q.t + wb) - Math.max(0, q.t - wb)) * k) + '" height="' + (gy - 6) + '" fill="' + COL.wire + '" opacity="0.1"/><circle cx="' + x(q.t) + '" cy="16" r="2.6" fill="' + COL.wire + '"/><text x="' + (x(q.t) + 5) + '" y="19" class="sl" style="fill:' + COL.wire + '">légvezeték</text>'; }
+    else if (c.id === 'pole' && Math.abs(q.ds) < 8) o += '<line x1="' + x(q.t) + '" y1="14" x2="' + x(q.t) + '" y2="' + gy + '" stroke="#b9a8d6" stroke-width="1.6" opacity="' + (Math.abs(q.ds) < 2 ? 1 : 0.4) + '"/>';
+    else if (c.id === 'walk' && Math.abs(q.ds) < 3) o += '<rect x="' + x(q.t - M.walkHalf) + '" y="' + (gy - 2.5) + '" width="' + (2 * M.walkHalf * k) + '" height="5" fill="#b9ad90"/><text x="' + x(q.t) + '" y="' + (gy - 6) + '" class="sl" text-anchor="middle">járda</text>';
+    else if (c.id === 'drive' && Math.abs(q.ds) < M.driveHalf + r.d[0]) o += '<text x="' + x(Math.min(at + 1.2, span - 4)) + '" y="' + (gy - 26) + '" class="sl" style="fill:' + COL.drive + '">kapubehajtó ' + hu(Math.max(0, c.d)) + ' m-re</text>';
+    else if (c.id === 'tree' && c.d < r.d[2]) o += '<text x="' + x(Math.min(at + 1.2, span - 4)) + '" y="' + (gy - 36) + '" class="sl" style="fill:' + COL.tree + '">meglévő fa ' + hu(c.d) + ' m-re</text>';
   });
-  const st = FH.stateAt(ev, upTo), cr = st.alive ? st.crown : 1, rad = [0, 2, 3.5, 6][cr] * k, col = st.alive ? (st.crown < 3 ? '#ff9f45' : '#2ad1b5') : '#ff6b4a';
+  const st = FH.stateAt(ev, upTo), cr = st.alive ? st.crown : 1, rad = [0, 2, 3.5, 6][cr] * k, col = st.alive ? (st.crown < 2 ? '#ff9f45' : '#2ad1b5') : '#ff6b4a';
   o += '<line x1="' + x(at) + '" y1="' + gy + '" x2="' + x(at) + '" y2="' + (gy - 22) + '" stroke="' + col + '" stroke-width="2.4"/><circle cx="' + x(at) + '" cy="' + (gy - 22 - Math.min(rad, 20) * 0.7) + '" r="' + Math.min(rad, 30) + '" fill="' + col + '" opacity="0.22" stroke="' + col + '" stroke-width="1.2"/>';
   if (!st.alive) o += '<text x="' + x(at) + '" y="' + (gy - 26) + '" text-anchor="middle" font-size="15" font-weight="700" fill="#ff6b4a">✕</text>';
   o += '<line x1="' + x(0) + '" y1="' + (H - 9) + '" x2="' + x(Math.floor(span)) + '" y2="' + (H - 9) + '" stroke="#5e7a80" stroke-width="0.8"/>';
@@ -386,111 +642,175 @@ function section(ev, upTo) {
   return o + '<style>.sl{font:500 8.5px Roboto Mono,monospace;fill:#9bb7bc}</style></svg>';
 }
 function inspHTML(ev, upTo, title) {
-  const r = reasons(ev, upTo, 4), st = r.st, cls = st.alive ? (st.crown < 3 ? 'lim' : 'ok') : 'x';
+  const r = reasons(ev, upTo, 4), st = r.st, cls = st.alive ? (st.crown < 2 ? 'lim' : 'ok') : 'x';
   const head = title || (st.alive ? 'Itt elfér egy fa — ' + CROWN[st.crown] + ' koronával (kb. ' + CROWN_M2[st.crown] + ' m² árnyék)' : 'Itt nem állhat fa');
   return '<div class="insp"><h3 class="' + cls + '">' + head + '</h3>' + section(ev, upTo) + '<ul>' + r.html + '</ul><div class="fn">A távolságok jellemző értékek — településenként és üzemeltetőnként eltérhetnek.</div></div>';
 }
 
-/* ---------- a játékos fáinak sorsa a lépcsőkön ---------- */
-function fateRows(upTo, full) {
-  return S.ghosts.map((t, i) => { const st = FH.stateAt(t.ev, upTo);
-    if (!st.alive) { const by = st.by, sn = STAGE_TXT[by.stage].name.toLowerCase(); return '<div class="x"><span class="t">' + (i + 1) + '</span><span>' + failText(by) + (full ? ' <span style="color:var(--faint)">· ' + sn + '</span>' : '') + '</span></div>'; }
-    if (st.crown < 3) return '<div class="lim"><span class="t">' + (i + 1) + '</span><span>áll, de legfeljebb <b>' + CROWN[st.crown] + ' koronával</b></span></div>';
-    return '<div class="ok"><span class="t">' + (i + 1) + '</span><span>áll</span></div>'; }).join('');
+/* ---------- a lépések rajza: vázlat arról, mit jelent a szabály (a távolság a rajzon méretezve) ---------- */
+function art(key) {
+  const W = 340, H = 104, c = COL[key], OK = '#2ad1b5', NO = '#ff6b4a', R = id => rule(id).d;
+  const T = (x, y, t, a, cl, f) => '<text x="' + x + '" y="' + y + '" text-anchor="' + (a || 'start') + '" class="' + (cl || 'al') + '"' + (f ? ' style="fill:' + f + '"' : '') + '>' + t + '</text>';
+  const mark = (x, y, ok) => ok ? '<path d="M' + (x - 4) + ' ' + y + 'l3 3 5-6" fill="none" stroke="' + OK + '" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>' : '<path d="M' + (x - 4) + ' ' + (y - 4) + 'l8 8m0-8l-8 8" stroke="' + NO + '" stroke-width="2" stroke-linecap="round"/>';
+  const tree = (x, gy, r, ok, h) => { h = h || 16; const col = ok ? OK : NO, cy = gy - h - r * 0.8; return '<line x1="' + x + '" y1="' + gy + '" x2="' + x + '" y2="' + (cy + r * 0.5) + '" stroke="' + col + '" stroke-width="2.4" stroke-linecap="round"/><circle cx="' + x + '" cy="' + cy + '" r="' + r + '" fill="' + col + '" fill-opacity=".2" stroke="' + col + '" stroke-width="1.3"/>' + mark(x, cy, ok); };
+  const ptree = (x, y, r, ok) => { const col = ok ? OK : NO; return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + col + '" fill-opacity=".2" stroke="' + col + '" stroke-width="1.3"/>' + mark(x, y, ok); };
+  const dim = (x1, x2, y, t) => '<path d="M' + x1 + ' ' + y + 'H' + x2 + 'M' + x1 + ' ' + (y - 3.5) + 'v7M' + x2 + ' ' + (y - 3.5) + 'v7" stroke="#eaf4f4" stroke-width="1" fill="none"/>' + T((x1 + x2) / 2, y - 4.5, t, 'middle', 'ad');
+  const soil = gy => '<rect x="0" y="' + gy + '" width="' + W + '" height="' + (H - gy) + '" fill="#13262d"/><path d="M0 ' + gy + 'H' + W + '" stroke="#2f505a" stroke-width="1"/>';
+  const zone = (x1, x2, y1, y2, o) => '<rect x="' + x1 + '" y="' + y1 + '" width="' + (x2 - x1) + '" height="' + (y2 - y1) + '" fill="' + c + '" opacity="' + (o || 0.2) + '"/><path d="M' + x1 + ' ' + y1 + 'V' + y2 + 'M' + x2 + ' ' + y1 + 'V' + y2 + '" stroke="' + c + '" stroke-width="1" stroke-dasharray="3 3" opacity=".85" fill="none"/>';
+  const car = (x, y) => '<rect x="' + (x - 26) + '" y="' + (y - 16) + '" width="52" height="11" rx="4" fill="#5b6f78"/><rect x="' + (x - 14) + '" y="' + (y - 24) + '" width="27" height="10" rx="4" fill="#4a5c64"/><circle cx="' + (x - 15) + '" cy="' + (y - 4) + '" r="4.5" fill="#1b2a30" stroke="#7d949c"/><circle cx="' + (x + 15) + '" cy="' + (y - 4) + '" r="4.5" fill="#1b2a30" stroke="#7d949c"/>';
+  /* föld alatti vezeték keresztmetszetben: [mélység px, csősugár, védőtávolság m, lépték px/m, felirat, szín] */
+  const pipe = (x0, gy, depth, r, col, label, side) => '<circle cx="' + x0 + '" cy="' + (gy + depth) + '" r="' + r + '" fill="' + col + '" fill-opacity=".3" stroke="' + col + '" stroke-width="2"/>' + T(x0 + (side || 1) * (r + 5), gy + depth + 3, label, side === -1 ? 'end' : 'start', 'al', col);
+  const under = (depth, r, need, k, label) => { const gy = 40, x0 = 170, zx = need * k, xt = x0 - zx * 0.5;
+    return soil(gy) + zone(x0 - zx, x0 + zx, gy, H) + pipe(x0, gy, depth, r, c, label)
+      + tree(xt, gy, 10, false, 12) + '<path d="M' + xt + ' ' + gy + 'q-3 12 -12 16M' + xt + ' ' + gy + 'q6 ' + (depth * 0.6) + ' ' + (x0 - r - xt) + ' ' + depth + '" stroke="' + NO + '" stroke-width="1.2" fill="none" opacity=".8"/>'
+      + tree(x0 + zx + 44, gy, 13, true, 14) + dim(x0, x0 + zx, 97, hu(need, 0) + ' m'); };
+  let o = '';
+  if (key === 'road') { const gy = 76; o = soil(gy) + '<rect x="0" y="' + (gy - 3) + '" width="118" height="9" fill="#3a474d"/>' + T(8, gy + 20, 'úttest') + car(58, gy - 3) + '<rect x="118" y="' + (gy - 7) + '" width="6" height="10" fill="' + c + '"/>' + T(121, gy + 20, 'szegély', 'middle')
+    + zone(124, 174, 10, gy) + tree(150, gy, 10, false) + tree(246, gy, 15, true, 22) + dim(124, 174, 22, hm(R('road')[0]) + ' m'); }
+  else if (key === 'drive') { o = '<rect x="0" y="14" width="' + W + '" height="60" fill="#103234"/><rect x="0" y="74" width="' + W + '" height="30" fill="#3a474d"/>' + T(8, 93, 'úttest') + '<path d="M0 14H' + W + '" stroke="#8f7650" stroke-width="2"/>' + T(8, 10, 'kerítés')
+    + '<rect x="140" y="14" width="60" height="60" fill="' + c + '" opacity=".75"/>' + zone(118, 140, 14, 74, 0.35) + zone(200, 222, 14, 74, 0.35) + T(170, 47, 'kapubehajtó', 'middle', 'al', '#2b1400')
+    + ptree(128, 30, 7, false) + ptree(270, 44, 13, true) + ptree(60, 44, 13, true) + dim(200, 222, 92, hm(R('drive')[0]) + ' m'); }
+  else if (key === 'sight') { const rr = R('junc')[0] * 13;   /* a kereszteződés középpontja: a két úttengely metszése */
+    o = '<rect x="0" y="14" width="' + W + '" height="52" fill="#103234"/><rect x="0" y="66" width="' + W + '" height="38" fill="#3a474d"/><rect x="36" y="0" width="40" height="66" fill="#3a474d"/>' + T(82, 10, 'keresztutca')
+    + '<clipPath id="fh-clip"><rect x="0" y="14" width="' + W + '" height="52"/></clipPath><circle cx="56" cy="85" r="' + rr + '" fill="' + c + '" opacity=".3" clip-path="url(#fh-clip)"/><circle cx="56" cy="85" r="' + rr + '" fill="none" stroke="' + c + '" stroke-dasharray="3 3" clip-path="url(#fh-clip)"/>'
+    + '<circle cx="56" cy="85" r="3" fill="' + c + '"/><path d="M56 85L' + (56 + rr * 0.94) + ' ' + (85 - rr * 0.342) + '" stroke="#eaf4f4" stroke-width="1"/>' + T(126, 55, hm(R('junc')[0]) + ' m', 'middle', 'ad')
+    + ptree(112, 34, 9, false) + ptree(250, 38, 12, true)
+    + [0, 1, 2, 3].map(i => '<rect x="' + (296 + i * 8) + '" y="68" width="4" height="34" fill="#f3f6f7" opacity=".85"/>').join('') + T(308, 60, 'zebra: ' + hm(R('cross')[0]) + ' m', 'middle'); }
+  else if (key === 'walk') { const gy = 76; o = soil(gy) + '<rect x="0" y="' + (gy - 3) + '" width="70" height="9" fill="#3a474d"/>' + T(8, gy + 20, 'úttest') + '<rect x="150" y="' + (gy - 4) + '" width="60" height="7" fill="' + c + '"/>' + T(180, gy + 20, 'járda', 'middle')
+    + zone(120, 240, 10, gy) + '<circle cx="166" cy="' + (gy - 34) + '" r="4.5" fill="none" stroke="#eaf4f4" stroke-width="1.5"/><path d="M166 ' + (gy - 29) + 'v15m0 0l-5 10m5-10l5 10m-10-18h10" stroke="#eaf4f4" stroke-width="1.5" fill="none" stroke-linecap="round"/>'
+    + tree(226, gy, 8, false, 12) + tree(288, gy, 15, true, 22) + dim(210, 240, 22, hm(R('walk')[0]) + ' m'); }
+  else if (key === 'plot') { const gy = 76; o = soil(gy) + '<rect x="286" y="' + (gy - 38) + '" width="54" height="38" fill="#24495b"/><path d="M280 ' + (gy - 38) + 'L313 ' + (gy - 58) + 'L346 ' + (gy - 38) + 'Z" fill="#2b5a70"/>' + T(313, gy + 20, 'ház', 'middle')
+    + '<path d="M250 ' + (gy - 22) + 'V' + gy + 'M258 ' + (gy - 22) + 'V' + gy + 'M266 ' + (gy - 22) + 'V' + gy + 'M246 ' + (gy - 16) + 'H270M246 ' + (gy - 7) + 'H270" stroke="' + c + '" stroke-width="2" fill="none"/>' + T(258, gy + 20, 'kerítés', 'middle')
+    + zone(190, 250, 10, gy) + tree(224, gy, 9, false, 12) + tree(140, gy, 15, true, 22) + dim(190, 250, 22, hu(R('fence')[0], 0) + '–' + hu(R('fence')[2], 0) + ' m'); }
+  else if (key === 'tree') { const gy = 76; o = soil(gy) + '<line x1="70" y1="' + gy + '" x2="70" y2="' + (gy - 24) + '" stroke="#5a4631" stroke-width="4"/><circle cx="70" cy="' + (gy - 42) + '" r="24" fill="#3f6b33" fill-opacity=".7" stroke="' + c + '" stroke-width="1.3"/>' + T(70, gy + 20, 'meglévő fa', 'middle')
+    + zone(70, 190, 10, gy, 0.16) + tree(126, gy, 12, false, 16) + tree(262, gy, 15, true, 22) + dim(70, 190, 22, hu(R('tree')[0], 0) + '–' + hu(R('tree')[2], 0) + ' m'); }
+  else if (key === 'drain') { const gy = 58; o = soil(gy) + '<path d="M140 ' + gy + 'L158 ' + (gy + 26) + 'H182L200 ' + gy + 'Z" fill="#0b1d24"/><path d="M151 ' + (gy + 16) + 'L158 ' + (gy + 26) + 'H182L189 ' + (gy + 16) + 'Z" fill="' + c + '" opacity=".85"/>' + T(170, gy + 40, 'árok', 'middle')
+    + zone(110, 230, 8, gy, 0.16) + tree(218, gy, 9, false, 12) + tree(296, gy, 14, true, 18) + dim(170, 230, 20, hm(R('drain')[0]) + ' m'); }
+  else if (key === 'wire') { const gy = 82; o = soil(gy) + zone(89, 251, 6, gy, 0.14) + '<path d="M170 ' + gy + 'V14M158 18H182" stroke="#b9a8d6" stroke-width="3" fill="none"/><circle cx="160" cy="16" r="2.6" fill="' + c + '"/><circle cx="180" cy="16" r="2.6" fill="' + c + '"/>' + T(188, 14, 'légvezeték', 'start', 'al', c)
+    + tree(128, gy, 24, false, 22) + tree(214, gy, 9, true, 10) + tree(304, gy, 22, true, 22) + dim(170, 251, 40, hm(R('wire')[1]) + ' m') + T(128, gy + 14, 'nagy fa', 'middle') + T(214, gy + 14, 'kis fa', 'middle') + T(304, gy + 14, 'nagy: ' + hu(R('wire')[2], 0) + ' m-től', 'middle'); }
+  else if (key === 'cable') { const gy = 40, k = 40, x0 = 150, zx = R('cable')[0] * k;
+    o = soil(gy) + zone(x0 - zx, x0 + zx, gy, H) + pipe(x0, gy, 22, 3.4, COL.cable, 'földkábel', -1) + pipe(236, gy, 15, 2.6, COL.tel, 'hírközlés')
+      + tree(x0 - 18, gy, 10, false, 12) + tree(226, gy, 10, true, 12) + T(226, gy + 34, 'kézi földmunka', 'middle') + tree(308, gy, 13, true, 14) + dim(x0, x0 + zx, 97, hu(R('cable')[0], 0) + ' m'); }
+  else if (key === 'water') o = under(32, 5, R('water')[0], 28, 'ivóvízvezeték');
+  else if (key === 'sewer') o = under(38, 7, R('sewer')[0], 22, 'csatorna');
+  else if (key === 'gas') o = under(26, 4.5, R('gas')[0], 28, 'gázvezeték');
+  return '<svg class="art" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Vázlat: ' + esc(stepTxt(key).t) + '">' + o + '<style>.al{font:500 9.5px Roboto Mono,monospace;fill:#9bb7bc}.ad{font:700 10.5px Roboto Mono,monospace;fill:#eaf4f4}</style></svg>';
 }
-function markGhosts(upTo) { S.ghosts.forEach((t, i) => { const st = FH.stateAt(t.ev, upTo); setTree(t, st.alive ? (st.crown < 3 ? 'lim' : 'ok') : 'x', st.alive ? String(i + 1) : '✕'); }); }
+
+/* ---------- a játékos fáinak sorsa ---------- */
+function markGhosts(upTo, prev) { S.ghosts.forEach((t, i) => { const st = FH.stateAt(t.ev, upTo), was = prev == null ? false : FH.stateAt(t.ev, prev).alive;
+  setTree(t, st.alive ? (st.crown < 2 ? 'lim' : '') : ('x' + (was ? ' now' : '')), st.alive ? String(i + 1) : '✕'); }); }
 const aliveN = upTo => S.ghosts.filter(t => FH.stateAt(t.ev, upTo).alive).length;
-function funnelHTML(cur) { const lab = ['Papíron', 'Közlekedés', 'Telek, felszín', 'Föld fölött', 'Föld alatt'];
-  return '<div class="fun">' + M.pct.map((p, i) => (cur != null && i > cur) ? '' : '<div class="' + (i === cur ? 'cur' : '') + '"><span>' + lab[i] + '</span><i><u style="width:' + Math.max(1.5, p) + '%"></u></i><b>' + Math.round(p) + '%</b></div>').join('') + '</div>'; }
+/* egyetlen halmozott sáv: a teljes közterületi sávból melyik fejezet mennyit vett el, és mennyi maradt szabadon */
+function stackHTML() { const seg2 = CH.map((c, i) => ({ n: c.label, v: M.chPct[i] - M.chPct[i + 1], col: CHCOL[c.id] })).concat([{ n: 'szabad', v: M.chPct[CH.length], col: FREE }]);
+  return '<div class="stack" role="img" aria-label="A közterületi sáv megoszlása">' + seg2.map(q => '<i style="width:' + q.v + '%;background:' + q.col + '"></i>').join('') + '</div><div class="stkl">'
+    + seg2.map(q => '<span><i style="background:' + q.col + '"></i>' + esc(q.n) + ' <b>' + pc(q.v) + '</b></span>').join('') + '</div>'
+    + '<div class="src" style="margin-top:6px">A légvezeték helyet alig vesz el, de a megmaradó szabad hely ' + M.smallPct[NST] + '%-án csak kis koronájú fa fér el.</div>'; }
 
 /* ---------- képernyők ---------- */
-function showChips(v) { LC.show(v); }
 function render() {
   if (!LC) return; const n = S.trees.length;
-  showChips(S.st === 'step' || S.st === 'mid' || S.st === 'inf' || S.st === 'final');
-  if (S.st === 'loading') { P.innerHTML = '<span class="eyebrow">Döntésjáték · 4–5 perc</span><h1>Hol fér el <em>egy fa</em>?</h1><p><span class="spin"></span>Az utca adatainak betöltése…</p>'; return; }
-  const c = M.counts;
-  if (S.st === 'intro') { TB.innerHTML = 'Diósd · <b>Kossuth Lajos utca</b>';
-    P.innerHTML = `<span class="eyebrow">Döntésjáték · 4–5 perc</span><h1>Hol fér el <em>egy fa</em>?</h1>
-    <div class="prob"><div><span class="n">1</span><span>${esc(M.town)}, ${esc(M.street)}: ${Math.round(M.len)} méter, a házak előtt ${M.stripW.L} méter széles közterületi sáv.</span></div>
-    <div><span class="n">2</span><span>Ránézésre bárhová fér fa. Megnézzük, mit enged az utca: a felszínen, fölötte és alatta.</span></div>
-    <div><span class="n">3</span><span>Előbb egy tipp: <b>a közterületi sáv mekkora részén állhat fa?</b></span></div></div>
-    <div class="guess">${[90, 70, 50, 30, 10].map(g => `<button type="button" onclick="guess(${g})">${g}%</button>`).join('')}</div>
-    <div class="src">Utca, behajtók, kerítések, oszlopok, fák: OpenStreetMap (${esc(M.osmDate)}) · Közművek: az e-közmű lakossági térképe alapján, egyszerűsítve — tájékoztató jellegű</div>`; return; }
+  const prb = !!(S.last && S.last.probe);   /* vizsgálólap közben a kapcsolók sora nem kell (asztali gépen), a panel visszakapja a teljes magasságát */
+  LC.show(S.st === 'final' && !(prb && innerWidth >= 820)); SHEET.classList.toggle('wide', S.st === 'wiz'); SHEET.classList.toggle('fin', S.st === 'final' && !prb);
+  if (S.st === 'loading') { P.innerHTML = '<span class="eyebrow">Döntésjáték · kb. 6 perc</span><h1>Hol fér el <em>egy fa</em>?</h1><p><span class="spin"></span>Az utca adatainak betöltése…</p>'; return; }
+  if (S.st === 'intro') { TB.innerHTML = esc(M.town) + ' · <b>' + esc(M.street) + '</b>';
+    if (S.intro === 0) { P.innerHTML = `<span class="eyebrow">Döntésjáték · kb. 6 perc</span><h1>Hol fér el <em>egy fa</em>?</h1>
+      <p>${esc(M.town)}, ${esc(M.street)}: ${Math.round(M.len)} méter valódi utca, nyilvános térképi adatokkal. Ültess el ${N} fát, aztán lépésenként megmutatjuk, mi van útban a felszínen, a fejünk fölött és a föld alatt.</p>
+      <div class="row"><button class="btn" onclick="introNext()">Kezdjük</button></div>`; return; }
+    if (S.intro === 1) { P.innerHTML = `<span class="eyebrow">Ez az utca</span><h1>Középen az úttest, a szélén telkek és zöldfelület</h1>
+      <p>Amit az utcán állva is látnál, az a térképen is ott van: a házak, a kerítések, a járda, a kapubehajtók és a meglévő fák.</p>
+      <div class="row"><button class="btn" onclick="introNext()">Tovább</button></div>
+      <div class="src">Utca, kerítések, házak, fák: OpenStreetMap, ${esc(dateHu(M.osmDate))}</div>`; return; }
+    P.innerHTML = `<span class="eyebrow">A közterületi sáv</span><h1>Fát csak a <em>zöld sávba</em> ültethetsz</h1>
+      <p>A zöld sáv a szegélytől az első kerítésig vagy házfalig tart — ahol nincs kerítés, ott ${Math.round(Math.max.apply(null, G.lim.R) - M.half)} méterig. A túloldalon kb. ${M.stripW.L} méter széles. Tippelj: <b>mekkora részén állhat fa?</b></p>
+      <div class="guess">${[90, 70, 50, 30, 10].map(g => `<button type="button" onclick="guess(${g})">${g}%</button>`).join('')}</div>`; return; }
   if (S.st === 'blind') { TB.innerHTML = '1. kör · adat nélkül · <b>' + n + '/' + N + '</b>';
-    P.innerHTML = `<span class="eyebrow">1. kör — adat nélkül</span><h1>Koppints ${N} helyre, ahová fát ültetnél</h1>
+    P.innerHTML = `<span class="eyebrow">1. kör — adat nélkül</span><h1>Ültess ${N} fát a <em>zöld sávba</em></h1>
     <div class="cnt">${Array.from({ length: N }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>
-    <div class="row"><button class="btn btn-ghost" onclick="undo()" ${n ? '' : 'disabled'}>Vissza</button><button class="btn" onclick="startFunnel()" ${n === N ? '' : 'disabled'}>Megnézzük</button></div>
-    <div class="hint">${n < N ? 'A világosabb sáv a közterület az úttest és a kerítések között. Nagyíts bátran; egy fára koppintva visszaveszed.' : 'Mind az ' + N + ' fa a helyén — nézzük, mit szól hozzá az utca.'}</div>`; return; }
-  if (S.st === 'step') { const i = S.stage, T = STAGE_TXT[i], pct = Math.round(M.pct[i]), al = aliveN(i), lost = S.ghosts.filter(t => { const a = FH.stateAt(t.ev, i - 1).alive, b = FH.stateAt(t.ev, i).alive; return a && !b; }).length;
-    TB.innerHTML = i + '/4 · ' + T.name + ' · <b>' + pct + '%</b>';
-    const body = { 1: `${c.drive} kapubehajtó, ${c.junc} útcsatlakozás, ${c.cross} gyalogátkelő. A behajtó szélétől legalább 1 méter, a saroktól 10 méter kell; a járdából és a szegély mellől sem vehetünk el.`,
-      2: `A kerítéstől és a homlokzattól 2 méter, a meglévő fától 5 méter, a nyílt ároktól 3 méter kell. ${c.tree} fa már áll a sávban.`,
-      3: `${nf(c.wireLen)} méter légvezeték és ${c.pole} oszlop. A vezeték 3 méteres sávjában csak alacsony fa maradhat: a még szabad terület ${M.smallPct[3]}%-án legfeljebb kis koronájú fa fér el.`,
-      4: `${nf(c.utilLen)} méter vezeték fut ${Math.round(M.len)} méter utca alatt: gáz ${nf(c.gasLen)} m, víz ${nf(c.waterLen)} m, csatorna ${nf(c.sewerLen)} m, földkábel ${nf(c.cableLen)} m, hírközlés ${nf(c.telLen)} m. Gáztól és víztől 2, csatornától 3, kábeltől 1 méter kell.` }[i];
-    const h1 = i === 3 ? 'A hely megvan — <em>a lombkorona nem</em>' : 'A sáv <em>' + pct + '%</em>-a maradt szabad';
-    let worst = null; if (i === 4) { worst = S.ghosts.find(t => { const st = FH.stateAt(t.ev, 4); return !st.alive && st.by.stage === 4; }) || null; }
-    P.innerHTML = `<span class="eyebrow">${i}/4 · ${T.name} <i>· ${T.src}</i></span><h1>${h1}</h1><p>${body}</p>
-    <div class="fate">${fateRows(i)}</div>
-    <div class="row"><button class="btn" onclick="nextStep()">${i < 4 ? 'Tovább' : 'Mérleg'}</button></div>
-    <div class="hint">${N} fádból <b>${al}</b> áll még${lost ? ' · ebben a lépésben <span class="bad">' + lost + ' esett ki</span>' : ''}.${i === 4 ? ' Az e-közmű lakossági térképe tájékoztató jellegű.' : ' Jellemző értékek — a helyi rendelet eltérhet.'}</div>
-    ${funnelHTML(i)}
-    ${worst ? inspHTML(worst.ev, 4, (S.ghosts.indexOf(worst) + 1) + '. fád helye a föld alatt') : ''}`; return; }
-  if (S.st === 'mid') { const al = aliveN(4); TB.innerHTML = 'Vakon · <b>' + al + '/' + N + '</b>';
-    P.innerHTML = `<span class="eyebrow">1. kör — eredmény</span><h1>Adat nélkül: <em>${al}</em> / ${N} fa maradt</h1>
-    <p>A közterületi sáv <b>${Math.round(M.pct[4])}%</b>-án állhat fa — a tipped <b>${S.guess}%</b> volt.</p>
-    <div class="fate">${fateRows(4, true)}</div>
-    ${S.last && S.last.probe ? inspHTML(S.last.ev, 4) : ''}
-    <div class="row"><button class="btn" onclick="startInformed()">Újra, adattal</button></div>
-    <div class="hint">A zöld foltok a szabad helyek. Koppints bárhová a sávban: megmutatjuk, mi van ott.</div>`; return; }
+    <div class="row"><button class="btn btn-ghost sm" onclick="undo()" ${n ? '' : 'disabled'}>Visszavonás</button><button class="btn" onclick="startWizard()" ${n === N ? '' : 'disabled'}>Megnézzük (${NST} lépés)</button></div>
+    <div class="hint">${n < N ? 'Koppints a térképen a zöld sávra.' + (seg() ? ' A térképet húzhatod; a felső csík az egész utca.' : '') : 'Mind az ' + N + ' fa a helyén.'}</div>`; return; }
+  if (S.st === 'wiz') { const k = S.step, sp = STEPS[k - 1], T = stepTxt(sp.key), ch = CH[sp.ch - 1], p0 = M.pct[k - 1], p1 = M.pct[k];
+    TB.innerHTML = seg() ? k + '/' + NST + ' · szabad <b>' + pc(p1) + '</b>' : k + '/' + NST + ' · ' + esc(T.t) + ' · <b>' + pc(p1) + '</b>';
+    const q = S.ghosts.map((t, i) => ({ i, a: FH.stateAt(t.ev, k - 1), b: FH.stateAt(t.ev, k) }));
+    const rows = q.filter(x => x.a.alive && !x.b.alive).map(x => '<div class="x"><span class="t">' + (x.i + 1) + '</span><span>' + (x.i + 1) + '. fád kiesett: ' + failText(x.b.by) + '</span></div>')
+      .concat(q.filter(x => x.b.alive && x.a.crown > 1 && x.b.crown === 1).map(x => '<div class="lim"><span class="t">' + (x.i + 1) + '</span><span>' + (x.i + 1) + '. fád marad, de csak <b>kis koronával</b></span></div>'));
+    const fate = rows.slice(0, 2).join('') + (rows.length > 2 ? '<div><span class="t">+' + (rows.length - 2) + '</span><span>további fádat is érinti</span></div>' : '');
+    const eff = p0 - p1 >= 0.5 ? '<div class="eff"><div class="bar"><u class="p" style="width:' + p0 + '%"></u><u class="n" style="width:' + Math.max(1, p1) + '%"></u></div><b>szabad: ' + pc(p0) + ' → ' + pc(p1) + '</b></div>'
+      : '<div class="eff note">Hely alig vész el — de a szabad hely ' + M.smallPct[k] + '%-án már csak kis koronájú fa fér el.</div>';
+    const dots = STEPS.map(s => '<i class="' + (s.id < k ? 'd' : s.id === k ? 'c' : '') + (s.id > 1 && s.ch !== STEPS[s.id - 2].ch ? ' g' : '') + '"></i>').join('');
+    P.innerHTML = `<div style="--c:${COL[sp.key]}"><div class="wiz-top"><span class="eyebrow">${esc(ch.label)} · ${k} / ${NST}</span>${k < NST ? '<button class="skip" type="button" onclick="skipWizard()">Kihagyom</button>' : ''}</div><div class="dots" aria-hidden="true">${dots}</div>
+    <div class="wz-body">${art(sp.key)}<div><h1><span class="sw"></span>${esc(T.t)}</h1><p>${esc(T.p)} <b>${esc(T.r)}</b></p></div></div>
+    ${eff}${fate ? '<div class="fate">' + fate + '</div>' : ''}
+    <div class="row">${k > 1 ? '<button class="btn btn-ghost sm" onclick="stepBy(-1)">Vissza</button>' : ''}<button class="btn" onclick="stepBy(1)">${k < NST ? 'Tovább' : 'Eredmény'}</button></div>
+    ${T.cav ? '<div class="src cav' + (T.cs && seg() ? ' keep' : '') + '">' + esc(T.cs && seg() ? T.cs : T.cav) + '</div>' : ''}</div>`; return; }
+  if (S.st === 'mid') { const al = aliveN(NST); TB.innerHTML = 'Adat nélkül · <b>' + al + '/' + N + '</b>';
+    if (S.last && S.last.probe) { P.innerHTML = '<button class="lnk" type="button" onclick="closeProbe()">‹ Vissza az eredményhez</button>' + inspHTML(S.last.ev, NST); return; }
+    P.innerHTML = `<span class="eyebrow">1. kör — eredmény</span><h1>Adat nélkül az ${N} fádból <em>${al}</em> maradt</h1>
+    <p>A közterületi sáv <b>${pc(M.pct[NST])}</b>-án állhat fa — a tipped <b>${S.guess}%</b> volt. Most ültess újra: a térkép már mutatja, hol maradt szabad hely.</p>
+    ${stackHTML()}
+    <div class="row"><button class="btn" onclick="startInformed()">Újra, adattal</button></div>`; return; }
   if (S.st === 'inf') { TB.innerHTML = '2. kör · adattal · <b>' + n + '/' + N + '</b>';
-    let msg = 'Koppints a zöld foltokra. Nagyíts rá: a szabad helyek kicsik.';
+    let msg = 'Koppints egy zöld foltra. A csíkozott, halványzöld helyeken csak kis koronájú fa fér el.', link = '';
     if (S.last) { if (S.last.own) msg = '<span class="bad">Túl közel van egy másik fádhoz — legalább ' + M.spacing + ' méter kell.</span>';
-      else if (S.last.ok) msg = 'Elfér: <b>' + CROWN[S.last.ev.crown] + ' koronájú</b> fa, kb. ' + CROWN_M2[S.last.ev.crown] + ' m² árnyék' + (S.last.ev.flags.park ? ' · <span class="warn">−1 parkolóhely</span>' : '') + '.';
-      else { const st = FH.stateAt(S.last.ev, 4); msg = '<span class="bad">Itt nem lehet:</span> ' + failText(st.by) + '.'; } }
-    P.innerHTML = `<span class="eyebrow">2. kör — adattal</span><h1>Ültess ${N} fát a szabad helyekre</h1>
+      else if (S.last.ok) msg = 'Elfér: <b>' + CROWN[S.last.ev.crown] + ' koronájú</b> fa, kb. ' + CROWN_M2[S.last.ev.crown] + ' m² árnyék' + (S.last.ev.flags.park ? ' · <span class="warn">−1 parkolóhely</span>' : '') + (S.last.ev.checks.some(c => c.id === 'tel' && c.res === 'L') ? ' · <span class="warn">hírközlési kábel mellett: csak kézi földmunkával</span>' : '') + '.';
+      else { const st = FH.stateAt(S.last.ev, NST); msg = '<span class="bad">Itt nem lehet:</span> ' + failText(st.by) + '.'; link = '<button class="lnk" type="button" onclick="S.sec=!S.sec;render()">' + (S.sec ? 'Keresztmetszet elrejtése' : 'Keresztmetszet') + '</button>'; } }
+    P.innerHTML = `<span class="eyebrow">2. kör — adattal</span><h1>Ültess ${N} fát a <em>zöldre</em></h1>
     <div class="cnt">${Array.from({ length: N }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>
-    <div class="row"><button class="btn btn-ghost" onclick="undo()" ${n ? '' : 'disabled'}>Vissza</button><button class="btn" onclick="finish()" ${n === N ? '' : 'disabled'}>Kiértékelés</button></div>
-    <div class="hint">${msg}</div>
-    ${S.last && !S.last.ok && !S.last.own ? inspHTML(S.last.ev, 4) : ''}`; return; }
-  if (S.st === 'final') { const f = M.final, truth = Math.round(M.pct[4]), diff = S.guess - truth; TB.innerHTML = 'Vakon <b>' + S.r1 + '</b> · adattal <b>' + n + '</b>';
-    const h1 = diff >= 15 ? `Tipped: ${S.guess}%. A valóság: <em>${truth}%</em>.` : `A sáv <em>${truth}%</em>-án állhat fa — jól érezted.`;
-    const groups = [['elo', 'Itt, ezen az utcán mérve'], ['papir', 'Papíron dől el — ültetés előtt tisztázni kell'], ['godor', 'Csak a próbagödör mutatja meg'], ['faj', 'Nem a helyet, hanem a fajt és a méretet szűkíti'], ['opt', 'Rangsorol: hol ér a legtöbbet a fa'], ['nincs', 'Ezen az utcán nincs ilyen'], ['videk', 'Csak vidéken és erdőben számít']];
+    <div class="row"><button class="btn btn-ghost sm" onclick="undo()" ${n ? '' : 'disabled'}>Visszavonás</button><button class="btn" onclick="finish()" ${n === N ? '' : 'disabled'}>Kiértékelés</button></div>
+    <div class="hint">${msg} ${link}</div>
+    ${S.sec && S.last && !S.last.ok && !S.last.own ? inspHTML(S.last.ev, NST) : ''}`; return; }
+  if (S.st === 'final') { const f = M.final, truth = M.pct[NST], diff = S.guess - truth; TB.innerHTML = 'Adat nélkül <b>' + S.r1 + '</b> · adattal <b>' + n + '</b>';
+    if (S.last && S.last.probe) { P.innerHTML = '<button class="lnk" type="button" onclick="closeProbe()">‹ Vissza a mérleghez</button>' + inspHTML(S.last.ev, NST); return; }
+    const h1 = diff >= 15 ? `Tipped: ${S.guess}%. A valóság: <em>${pc(truth)}</em>.` : `A sáv <em>${pc(truth)}</em>-án állhat fa — jól érezted.`;
+    const groups = [['elo', 'Itt, ezen az utcán mérve'], ['papir', 'Papíron dől el — ültetés előtt tisztázni kell'], ['godor', 'Csak a próbagödör mutatja meg'], ['faj', 'Nem a helyet, hanem a fajt és a méretet szűkíti'], ['opt', 'Rangsorol: hol ér a legtöbbet a fa'], ['nincs', 'Ezen a szakaszon nincs, vagy a játék nem vizsgálta'], ['videk', 'Csak vidéken és erdőben számít']];
     const cat = groups.map(([k, t]) => { const it = D.catalog.filter(q => q[4] === k); return it.length ? '<h4>' + t + ' · ' + it.length + '</h4><p>' + it.map(q => esc(q[1])).join(' · ') + '</p>' : ''; }).join('');
     P.innerHTML = `<span class="eyebrow">Az utca mérlege</span><h1>${h1}</h1>
-    ${S.last && S.last.probe ? inspHTML(S.last.ev, 4) : ''}
     <div class="score"><div class="sc b1"><span>1. kör · adat nélkül</span><b>${S.r1}/${N}</b></div><div class="sc b2"><span>2. kör · adattal</span><b>${n}/${N}</b></div></div>
-    ${funnelHTML(null)}
-    <p>Ezen a ${Math.round(M.len)} méteren <b>${f.n} új fa</b> férne el — ha pontosan oda kerülnek. Közülük ${f.small} csak kis koronájú lehet a légvezeték miatt, ${f.park} parkolóhelyet vinne el.</p>
-    <p>A szabad ${truth}%-ot az találja meg elsőre, aki a behajtókat, a légvezetéket, a meglévő fákat és a közműveket egy térképen látja — még az ígéret előtt, nem a gödör mellett.</p>
-    <p style="font-size:13.5px">Ásás előtt: az e-közmű lakossági térképe tájékoztató jellegű; hiteles adatot a közműegyeztetés ad, és a házi bekötések egy része a nyilvántartásból is hiányozhat.</p>
-    <details class="cat"><summary>${D.catalog.length} szempontból ${M.roles.elo} dőlt el itt a térképen — a többi</summary>${cat}</details>
-    <p style="margin-top:12px;color:var(--text);font-size:14px">Melyik lépcső lepett meg a legjobban?</p>
-    <div class="poll">${[1, 2, 3, 4].map(i => `<button type="button" class="${S.poll === i ? 'on' : ''}" onclick="poll(${i})">${STAGE_TXT[i].name}</button>`).join('')}</div>
-    <div class="src">Koppints bárhová a sávban: megmutatjuk, mi van ott. Az ⭕ Elférő fák réteg a ${f.n} lehetséges helyet mutatja.</div>
-    ${GV.endPanel({ game: 'fahely' })}`; return; }
+    ${GV.endPanel({ game: 'fahely' })}
+    ${stackHTML()}
+    <p style="margin-top:10px">A játék adatai szerint ezen a ${Math.round(M.len)} méteren <b>${f.n} új fa</b> férne el — ha pontosan a szabad helyekre kerülnek. Közülük ${f.small} csak kis koronájú lehet${f.park ? ', ' + f.park + ' parkolóhelyet vinne el' : ''}${f.tel ? ', ' + f.tel + ' pedig hírközlési kábel mellé kerülne (ott csak kézzel lehet ásni)' : ''}.</p>
+    <div class="src">A föld alatti vezetékek helye tájékoztató jellegű (az e-közmű lakossági térképe alapján); a távolságok jellemző értékek.</div>
+    <p style="margin-top:14px;color:var(--text);font-size:14px">Melyik rész lepett meg a legjobban?</p>
+    <div class="poll">${CH.map(c => `<button type="button" class="${S.poll === c.id ? 'on' : ''}" onclick="poll(${c.id})">${esc(c.label)}</button>`).join('')}</div>
+    <details class="cat"><summary>Honnan vannak az adatok, és mit nem mutat a térkép</summary>
+    <p>A szabad ${pc(truth)}-ot az találja meg elsőre, aki a behajtókat, a légvezetéket, a meglévő fákat és a közműveket egy térképen látja — még az ígéret előtt, nem a gödör mellett.</p>
+    <p>Az utca, a kerítések, a behajtók, az oszlopok és a fák az OpenStreetMapből származnak (${esc(dateHu(M.osmDate))} állapot). A föld alatti vezetékek az e-közmű lakossági térképe alapján, egyszerűsítve kerültek ide: tájékoztató jellegűek, hiteles adatot a közműegyeztetés ad, és a házi bekötések egy része a nyilvántartásból is hiányozhat. A távolságok jellemző értékek, nem jogi állásfoglalás; az úttest, a járda és a behajtók szélessége becsült. A közterületi sáv határa is közelítés, nem ingatlan-nyilvántartási adat: a szegélytől az első kerítésig vagy házfalig tart, ahol pedig nincs ilyen (park, tér), ott a szegélytől ${Math.round(Math.max.apply(null, G.lim.R) - M.half)}, illetve ${Math.round(Math.max.apply(null, G.lim.L) - M.half)} méterig.</p>
+    <h4>${D.catalog.length} szempontból ${M.roles.elo}-et vizsgált itt a játék a térképen</h4>${cat}</details>
+    <div class="src">A rétegeket a panel fölötti kapcsolókkal nézheted meg. Koppints bárhová a sávban: megmutatjuk, mi van ott.</div>`; return; }
 }
 
 /* ---------- lépések ---------- */
-function guess(g) { S.guess = g; S.st = 'blind'; render(); fitStreet(true); }
-function startFunnel() { S.ghosts = S.trees; S.trees = []; S.ghosts.forEach(t => t.el.classList.add('ghost')); LC.set('ghost', true); S.stage = 0; nextStep(); }
-function nextStep() {
-  if (S.stage < 4) { S.stage++; S.st = 'step'; [1, 2, 3, 4].forEach(i => LC.set('s' + i, i === S.stage)); LC.set('free', true); markGhosts(S.stage); render(); applyStage(); fitStreet(true); P.scrollTop = 0; return; }
-  S.r1 = aliveN(4); S.st = 'mid'; S.last = null; [1, 2, 3].forEach(i => LC.set('s' + i, false)); LC.set('s4', false); LC.set('free', true); render(); applyStage(); fitStreet(true); P.scrollTop = 0;
-}
-function startInformed() { clearProbe(); S.st = 'inf'; S.last = null; S.tries = 0; LC.set('ghost', false); LC.set('free', true); render(); applyStage(); zoomToFree(); }
-/* a 2. kör elején ráközelítünk az utca egy olyan részére, ahol több szabad folt is van */
-function zoomToFree() { if (!mapReady) return; let best = 0, bs = AX.L / 2; for (let s = 30; s < AX.L - 30; s += 10) { let nn = 0; for (const p of S.freePts) { const q = AX.st(p[0], p[1]); if (Math.abs(q.s - s) < 28) nn++; } if (nn > best) { best = nn; bs = s; } }
-  const sheet = document.querySelector('.sheet'), wide = innerWidth >= 900, pad = wide ? { top: 60, bottom: 20, left: 470, right: 20 } : { top: 60, bottom: Math.min(innerHeight * 0.6, sheet.offsetHeight + 14), left: 12, right: 12 };
-  const w = Math.max(120, innerWidth - pad.left - pad.right); const z = Math.log2((w / 62) / PXM14) + 14;
-  map.easeTo({ center: LLst(bs, 4), zoom: Math.min(20, z), bearing: M.az - 90, padding: pad, duration: 900, essential: true }); }
-function finish() { clearProbe(); S.st = 'final'; S.last = null; LC.set('final', true); LC.set('ghost', true);
-  GV.record('fahely', { ds: M.id, score: S.r1, guess: S.guess, truth: M.pct[4],
-    blind: { alive: S.r1, pts: S.ghosts.map(t => { const st = FH.stateAt(t.ev, 4); return [+t.x.toFixed(1), +t.y.toFixed(1), st.alive ? 0 : st.by.stage, st.alive ? '' : st.by.id, st.crown]; }) },
+function introNext() { S.intro++; render(); applyScene(); if (seg()) cam(true); focusMain(); }
+function guess(g) { S.guess = g; S.st = 'blind'; render(); applyScene(); cam(true); }
+function startWizard() { S.ghosts = S.trees; S.trees = []; S.ghosts.forEach(t => { t.el.classList.add('ghost'); t.on = true; }); S.step = 0; S.tStep = Date.now(); stepBy(1); }
+function stepBy(d) { const k = S.step + d; if (k < 1) return; const now = Date.now(); if (S.step >= 1) S.dwell[S.step - 1] = (S.dwell[S.step - 1] || 0) + Math.round((now - S.tStep) / 100) / 10; S.tStep = now;
+  if (k > NST) return toMid();
+  const prev = S.step; S.step = k; S.st = 'wiz'; markGhosts(k, d > 0 ? prev : null); render(); applyScene(); focusStep(true); P.scrollTop = 0; focusMain(); }
+/* billentyűzettel játszóknak: az újrarajzolt panel fő gombja kapja a fókuszt (érintőképernyőn nem nyúlunk hozzá) */
+function focusMain() { if (!FINE) return; const b = P.querySelector('.row .btn:not(.btn-ghost)'); if (b) { try { b.focus({ preventScroll: true }); } catch (e) {} } }
+/* kamera a lépéshez — asztali gépen az egész utca látszik, nem mozdul; keskeny képernyőn: ha most esett ki egy fád, oda;
+   ha a réteg kieső része már látszik, maradunk; különben odacsúszunk */
+function focusStep(anim) { if (!seg()) return fitStreet(anim); const k = S.step, dead = S.ghosts.find(t => FH.stateAt(t.ev, k - 1).alive && !FH.stateAt(t.ev, k).alive), half = innerWidth / segPx() / 2;
+  if (dead) return focusSeg(AX.st(dead.x, dead.y).s, anim, 600);
+  if (S.segS != null && Math.abs(SHOW[k] - S.segS) < half * 0.7) return focusSeg(S.segS, anim, 400);
+  focusSeg(SHOW[k], anim, 600); }
+function skipWizard() { S.skipped = true; toMid(); }
+function toMid() { S.step = NST; S.r1 = aliveN(NST); S.st = 'mid'; S.last = null; markGhosts(NST, null); render(); applyScene(); cam(true); P.scrollTop = 0; }
+function bestFreeS() { let best = 0, bs = AX.L / 2; const half = seg() ? innerWidth / segPx() / 2 : 30; for (let s = 28; s <= AX.L - 28; s += 6) { let nn = 0; for (const p of S.freePts) if (Math.abs(AX.st(p[0], p[1]).s - s) < half) nn++; if (nn > best) { best = nn; bs = s; } } return bs; }
+function startInformed() { clearProbe(); S.st = 'inf'; S.last = null; S.tries = 0; S.sec = false; render(); applyScene(); cam(true); }
+function finish() { clearProbe(); S.st = 'final'; S.last = null; S.flash = 0; LC.set('final', true); LC.set('free', true); LC.set('ghost', true);
+  GV.record('fahely', { ds: M.id, score: S.r1, guess: S.guess, truth: M.pct[NST],
+    blind: { alive: S.r1, pts: S.ghosts.map(t => { const st = FH.stateAt(t.ev, NST); return [+t.x.toFixed(1), +t.y.toFixed(1), st.alive ? 0 : rule(st.by.id).ch, st.alive ? '' : st.by.id, st.crown]; }) },
     informed: { score: S.trees.length, tries: S.tries, pts: S.trees.map(t => [+t.x.toFixed(1), +t.y.toFixed(1), t.ev.crown, t.ev.flags.park ? 1 : 0]) },
-    layers: LC.all(), toggles: S.toggles, dur: Math.round((Date.now() - S.t0) / 1000), vw: innerWidth });
-  render(); applyStage(); fitStreet(true); P.scrollTop = 0; }
-function poll(i) { if (S.poll) return; S.poll = i; GV.record('velemeny', { game: 'fahely', q: 'meglepett', a: STAGE_TXT[i].name }); render(); }
+    skipped: S.skipped ? 1 : 0, dwell: S.dwell, d3: S.d3 ? 1 : 0, dur: Math.round((Date.now() - S.t0) / 1000), vw: innerWidth });
+  render(); applyScene(); fitStreet(true); P.scrollTop = 0; }
+function poll(i) { if (S.poll) return; S.poll = i; GV.record('velemeny', { about: 'fahely', q: 'meglepett', a: CH[i - 1].label }); render(); }
+/* billentyűk a varázslóban: Enter vagy → = Tovább, ← = Vissza */
+document.addEventListener('keydown', e => { if (S.st !== 'wiz' || e.altKey || e.ctrlKey || e.metaKey) return; const tag = (e.target && e.target.tagName) || '';
+  if (e.key === 'ArrowRight' || (e.key === 'Enter' && !/^(BUTTON|A|INPUT|SUMMARY)$/.test(tag))) { e.preventDefault(); stepBy(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); stepBy(-1); } });
+/* ---------- indulás ---------- */
+function start() { render(); fetch('data/fahely-diosd-kossuth.json?v=16').then(r => { if (!r.ok) throw new Error('adat'); return r.json(); }).then(init).catch(() => { document.body.classList.add('maperr'); SHEET.style.display = 'none'; }); }
+start();
 </script>
 <script>window.addEventListener('pageshow',function(){document.body.style.opacity='';document.body.classList.add('in');});</script>
 </body>

@@ -20,8 +20,8 @@
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap"></noscript>
-<script src="jatekok/config.js?v=15"></script>
-<script src="jatekok/gv.js?v=15"></script>
+<script src="jatekok/config.js?v=16"></script>
+<script src="jatekok/gv.js?v=16"></script>
 <style>
 :root{--bg:#050f14;--petrol:#0F4A57;--teal:#2AD1B5;--amber:#FF9F45;--text:#EAF4F4;--muted:#8FB0B5;--faint:#5E7A80;
   --card:rgba(5,15,20,.68);--cardline:rgba(42,209,181,.22);--font:'Roboto',system-ui,sans-serif;--mono:'Roboto Mono',ui-monospace,monospace}
@@ -86,7 +86,7 @@ h2{font-size:clamp(22px,3vw,30px);font-weight:900;line-height:1.12;margin:54px 0
 <header>
   <a class="logo" href="index.html"><img src="/logo/geovern-wm.svg" alt="GEOVERN"></a>
   <div class="spacer"></div>
-  <a class="navlink" href="jatek-swipe.html?v=15">Krízisjáték</a>
+  <a class="navlink" href="jatek-swipe.html?v=16">Krízisjáték</a>
   <a class="navlink" href="index.html">← Vissza a főoldalra</a>
 </header>
 
@@ -102,7 +102,7 @@ h2{font-size:clamp(22px,3vw,30px);font-weight:900;line-height:1.12;margin:54px 0
   <div class="grid" id="grid"></div>
 
   <h2>Folyamatjátékok — 3–8 perc</h2>
-  <p class="lead">Itt nem egy döntést hozol, hanem egy folyamatot viszel végig: egy év egy városrész élén, illetve hat hét egy önkormányzati ügymenetben. A végén kiderül, mennyit költöttél vakon — és hány döntés elé került adat.</p>
+  <p class="lead">Itt nem egy döntést hozol, hanem egy folyamatot viszel végig: egy valós utca rétegről rétegre, egy év egy városrész élén, illetve hat hét egy önkormányzati ügymenetben. A végén kiderül, mennyit költöttél vakon — és hány döntés elé került adat.</p>
   <div class="grid" id="gridbig"></div>
 
   <h2>Önkormányzatoknak — hogyan használd</h2>
@@ -144,8 +144,8 @@ const GAMES=[
   design:'szenzor-műszerfal',mode:'döntés → 12 hetes szimuláció → újradöntés',data:'idősor-diagram',coll:'mérési hajlandóság, eszközválasztás'}
 ];
 const BIG=[
- {f:'jatekok/fahely.html',img:'jatekok/img/fahely.jpg',t:'Hol fér el egy fa?',min:'4–5 perc',hook:'Egy valós utca, 13 méter széles zöldsáv — ránézésre bárhová fér fa. Aztán jönnek a kapubehajtók, a légvezeték és 2,5 kilométer közmű a föld alatt. A sáv 8 százalékán marad hely: megtalálod adat nélkül?',
-  design:'GEOVERN sötét térkép, keresztmetszettel',mode:'két kör (vakon → adattal), négy lépcsős tölcsér',data:'valós utca: OpenStreetMap + az e-közmű lakossági térképe alapján vektorizált közművek',coll:'tipp a szabad terület arányára, vak és adatos fahelyek, mi zárta ki őket'},
+ {f:'jatekok/fahely.html',img:'jatekok/img/fahely.jpg',t:'Hol fér el egy fa?',min:'kb. 6 perc',hook:'Egy valós utca 3D-ben, akár 13 méter széles közterületi sávval — ránézésre bárhová fér fa. Aztán rétegenként jönnek a kapubehajtók, a légvezeték és 2,0 kilométer vezeték a föld alatt. A sáv 7 százalékán marad hely: megtalálod adat nélkül?',
+  design:'3D-s utcakép, feliratokkal a térképen',mode:'két kör (adat nélkül → adattal), közte 12 lépés: lépésenként egy réteg, rajzos magyarázattal',data:'valós utca: OpenStreetMap + az e-közmű lakossági térképe alapján vektorizált közművek',coll:'tipp a szabad terület arányára, vak és adatos fahelyek, mi zárta ki őket'},
  {f:'jatekok/zold-varosresz.html',img:'jatekok/img/zold.jpg',t:'Zöld városrész — 12 hónap',min:'5–8 perc',hook:'120 millió forint, 48 tömb, három kockázat — és egy térkép, amin eleinte semmi nem látszik. Öt eszköz: fa, esőkert, csillapítás, szenzor, felmérés. A tavasz, a nyár és az ősz megmutatja, mit ért a döntés.',
   design:'sim-nézet, nyugodt HUD',mode:'építés + havi események + rejtett rétegek',data:'rácsos városrész, mérés fedi fel',coll:'adattal vs. vakon költött arány, elhelyezések, károk'},
  {f:'jatekok/ugymenet.html',img:'jatekok/img/hub.jpg',t:'Ügymenet',min:'3–4 perc',hook:'Minden lakossági kérés egy kártya. Húzd balról jobbra a lépcsőkön — beérkezett, adat, döntés, végrehajtás, mérve —, mint egy CRM-táblán. Itt a lakók türelme a határidő. Hat hét, 300 millió, tizenkét ügy: a hangos nem mindig a fontos.',
