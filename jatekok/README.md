@@ -97,4 +97,5 @@ A játékok névtelenek. Minden lejátszás végén egy JSON-sor keletkezik (já
 - Esőkert-játék háttérképe: ha létezik `img/esokert-metszet.jpg`, a játék azt teszi a metszet mögé, és csak a dinamikus elemeket (víz, eső, esőkertek, cső) rajzolja rá. A kép kompozíciója a `scene()` függvény koordinátáit kövesse: bal oldalt ház pincével, járda, zöldsáv, út, jobb oldalt középület; a föld alatt csatorna.
 - A `zold-varosresz.html` városrésze a `LAYOUT` sorokból épül (8×6, betűnként egy tömbtípus).
 - Képek: `img/` (1280 px széles JPEG-ek, a projekt generált látványképeiből).
+- A „Hol fér el egy fa?” lépéskártyáinak miniábrái: `img/fahely-abrak/01…12-*.svg` (340 × 104). A rajzokon rögzített távolságok szerepelnek; a `fahely.html` `ABRA` táblája soronként felsorolja, melyik szabályértékhez készült az ábra. Ha az adatcsomag értéke ettől eltér, a játék az adatból generált vázlatot (`sketch()`) mutatja helyette — új értékeknél az ábrát is frissíteni kell.
 - Frissítéskor a `?v=16` a script-hivatkozásokban a böngésző-gyorsítótárat kerüli meg; új `gv.js`/`gvmap.js` kiadásánál a számot emeld.

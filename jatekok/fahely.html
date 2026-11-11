@@ -647,8 +647,32 @@ function inspHTML(ev, upTo, title) {
   return '<div class="insp"><h3 class="' + cls + '">' + head + '</h3>' + section(ev, upTo) + '<ul>' + r.html + '</ul><div class="fn">A távolságok jellemző értékek — településenként és üzemeltetőnként eltérhetnek.</div></div>';
 }
 
-/* ---------- a lépések rajza: vázlat arról, mit jelent a szabály (a távolság a rajzon méretezve) ---------- */
-function art(key) {
+/* ---------- a lépések miniábrái (img/fahely-abrak/, 340 × 104). A rajzokon rögzített számok szerepelnek (2. mező: szabály:kis,közepes,nagy);
+   ha az adatcsomag valamelyik értéke ettől eltér, az adatból generált vázlat jelenik meg, hogy a kép ne mondjon mást, mint a kártya szövege. ---------- */
+const ABRA = {
+  road: ['01-uttest-es-szegely', 'road:1.25', 'Fahelyek az útszegély mellett. A játék 1,25 m távolságot jelöl a szegélytől.'],
+  drive: ['02-kapubehajtok', 'drive:1,1.5,2', 'A kapubehajtó széle és a fa között a korona méretétől függően 1, 1,5 vagy 2 m szükséges a játékban.'],
+  sight: ['03-keresztezodes-es-zebra', 'junc:10 cross:5', 'A játék 10 m távolságot jelöl a kereszteződés középpontjától és 5 m-t a zebrától.'],
+  walk: ['04-jarda', 'walk:0.75 jardaW:1.5', '1,5 m szabad járdaszélesség és 0,75 m távolság a járda szélétől a játékban.'],
+  plot: ['05-kerites-es-homlokzat', 'fence:2,2.5,3 bld:2,2.5,3', 'A kerítéstől és a homlokzattól a koronamérettől függően 2, 2,5 vagy 3 m távolság szerepel a játékban.'],
+  tree: ['06-meglevo-fak', 'tree:5,7,9', 'A játékban a meglévő fa törzsétől 5, 7 vagy 9 m a tőtávolság az új fa koronaméretétől függően.'],
+  drain: ['07-vizelvezeto-arok', 'drain:3 manhole:1.5', 'A játék 3 m távolságot jelöl az árok tengelyétől és 1,5 m-t az aknafedlaptól.'],
+  wire: ['08-legvezetek-es-oszlopok', 'wire:,4.5,7 pole:1', 'A játékban a légvezeték közelében kis fa fér el. Közepes fa 4,5 m-től, nagy fa 7 m-től. Az oszloptól 1 m a jellemző távolság.'],
+  cable: ['09-kabelek-a-fold-alatt', 'cable:1 tel:1', 'Az elektromos földkábeltől 1 m távolság szerepel a játékban. A hírközlési kábel 1 m-es sávjában kézi földmunka szükséges.'],
+  water: ['10-ivovizvezetek', 'water:2', 'A játék 2 m távolságot jelöl az ivóvízvezetéktől.'],
+  sewer: ['11-csatorna', 'sewer:3', 'A játék 3 m távolságot jelöl a csatornától.'],
+  gas: ['12-gazvezetek', 'gas:2', 'A játék 2 m távolságot jelöl a gázvezetéktől.']
+};
+const abraSrc = key => 'img/fahely-abrak/' + ABRA[key][0] + '.svg?v=16';
+const abraOk = spec => spec.split(' ').every(c => { const [id, v] = c.split(':'), d = id === 'jardaW' ? [M.walkHalf * 2] : (rule(id) || {}).d;
+  return !!d && v.split(',').every((x, i) => x === '' || Math.abs(d[i] - x) < 1e-9); });
+function art(key) { const a = ABRA[key]; if (!a) return ''; if (!abraOk(a[1])) return sketch(key);
+  return '<img class="art" src="' + abraSrc(key) + '" width="340" height="104" alt="' + esc(a[2]) + '">'; }
+/* a varázsló előtt (a tipp után, amíg a játékos ültet) betöltjük mind a 12-t, hogy lapozáskor ne villanjon üres keret */
+function preloadArt() { for (const k in ABRA) if (abraOk(ABRA[k][1])) new Image().src = abraSrc(k); }
+
+/* ---------- tartalék: adatból generált vázlat arról, mit jelent a szabály (a távolság a rajzon méretezve) ---------- */
+function sketch(key) {
   const W = 340, H = 104, c = COL[key], OK = '#2ad1b5', NO = '#ff6b4a', R = id => rule(id).d;
   const T = (x, y, t, a, cl, f) => '<text x="' + x + '" y="' + y + '" text-anchor="' + (a || 'start') + '" class="' + (cl || 'al') + '"' + (f ? ' style="fill:' + f + '"' : '') + '>' + t + '</text>';
   const mark = (x, y, ok) => ok ? '<path d="M' + (x - 4) + ' ' + y + 'l3 3 5-6" fill="none" stroke="' + OK + '" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>' : '<path d="M' + (x - 4) + ' ' + (y - 4) + 'l8 8m0-8l-8 8" stroke="' + NO + '" stroke-width="2" stroke-linecap="round"/>';
@@ -781,7 +805,7 @@ function render() {
 
 /* ---------- lépések ---------- */
 function introNext() { S.intro++; render(); applyScene(); if (seg()) cam(true); focusMain(); }
-function guess(g) { S.guess = g; S.st = 'blind'; render(); applyScene(); cam(true); }
+function guess(g) { S.guess = g; S.st = 'blind'; render(); applyScene(); cam(true); preloadArt(); }
 function startWizard() { S.ghosts = S.trees; S.trees = []; S.ghosts.forEach(t => { t.el.classList.add('ghost'); t.on = true; }); S.step = 0; S.tStep = Date.now(); stepBy(1); }
 function stepBy(d) { const k = S.step + d; if (k < 1) return; const now = Date.now(); if (S.step >= 1) S.dwell[S.step - 1] = (S.dwell[S.step - 1] || 0) + Math.round((now - S.tStep) / 100) / 10; S.tStep = now;
   if (k > NST) return toMid();
