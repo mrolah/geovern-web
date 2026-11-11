@@ -54,7 +54,11 @@ button:focus-visible,a:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px 18px 14px;backdrop-filter:blur(16px);
   box-shadow:0 -10px 50px rgba(0,0,0,.55);max-height:62vh;max-height:62dvh;overflow:auto}
 /* a záróképernyőn a panel alacsonyabb, hogy a rétegkapcsolókkal együtt se takarja el az utcát */
-.sheet.fin .panel{max-height:38vh;max-height:38dvh}
+.sheet.fin .panel{max-height:46vh;max-height:46dvh}
+/* a záró lapokon a lapozógombok a panel alján maradnak, ha a tartalom görgetni kell */
+.sheet.fin .panel .row:last-child{position:sticky;bottom:-14px;margin-bottom:-14px;padding:12px 0 14px;background:linear-gradient(rgba(6,17,22,0),rgba(6,17,22,.98) 12px);z-index:1}
+.row a.btn{text-decoration:none;text-align:center;line-height:1.25;font-size:15px}
+.sheet.fin h1:focus{outline:none}
 h1{font-size:22px;font-weight:900;line-height:1.18;margin-bottom:6px}
 h1 em{font-style:normal;color:var(--teal)}
 h1 .sw{display:inline-block;width:12px;height:12px;border-radius:4px;background:var(--c,var(--teal));margin-right:9px;vertical-align:1px}
@@ -122,6 +126,32 @@ details.cat summary::after{content:' ›'}details.cat[open] summary::after{conte
 .poll{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .poll button{font:500 13.5px var(--font);padding:10px 8px;border-radius:12px;border:1.5px solid var(--line);background:transparent;color:var(--text);cursor:pointer;touch-action:manipulation}
 .poll button.on{background:var(--teal);color:#04211d;border-color:var(--teal)}
+.poll button i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;vertical-align:0}
+/* záró lapok: a csík lépcsőzetes felbontása, az egyenkénti hatás és az elférő fák */
+.cap{font:500 11.5px var(--mono);color:var(--muted);line-height:1.45}
+.wf{display:grid;gap:6px;margin:8px 0 2px}
+.wr{display:grid;grid-template-columns:minmax(124px,32%) 1fr;gap:3px 12px;align-items:center}
+.wr .wl{font:500 12px var(--mono);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wr .wl i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+.wr .wl b{font-weight:500;color:var(--c)}
+.wb{height:12px;border-radius:4px;background:rgba(143,176,181,.12);position:relative;overflow:hidden}
+.wb u{position:absolute;top:0;bottom:0;background:var(--c);border-radius:3px;min-width:3px}
+.wb.stk{display:flex;height:16px}.wb.stk i{display:block;height:100%;min-width:2px}
+.wb u.hatch{background:repeating-linear-gradient(135deg,var(--c) 0 3px,transparent 3px 6px)}
+.wr .wk{grid-column:2;font:500 10.5px var(--mono);color:var(--muted);line-height:1.4}
+.wr.sum{margin-top:2px;padding-top:8px;border-top:1px dashed rgba(143,176,181,.25)}.wr.sum .wl{color:var(--muted)}
+.sr{display:grid;grid-template-columns:116px 1fr 38px;gap:10px;align-items:center;font:500 12px var(--mono);color:var(--text)}
+.sr b{font-weight:500;text-align:right;color:var(--muted)}.sr .wb{height:10px}
+.sr.lim{color:var(--amber)}.sr.lim b{color:var(--amber)}
+.tdots{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 10px}
+.tdots i,.tleg i{display:inline-block;border-radius:50%;background:rgba(42,209,181,.5);border:1.5px solid var(--teal);flex:none}
+.tdots i.c3,.tleg i.c3{width:20px;height:20px}.tdots i.c2,.tleg i.c2{width:15px;height:15px}.tdots i.c1,.tleg i.c1{width:10px;height:10px}
+.tdots i.pk,.tleg i.pk{border-color:var(--amber);background:rgba(255,159,69,.5)}
+.tdots i.tl,.tleg i.tl{outline:1.5px dashed var(--muted);outline-offset:2px}
+.tleg{display:flex;flex-wrap:wrap;gap:6px 16px;font:500 11.5px var(--mono);color:var(--muted)}
+.tleg span{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}.tleg b{color:var(--text);font-weight:500}
+.thx{margin-top:8px;font:500 12.5px var(--mono);color:var(--text)}
+@media(max-width:819px){.sheet.fin .panel .row:last-child{bottom:-12px;margin-bottom:-12px;padding-bottom:12px}.wr{grid-template-columns:1fr;gap:4px}.wr .wk{grid-column:1}.sr{grid-template-columns:96px 1fr 34px;gap:8px;font-size:11.5px}}
 /* a fák sorszáma a törzs tövénél (a külső elemet a MapLibre pozicionálja, azon nincs saját transform) */
 .mk{width:24px;height:24px;cursor:pointer}
 .tree{width:24px;height:24px;border-radius:50%;background:rgba(6,17,22,.92);border:2px solid #eafaf7;display:flex;align-items:center;justify-content:center;
@@ -145,7 +175,7 @@ body.maperr .err{display:flex}
 .err div{max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--faint);border-top-color:var(--teal);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes sp{to{transform:rotate(360deg)}}
-@media(min-width:820px){.sheet{bottom:12px}.sheet.wide{max-width:780px}.panel{padding:18px 22px 16px}.sheet.fin .panel{max-height:34vh}.insp svg{max-height:132px;width:auto;max-width:100%;margin-left:auto;margin-right:auto}
+@media(min-width:820px){.sheet{bottom:12px}.sheet.wide{max-width:780px}.panel{padding:18px 22px 16px}.sheet.fin .panel{max-height:50vh;max-height:min(50vh,calc(100vh - 400px))}.sheet.fin .panel .row:last-child{bottom:-16px;margin-bottom:-16px;padding-bottom:16px}.insp svg{max-height:132px;width:auto;max-width:100%;margin-left:auto;margin-right:auto}
   .sheet.wide .wz-body{grid-template-columns:320px 1fr;gap:16px;align-items:start;min-height:100px}}
 @media(max-width:819px){.art{max-height:88px;width:auto;max-width:100%;margin:0 auto}.wz-body p{font-size:14px}.src.cav{display:none}.src.cav.keep{display:block}.panel{padding:14px 16px 12px}}
 @media(prefers-reduced-motion:reduce){.tree,.tree.x.now,.mk.ghost .tree.x.now{animation:none}.eff .bar u{transition:none}}
@@ -500,9 +530,13 @@ LC = GV.layerControl({ container: 'layers', title: 'Rétegek', hint: (FINE ? 'ka
 /* ---------- kamera ----------
    Az utca vízszintesen fut. Az alsó térköz állapotonként rögzített (nem a panel pillanatnyi magasságából számoljuk),
    így a térkép nem ugrál, amikor a panel tartalma változik. */
+function finPad() { try { const mh = parseFloat(getComputedStyle(P).maxHeight), lay = document.getElementById('layers'), lh = lay && lay.offsetHeight ? lay.offsetHeight + (parseFloat(getComputedStyle(lay).marginBottom) || 0) : (innerWidth >= 820 ? 120 : 76);
+  return mh > 0 ? Math.round(mh + lh + Math.max(0, innerHeight - P.getBoundingClientRect().bottom) + 8) : 0; } catch (e) { return 0; } }
 function padNow() { const small = S.st === 'blind' || S.st === 'inf'; const wide = innerWidth >= 820;
   const fin = S.st === 'final';   /* a záróképernyőn a panel fölött a rétegkapcsolók sora is ott van */
-  return { top: seg() ? 100 : 58, bottom: Math.round(Math.min(innerHeight * 0.56, small ? (wide ? 190 : 210) : fin ? (wide ? innerHeight * 0.34 + 150 : innerHeight * 0.38 + 90) : (wide ? 330 : innerHeight * 0.5))), left: 12, right: 12 }; }
+  const fp = fin && SHEET.classList.contains('fin') ? finPad() : 0;
+  if (fp) return { top: seg() ? 100 : 58, bottom: Math.round(Math.min(innerHeight * 0.8, fp)), left: 12, right: 12 };
+  return { top: seg() ? 100 : 58, bottom: Math.round(Math.min(innerHeight * 0.56, small ? (wide ? 190 : 210) : fin ? (wide ? innerHeight * 0.5 + 110 : innerHeight * 0.46 + 90) : (wide ? 330 : innerHeight * 0.5))), left: 12, right: 12 }; }
 function fly(center, pxm, anim, dur) { if (!mapReady) return;
   map.easeTo({ center, zoom: clamp(Math.log2(pxm / PXM14) + 14, 15, 20.5), bearing: M.az - 90, pitch: pitchNow(), padding: padNow(), duration: anim && !RM ? (dur || 850) : 0, essential: true }); }
 /* a teljes utca befér: zárt alakú illesztés a dőlésszöggel (a közelebbi szél a szűk keresztmetszet) */
@@ -523,7 +557,7 @@ function cam(anim) { if (!mapReady) return; const st = S.st;
 function overview() { fitStreet(true); }
 function toggle3D() { S.d3 = !S.d3; document.getElementById('dimbtn').textContent = S.d3 ? '2D' : '3D'; if (mapReady) map.easeTo({ pitch: pitchNow(), duration: RM ? 0 : 500 }); }
 let rsT = null;
-window.addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { SHEET.classList.toggle('wide', S.st === 'wiz'); applyScene(); if (S.st !== 'inf' && S.st !== 'blind') cam(false); }, 180); });
+window.addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { SHEET.classList.toggle('wide', S.st === 'wiz' || S.st === 'final'); applyScene(); if (S.st !== 'inf' && S.st !== 'blind') cam(false); }, 180); });
 /* szakasznézetben a térkép az utca mentén marad: ha elhúzták oldalra, visszaigazítjuk a tengelyre */
 function segSnap(e) { if (!e || !e.originalEvent || !seg() || !(S.st === 'intro' || S.st === 'blind' || S.st === 'wiz' || S.st === 'inf')) return; const c = map.getCenter(), q = AX.st.apply(null, XY(c.lng, c.lat));
   S.segS = clamp(q.s, 26, AX.L - 26); if (Math.abs(q.t - 3) > 16 || q.s < 10 || q.s > AX.L - 10) map.easeTo({ center: LLst(S.segS, 3), duration: RM ? 0 : 350 }); }
@@ -726,16 +760,57 @@ function markGhosts(upTo, prev) { S.ghosts.forEach((t, i) => { const st = FH.sta
   setTree(t, st.alive ? (st.crown < 2 ? 'lim' : '') : ('x' + (was ? ' now' : '')), st.alive ? String(i + 1) : '✕'); }); }
 const aliveN = upTo => S.ghosts.filter(t => FH.stateAt(t.ev, upTo).alive).length;
 /* egyetlen halmozott sáv: a teljes közterületi sávból melyik fejezet mennyit vett el, és mennyi maradt szabadon */
-function stackHTML() { const seg2 = CH.map((c, i) => ({ n: c.label, v: M.chPct[i] - M.chPct[i + 1], col: CHCOL[c.id] })).concat([{ n: 'szabad', v: M.chPct[CH.length], col: FREE }]);
+const pcs = v => v > 0 && v < 0.5 ? '<1%' : pc(v);   /* a „0%” félrevezető, ha kevés, de nem semmi */
+const stackSeg = () => CH.map((c, i) => ({ n: c.label, v: M.chPct[i] - M.chPct[i + 1], col: CHCOL[c.id] })).concat([{ n: 'szabad', v: M.chPct[CH.length], col: FREE }]);
+function stackHTML() { const seg2 = stackSeg();
   return '<div class="stack" role="img" aria-label="A közterületi sáv megoszlása">' + seg2.map(q => '<i style="width:' + q.v + '%;background:' + q.col + '"></i>').join('') + '</div><div class="stkl">'
-    + seg2.map(q => '<span><i style="background:' + q.col + '"></i>' + esc(q.n) + ' <b>' + pc(q.v) + '</b></span>').join('') + '</div>'
-    + '<div class="src" style="margin-top:6px">A légvezeték helyet alig vesz el, de a megmaradó szabad hely ' + M.smallPct[NST] + '%-án csak kis koronájú fa fér el.</div>'; }
+    + seg2.map(q => '<span><i style="background:' + q.col + '"></i>' + esc(q.n) + ' <b>' + pcs(q.v) + '</b></span>').join('') + '</div>'
+    + '<div class="src" style="margin-top:6px">100% = a teljes közterületi sáv; balról jobbra a lépések sorrendjében.' + (capShare(3) >= 1 ? ' A légvezeték helyet alig vesz el, de a szabad hely ' + capShare(3) + '%-át kis koronára szorítja.' : '') + '</div>'; }
+/* egy fejezet saját koronakorlátozása: a végül szabad cellák hány %-át szorította kis koronára éppen ez a fejezet */
+function capShare(chId) { const st = STEPS.filter(q => q.ch === chId); if (!st.length) return 0; const a = st[0].id - 1, b = st[st.length - 1].id; let n = 0, fr = 0;
+  ['L', 'R'].forEach(sd => { const g = GRID[sd]; if (!g) return; const z = g.crown[NST], c0 = g.crown[a], c1 = g.crown[b]; for (let i = 0; i < z.length; i++) if (z[i]) { fr++; if (c1[i] === 1 && c0[i] > 1) n++; } });
+  return fr ? Math.round(100 * n / fr) : 0; }
+/* egész százalékok úgy, hogy a részek összege a kerekített egészet adja (legnagyobb maradék módszere) */
+function lrRound(vals, total) { const fl = vals.map(Math.floor); let rest = Math.round(total) - fl.reduce((x, y) => x + y, 0);
+  vals.map((v, i) => i).sort((i, j) => (vals[j] - fl[j]) - (vals[i] - fl[i])).forEach(i => { if (rest > 0) { fl[i]++; rest--; } }); return fl; }
+
+/* ---------- a záró lapok ábrái ---------- */
+const KW = { road: 'szegély', drive: 'behajtók', sight: 'kereszteződés, zebra', walk: 'járda', plot: 'kerítés, ház', tree: 'meglévő fák', drain: 'árok', wire: 'légvezeték', cable: 'kábelek', water: 'ivóvíz', sewer: 'csatorna', gas: 'gáz' };
+const RK = { road: 'szegély', sideroad: 'keresztutca', drive: 'behajtók', junc: 'kereszteződés', cross: 'zebra', walk: 'járda', fence: 'kerítés', bld: 'homlokzat', tree: 'meglévő fák', drain: 'árok', pole: 'oszlop', gas: 'gáz', water: 'ivóvíz', sewer: 'csatorna', cable: 'földkábel', manhole: 'aknafedlap', culv: 'befedett árok', wire: 'légvezeték', lamp: 'lámpa' };
+const nevelo = w => /^[aáeéiíoóöőuúüű]/i.test(w) ? 'Az' : 'A';
+/* a csík lépcsőzetesen: minden fejezet csak azt kapja, ami előtte még szabad volt; alul az összerakott csík */
+function wfHTML() { const fr = M.chPct[CH.length];
+  const rows = CH.map((c, i) => { const v = M.chPct[i] - M.chPct[i + 1], left = 100 - M.chPct[i];
+    const st = STEPS.filter(q => q.ch === c.id), raw = st.map(q => 100 * (M.area[q.id - 1] - M.area[q.id]) / M.stripArea), rd = lrRound(raw, v);   /* egész m²-ből: a részek összege a sor értéke */
+    const parts = st.map((q, j) => ({ k: KW[q.key] || q.key, r: rd[j], v: raw[j] })).filter(q => q.r >= 1).sort((a, b) => b.v - a.v), cs = capShare(c.id);
+    const kw = (parts.length ? parts.map(q => q.k + ' ' + q.r + '%').join(' · ') : 'helyet alig vesz el' + (cs >= 1 ? ' · de a szabad hely ' + cs + '%-át kis koronára szorítja' : '')) + (c.src === 'ek' ? ' · tájékoztató adat' : '');
+    return '<div class="wr" style="--c:' + CHCOL[c.id] + '"><div class="wl"><i></i>' + esc(c.label) + ' <b>−' + pcs(v) + '</b></div><div class="wb"><u style="left:' + left + '%;width:' + v + '%"></u></div><div class="wk">' + kw + '</div></div>'; }).join('');
+  const free = '<div class="wr" style="--c:' + FREE + '"><div class="wl"><i></i>Szabad <b>' + pcs(fr) + '</b> · ' + nf(M.area[NST]) + ' m²</div><div class="wb"><u style="left:' + (100 - fr) + '%;width:' + fr + '%"></u></div></div>';
+  const sum = '<div class="wr sum"><div class="wl">= a csík</div><div class="wb stk" role="img" aria-label="A közterületi sáv megoszlása">' + stackSeg().map(q => '<i style="width:' + q.v + '%;background:' + q.col + '"></i>').join('') + '</div></div>';
+  return '<div class="cap">100% = a teljes közterületi sáv, ' + nf(M.stripArea) + ' m². Sorban levonjuk, ami kizárja a fát.</div><div class="wf">' + rows + free + sum + '</div>'; }
+/* egyenként: ha csak ez az egy szabály lenne, a sáv mekkora részén nem állhatna fa (M.solo) */
+function soloHTML() { const so = M.solo || {}, col = id => COL[(STEPS[rule(id).stage - 1] || {}).key] || NEUT;
+  const ks = Object.keys(so).filter(k => !/_L$/.test(k) && RK[k] && rule(k)).sort((a, b) => so[b] - so[a]).slice(0, 6);
+  const row = (id, v, lim) => '<div class="sr' + (lim ? ' lim' : '') + '" style="--c:' + (lim ? 'var(--amber)' : col(id)) + '"><span>' + RK[id] + '</span><div class="wb"><u' + (lim ? ' class="hatch"' : '') + ' style="left:0;width:' + v + '%"></u></div><b>' + pcs(v) + '</b></div>';
+  const under = ks.filter(k => rule(k).ch === 4), chU = M.chPct[3] - M.chPct[4];
+  const note = under.length && so[under[0]] > chU + 2 ? 'A csíkon a föld alatt ezért csak ' + pc(chU) + ': ahol a vezetékek futnak, ott sokszor már a felszín is kizárta a fát.' : 'Sok helyet több ok is kizár: a csíkon minden hely csak egyszer, a sorban első okánál számít.';
+  return { top: ks[0], h: '<div class="cap">Ha csak ez az egy szabály lenne — a sáv ennyi százalékán nem állhatna fa:</div><div class="wf">' + ks.map(k => row(k, so[k])).join('')
+    + (so.wire_L ? row('wire', so.wire_L, true) + '<div class="cap" style="color:var(--amber);margin-top:-3px">légvezeték: itt nagy koronájú fa nem nőhet (' + hm(rule('wire').d[1]) + ' m-en belül csak kis)</div>' : '') + '</div><div class="src">' + note + (under.length ? ' A föld alatti vezetékek helye tájékoztató jellegű (e-közmű).' : '') + '</div>' }; }
+/* az elférő fák pöttyökben: méret = korona; borostyán pötty = parkolóhely helyén; szaggatott keret = hírközlési kábel mellett */
+function treesHTML() { const T = (D.trees || []).slice().sort((a, b) => b[2] - a[2] || (b[3] + b[4]) - (a[3] + a[4])), n = [0, 0, 0, 0];
+  let pk = 0, tl = 0, sh = 0; T.forEach(t => { n[t[2]]++; pk += t[3] ? 1 : 0; tl += t[4] ? 1 : 0; sh += CROWN_M2[t[2]]; });
+  const dots = T.map(t => '<i class="c' + t[2] + (t[3] ? ' pk' : '') + (t[4] ? ' tl' : '') + '"></i>').join('');
+  const leg = [n[3] ? '<span><i class="c3"></i>nagy korona <b>' + n[3] + '</b></span>' : '', n[2] ? '<span><i class="c2"></i>közepes <b>' + n[2] + '</b></span>' : '', n[1] ? '<span><i class="c1"></i>csak kis <b>' + n[1] + '</b></span>' : '',
+    pk ? '<span><i class="c1 pk"></i>parkolóhely helyén <b>' + pk + '</b></span>' : '', tl ? '<span><i class="c1 tl"></i>hírközlési kábel mellett <b>' + tl + '</b></span>' : ''].join('');
+  return { n: T.length, h: '<div class="tdots" role="img" aria-label="' + T.length + ' elférő fa koronaméret szerint">' + dots + '</div><div class="tleg">' + leg + '</div>'
+    + '<div class="thx">≈ ' + nf(Math.round(sh / 10) * 10) + ' m² lombkorona</div>'
+    + '<div class="src">Ha pontosan a szabad helyekre kerülnek, egymástól legalább ' + M.spacing + ' m-re' + (tl ? '; a kábel mellett csak kézi ásással' : '') + '. A térképen: „Elférő fák” réteg.</div>' }; }
 
 /* ---------- képernyők ---------- */
 function render() {
   if (!LC) return; const n = S.trees.length;
   const prb = !!(S.last && S.last.probe);   /* vizsgálólap közben a kapcsolók sora nem kell (asztali gépen), a panel visszakapja a teljes magasságát */
-  LC.show(S.st === 'final' && !(prb && innerWidth >= 820)); SHEET.classList.toggle('wide', S.st === 'wiz'); SHEET.classList.toggle('fin', S.st === 'final' && !prb);
+  LC.show(S.st === 'final' && !(prb && innerWidth >= 820)); SHEET.classList.toggle('wide', S.st === 'wiz' || S.st === 'final'); SHEET.classList.toggle('fin', S.st === 'final' && !prb);
   if (S.st === 'loading') { P.innerHTML = '<span class="eyebrow">Döntésjáték · kb. 6 perc</span><h1>Hol fér el <em>egy fa</em>?</h1><p><span class="spin"></span>Az utca adatainak betöltése…</p>'; return; }
   if (S.st === 'intro') { TB.innerHTML = esc(M.town) + ' · <b>' + esc(M.street) + '</b>';
     if (S.intro === 0) { P.innerHTML = `<span class="eyebrow">Döntésjáték · kb. 6 perc</span><h1>Hol fér el <em>egy fa</em>?</h1>
@@ -783,24 +858,33 @@ function render() {
     <div class="row"><button class="btn btn-ghost sm" onclick="undo()" ${n ? '' : 'disabled'}>Visszavonás</button><button class="btn" onclick="finish()" ${n === N ? '' : 'disabled'}>Kiértékelés</button></div>
     <div class="hint">${msg} ${link}</div>
     ${S.sec && S.last && !S.last.ok && !S.last.own ? inspHTML(S.last.ev, NST) : ''}`; return; }
-  if (S.st === 'final') { const f = M.final, truth = M.pct[NST], diff = S.guess - truth; TB.innerHTML = 'Adat nélkül <b>' + S.r1 + '</b> · adattal <b>' + n + '</b>';
+  if (S.st === 'final') { const truth = M.pct[NST], diff = S.guess - truth, fp = Math.min(S.fp || 0, FINP.length - 1), last = fp === FINP.length - 1; TB.innerHTML = 'Adat nélkül <b>' + S.r1 + '</b> · adattal <b>' + n + '</b>';
     if (S.last && S.last.probe) { P.innerHTML = '<button class="lnk" type="button" onclick="closeProbe()">‹ Vissza a mérleghez</button>' + inspHTML(S.last.ev, NST); return; }
-    const h1 = diff >= 15 ? `Tipped: ${S.guess}%. A valóság: <em>${pc(truth)}</em>.` : `A sáv <em>${pc(truth)}</em>-án állhat fa — jól érezted.`;
-    const groups = [['elo', 'Itt, ezen az utcán mérve'], ['papir', 'Papíron dől el — ültetés előtt tisztázni kell'], ['godor', 'Csak a próbagödör mutatja meg'], ['faj', 'Nem a helyet, hanem a fajt és a méretet szűkíti'], ['opt', 'Rangsorol: hol ér a legtöbbet a fa'], ['nincs', 'Ezen a szakaszon nincs, vagy a játék nem vizsgálta'], ['videk', 'Csak vidéken és erdőben számít']];
-    const cat = groups.map(([k, t]) => { const it = D.catalog.filter(q => q[4] === k); return it.length ? '<h4>' + t + ' · ' + it.length + '</h4><p>' + it.map(q => esc(q[1])).join(' · ') + '</p>' : ''; }).join('');
-    P.innerHTML = `<span class="eyebrow">Az utca mérlege</span><h1>${h1}</h1>
-    <div class="score"><div class="sc b1"><span>1. kör · adat nélkül</span><b>${S.r1}/${N}</b></div><div class="sc b2"><span>2. kör · adattal</span><b>${n}/${N}</b></div></div>
-    ${GV.endPanel({ game: 'fahely' })}
-    ${stackHTML()}
-    <p style="margin-top:10px">A játék adatai szerint ezen a ${Math.round(M.len)} méteren <b>${f.n} új fa</b> férne el — ha pontosan a szabad helyekre kerülnek. Közülük ${f.small} csak kis koronájú lehet${f.park ? ', ' + f.park + ' parkolóhelyet vinne el' : ''}${f.tel ? ', ' + f.tel + ' pedig hírközlési kábel mellé kerülne (ott csak kézzel lehet ásni)' : ''}.</p>
-    <div class="src">A föld alatti vezetékek helye tájékoztató jellegű (az e-közmű lakossági térképe alapján); a távolságok jellemző értékek.</div>
-    <p style="margin-top:14px;color:var(--text);font-size:14px">Melyik rész lepett meg a legjobban?</p>
-    <div class="poll">${CH.map(c => `<button type="button" class="${S.poll === c.id ? 'on' : ''}" onclick="poll(${c.id})">${esc(c.label)}</button>`).join('')}</div>
+    /* lapozható záró lapok: mérleg → hová lett a hely → egyenként → elférő fák → kérdés → tovább */
+    const top = '<div class="wiz-top"><span class="eyebrow">' + FINP[fp] + ' · ' + (fp + 1) + ' / ' + FINP.length + '</span>' + '<button class="skip" type="button" onclick="restart()">Újrakezdés</button></div>'
+      + '<div class="dots" aria-hidden="true">' + FINP.map((_, i) => '<i class="' + (i < fp ? 'd' : i === fp ? 'c' : '') + '"></i>').join('') + '</div>';
+    const nav = '<div class="row">' + (fp > 0 ? '<button class="btn btn-ghost sm" onclick="finStep(-1)">Vissza</button>' : '') + '<button class="btn" onclick="finStep(1)">Tovább</button></div>';
+    let body = '';
+    if (fp === 0) { const h1 = diff >= 15 ? `Tipped: ${S.guess}%. A valóság: <em>${pc(truth)}</em>.` : `A sáv <em>${pc(truth)}</em>-án állhat fa — jól érezted.`;
+      body = `<h1>${h1}</h1><div class="score"><div class="sc b1"><span>1. kör · adat nélkül</span><b>${S.r1}/${N}</b></div><div class="sc b2"><span>2. kör · adattal</span><b>${n}/${N}</b></div></div>
+      <div class="src">Koppints bárhová a sávban: megmutatjuk, mi van ott.</div>${nav}`; }
+    else if (fp === 1) body = `<h1>A ${nf(M.stripArea)} m²-es sávból <em>${nf(M.area[NST])} m²</em> maradt</h1>${wfHTML()}${nav}`;
+    else if (fp === 2) { const so = soloHTML(), w = RK[so.top] || '';
+      body = `<h1>${nevelo(w)} ${w} egyedül a sáv <em>${pc(M.solo[so.top])}</em>-át zárná ki</h1>${so.h}${nav}`; }
+    else if (fp === 3) { const tr = treesHTML(); body = `<h1><em>${tr.n} új fa</em> férne el a ${Math.round(M.len)} méteren</h1>${tr.h}${nav}`; }
+    else if (fp === 4) body = `<h1>Melyik rész lepett meg a legjobban?</h1>
+      <div class="poll">${CH.map(c => `<button type="button" class="${S.poll === c.id ? 'on' : ''}" onclick="poll(${c.id})"><i style="background:${CHCOL[c.id]}"></i>${esc(c.label)}</button>`).join('')}</div>
+      ${S.poll ? '<div class="src">Köszönjük — ez is adat.</div>' : ''}${nav}`;
+    else { const groups = [['elo', 'Itt, ezen az utcán mérve'], ['papir', 'Papíron dől el — ültetés előtt tisztázni kell'], ['godor', 'Csak a próbagödör mutatja meg'], ['faj', 'Nem a helyet, hanem a fajt és a méretet szűkíti'], ['opt', 'Rangsorol: hol ér a legtöbbet a fa'], ['nincs', 'Ezen a szakaszon nincs, vagy a játék nem vizsgálta'], ['videk', 'Csak vidéken és erdőben számít']];
+      const nx = GV.nextGame('fahely'), cat = groups.map(([k, t]) => { const it = D.catalog.filter(q => q[4] === k); return it.length ? '<h4>' + t + ' · ' + it.length + '</h4><p>' + it.map(q => esc(q[1])).join(' · ') + '</p>' : ''; }).join('');
+      body = `<h1>A szabad <em>${pc(truth)}</em>-ot az találja meg elsőre, aki minden réteget egy térképen lát</h1>
+    <p>Behajtók, légvezeték, meglévő fák, közművek — még az ígéret előtt, nem a gödör mellett.</p>
     <details class="cat"><summary>Honnan vannak az adatok, és mit nem mutat a térkép</summary>
-    <p>A szabad ${pc(truth)}-ot az találja meg elsőre, aki a behajtókat, a légvezetéket, a meglévő fákat és a közműveket egy térképen látja — még az ígéret előtt, nem a gödör mellett.</p>
     <p>Az utca, a kerítések, a behajtók, az oszlopok és a fák az OpenStreetMapből származnak (${esc(dateHu(M.osmDate))} állapot). A föld alatti vezetékek az e-közmű lakossági térképe alapján, egyszerűsítve kerültek ide: tájékoztató jellegűek, hiteles adatot a közműegyeztetés ad, és a házi bekötések egy része a nyilvántartásból is hiányozhat. A távolságok jellemző értékek, nem jogi állásfoglalás; az úttest, a járda és a behajtók szélessége becsült. A közterületi sáv határa is közelítés, nem ingatlan-nyilvántartási adat: a szegélytől az első kerítésig vagy házfalig tart, ahol pedig nincs ilyen (park, tér), ott a szegélytől ${Math.round(Math.max.apply(null, G.lim.R) - M.half)}, illetve ${Math.round(Math.max.apply(null, G.lim.L) - M.half)} méterig.</p>
     <h4>${D.catalog.length} szempontból ${M.roles.elo}-et vizsgált itt a játék a térképen</h4>${cat}</details>
-    <div class="src">A rétegeket a panel fölötti kapcsolókkal nézheted meg. Koppints bárhová a sávban: megmutatjuk, mi van ott.</div>`; return; }
+    <div class="src">A föld alatti vezetékek helye tájékoztató jellegű (az e-közmű lakossági térképe alapján); a távolságok jellemző értékek. A rétegeket a panel fölötti kapcsolókkal nézheted meg.</div>
+    <div class="row"><button class="btn btn-ghost sm" onclick="finStep(-1)">Vissza</button><a class="btn gv-next" href="${esc(GV.urlFor(nx.file))}" onclick="return Date.now() - (S.finT || 0) > 600">Következő: ${esc(nx.n)} →</a></div>`; }
+    P.innerHTML = top + body.replace('<h1>', '<h1 tabindex="-1">'); return; }
 }
 
 /* ---------- lépések ---------- */
@@ -811,7 +895,7 @@ function stepBy(d) { const k = S.step + d; if (k < 1) return; const now = Date.n
   if (k > NST) return toMid();
   const prev = S.step; S.step = k; S.st = 'wiz'; markGhosts(k, d > 0 ? prev : null); render(); applyScene(); focusStep(true); P.scrollTop = 0; focusMain(); }
 /* billentyűzettel játszóknak: az újrarajzolt panel fő gombja kapja a fókuszt (érintőképernyőn nem nyúlunk hozzá) */
-function focusMain() { if (!FINE) return; const b = P.querySelector('.row .btn:not(.btn-ghost)'); if (b) { try { b.focus({ preventScroll: true }); } catch (e) {} } }
+function focusMain() { if (!FINE) return; let b = P.querySelector('.row .btn:not(.btn-ghost)'); if (S.st === 'final' && (!b || b.tagName === 'A')) b = P.querySelector('h1');   /* a záró lapon a linkre nem tesszük a fókuszt: egy nyomva tartott Enter kivinné a játékból */ if (b) { try { b.focus({ preventScroll: true }); } catch (e) {} } }
 /* kamera a lépéshez — asztali gépen az egész utca látszik, nem mozdul; keskeny képernyőn: ha most esett ki egy fád, oda;
    ha a réteg kieső része már látszik, maradunk; különben odacsúszunk */
 function focusStep(anim) { if (!seg()) return fitStreet(anim); const k = S.step, dead = S.ghosts.find(t => FH.stateAt(t.ev, k - 1).alive && !FH.stateAt(t.ev, k).alive), half = innerWidth / segPx() / 2;
@@ -827,10 +911,17 @@ function finish() { clearProbe(); S.st = 'final'; S.last = null; S.flash = 0; LC
     blind: { alive: S.r1, pts: S.ghosts.map(t => { const st = FH.stateAt(t.ev, NST); return [+t.x.toFixed(1), +t.y.toFixed(1), st.alive ? 0 : rule(st.by.id).ch, st.alive ? '' : st.by.id, st.crown]; }) },
     informed: { score: S.trees.length, tries: S.tries, pts: S.trees.map(t => [+t.x.toFixed(1), +t.y.toFixed(1), t.ev.crown, t.ev.flags.park ? 1 : 0]) },
     skipped: S.skipped ? 1 : 0, dwell: S.dwell, d3: S.d3 ? 1 : 0, dur: Math.round((Date.now() - S.t0) / 1000), vw: innerWidth });
-  render(); applyScene(); fitStreet(true); P.scrollTop = 0; }
-function poll(i) { if (S.poll) return; S.poll = i; GV.record('velemeny', { about: 'fahely', q: 'meglepett', a: CH[i - 1].label }); render(); }
-/* billentyűk a varázslóban: Enter vagy → = Tovább, ← = Vissza */
-document.addEventListener('keydown', e => { if (S.st !== 'wiz' || e.altKey || e.ctrlKey || e.metaKey) return; const tag = (e.target && e.target.tagName) || '';
+  S.fp = 0; render(); applyScene(); fitStreet(true); P.scrollTop = 0; focusMain(); }
+const FINP = ['Az utca mérlege', 'Hová lett a hely?', 'Egyenként', 'Elférő fák', 'Egy kérdés', 'Tovább'];
+function finStep(d) { const k = (S.fp || 0) + d, now = Date.now(); if (k < 0 || k >= FINP.length || now - (S.finT || 0) < 250) return; S.finT = now; S.fp = k; render(); P.scrollTop = 0; focusMain(); }
+function restart() { location.reload(); }
+function poll(i) { if (S.poll) return; S.poll = i; GV.record('velemeny', { about: 'fahely', q: 'meglepett', a: CH[i - 1].label }); render();
+  if (FINE) { const b = P.querySelector('.poll button.on'); if (b) try { b.focus({ preventScroll: true }); } catch (e) {} } }
+/* billentyűk: a varázslóban Enter vagy → = Tovább, ← = Vissza; a záró lapokon → és ← lapoz */
+document.addEventListener('keydown', e => { if (e.altKey || e.ctrlKey || e.metaKey) return;
+  if (/^Arrow/.test(e.key) && e.target && e.target.closest && e.target.closest('.maplibregl-map')) return;   /* a térképen a nyilak a térképet mozgatják */
+  if (S.st === 'final' && !(S.last && S.last.probe)) { if (e.key === 'ArrowRight') { e.preventDefault(); finStep(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); finStep(-1); } return; }
+  if (S.st !== 'wiz') return; const tag = (e.target && e.target.tagName) || '';
   if (e.key === 'ArrowRight' || (e.key === 'Enter' && !/^(BUTTON|A|INPUT|SUMMARY)$/.test(tag))) { e.preventDefault(); stepBy(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); stepBy(-1); } });
 /* ---------- indulás ---------- */
 function start() { render(); fetch('data/fahely-diosd-kossuth.json?v=16').then(r => { if (!r.ok) throw new Error('adat'); return r.json(); }).then(init).catch(() => { document.body.classList.add('maperr'); SHEET.style.display = 'none'; }); }
