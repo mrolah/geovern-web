@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="104" viewBox="0 0 340 104" role="img" xml:lang="hu" aria-labelledby="x-road-title x-road-desc">
+  <title id="x-road-title">Szegély</title>
+  <desc id="x-road-desc">A túl közel ültetett fa törzséig ér a szegélynél nyitott autóajtó. A szegélykőtől számított 1,25 m-es sávon kívül látszik a javasolt hely.</desc>
+  <defs>
+    <linearGradient id="x-road-back" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#102831" />
+      <stop offset="100%" stop-color="#091820" />
+    </linearGradient>
+    <linearGradient id="x-road-earth" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E3840" />
+      <stop offset="100%" stop-color="#10252D" />
+    </linearGradient>
+    <linearGradient id="x-road-car" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7F9BA6" />
+      <stop offset="100%" stop-color="#486775" />
+    </linearGradient>
+    <pattern id="x-road-grid" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="8" cy="8" r="0.65" fill="#ADC8C9" opacity="0.15" />
+    </pattern>
+    <pattern id="x-road-soilDots" width="37" height="14" patternUnits="userSpaceOnUse">
+      <path d="M4 4h3m8 5h2m11-4h4m1 7h2" fill="none" stroke="#8EABA5" stroke-width="0.65" opacity="0.18" />
+    </pattern>
+    <pattern id="x-road-hatch" width="6.8" height="6.8" patternUnits="userSpaceOnUse">
+      <path d="M-1 1L1-1M0 6.8L6.8 0M5.8 7.8L7.8 5.8" fill="none" stroke="#C5D1D6" stroke-width="0.65" opacity="0.23" />
+    </pattern>
+    <clipPath id="x-road-round">
+      <rect x="0" y="0" width="340" height="104" fill="#fff" rx="10" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#x-road-round)">
+    <rect x="0" y="0" width="340" height="104" fill="url(#x-road-back)" />
+    <rect x="0" y="0" width="340" height="104" fill="url(#x-road-grid)" />
+    <rect x="0" y="74" width="340" height="30" fill="url(#x-road-earth)" />
+    <rect x="0" y="74" width="340" height="30" fill="url(#x-road-soilDots)" />
+    <path d="M0 86Q68 81 122 88T255 87T340 88V104H0Z" fill="#0A1B22" opacity="0.45" />
+    <line x1="0" y1="74" x2="340" y2="74" stroke="#567973" stroke-width="1.25" opacity="0.9" />
+    <line x1="0" y1="76" x2="340" y2="76" stroke="#75968B" stroke-width="0.55" opacity="0.2" />
+    <rect x="126" y="25" width="110" height="49" fill="#C5D1D6" opacity="0.12" />
+    <rect x="126" y="25" width="110" height="49" fill="url(#x-road-hatch)" />
+    <line x1="236" y1="25" x2="236" y2="74" stroke="#C5D1D6" stroke-width="0.95" stroke-dasharray="2.5 3.4" opacity="0.72" />
+    <path d="M0 75h120v15H0Z" fill="#293E47" />
+    <path d="M0 75h120" fill="none" stroke="#6F8991" stroke-width="2.2" />
+    <path d="M0 84h118" fill="none" stroke="#647E87" stroke-width="0.85" stroke-linecap="round" stroke-dasharray="15 10" opacity="0.78" />
+    <path d="M114 75l7-7h5v17h-12Z" fill="#839BA2" />
+    <path d="M114 75l7-7h5v17" fill="none" stroke="#C5D1D6" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" />
+    <g transform="translate(71 76) rotate(0) scale(1.0)">
+      <ellipse cx="0" cy="0" rx="42" ry="3.2" fill="#071217" opacity="0.7" />
+      <path d="M-40-8l2-9q1-4 5-4l13-1 9-12q3-4 9-4h19q4 0 8 4l8 10 7 4q4 2 4 7v6H-37q-3 0-3-1Z" fill="url(#x-road-car)" stroke="#A8BCC2" stroke-width="0.9" />
+      <path d="M-14-23l7-10q2-2 6-2h7v12Zm24 0v-12h7q4 0 6 3l7 9Z" fill="#233F4A" stroke="#ACC9D0" stroke-opacity="0.48" stroke-width="0.7" />
+      <path d="M-34-13h69M9-20v10m3-9h7" fill="none" stroke="#C2D5D7" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.58" />
+      <rect x="36" y="-19" width="7" height="4.2" fill="#F3DFB4" rx="1.3" />
+      <rect x="-39" y="-19" width="5.8" height="3.7" fill="#F39B7E" rx="0.9" />
+      <circle cx="-24" cy="-6" r="6.4" fill="#112329" stroke="#647F89" stroke-width="1.1" />
+      <circle cx="-24" cy="-6" r="2.65" fill="#A4B7BF" />
+      <circle cx="28" cy="-6" r="6.4" fill="#112329" stroke="#647F89" stroke-width="1.1" />
+      <circle cx="28" cy="-6" r="2.65" fill="#A4B7BF" />
+    </g>
+    <g transform="translate(144 74) scale(0.78 0.78)">
+      <ellipse cx="0" cy="-0.2" rx="19.5" ry="3.5" fill="#061217" opacity="0.6" />
+      <path d="M-3.6 0C-1.8-8-2.4-18-2.7-27l6.1-.3C2.2-17 1.5-7 3.7 0Z" fill="#8B8871" />
+      <path d="M-19-22C-27-27-26-39-18-45C-17-53-11-57-4-56C2-62 12-59 16-52C25-51 29-42 25-35C29-28 22-21 15-21C10-16 1-16-5-19C-11-17-16-18-19-22Z" fill="#344B43" stroke="#A8BE9B" stroke-opacity="0.46" stroke-width="1.05" />
+      <path d="M-22-34C-21-40-16-43-12-43C-11-51-4-54 2-53C8-57 16-53 18-47C24-46 26-40 22-35C17-29 8-28 3-29C-3-24-12-25-17-28C-21-28-23-31-22-34Z" fill="#496453" />
+      <path d="M-17-39C-12-45-7-44-5-48C-1-54 8-55 12-50C17-50 20-45 17-42C14-38 7-39 3-37C-1-34-10-34-14-34C-18-34-19-36-17-39Z" fill="#64806A" opacity="0.83" />
+      <path d="M-13-43q5-3 8-3m4 4q4-3 9-4m2 14q4-1 7-4" fill="none" stroke="#A8BE9B" stroke-width="0.95" stroke-linecap="round" stroke-linejoin="round" opacity="0.62" />
+      <path d="M0-11v-14m0 2q-4-7-11-10m11 10q4-6 11-9" fill="none" stroke="#8B8871" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" opacity="0.84" />
+    </g>
+    <g transform="translate(248 74) scale(0.78 0.78)">
+      <path d="M-3.6 0C-1.8-8-2.4-18-2.7-27l6.1-.3C2.2-17 1.5-7 3.7 0Z" fill="#38DEC4" fill-opacity="0.08" stroke="#38DEC4" stroke-width="1.615" stroke-dasharray="4.36 3.27" stroke-opacity="0.9" stroke-linecap="round" />
+      <path d="M-19-22C-27-27-26-39-18-45C-17-53-11-57-4-56C2-62 12-59 16-52C25-51 29-42 25-35C29-28 22-21 15-21C10-16 1-16-5-19C-11-17-16-18-19-22Z" fill="#38DEC4" fill-opacity="0.08" stroke="#38DEC4" stroke-width="1.615" stroke-dasharray="4.36 3.27" stroke-opacity="0.9" stroke-linecap="round" />
+    </g>
+    <line x1="156" y1="62" x2="236" y2="62" stroke="#38DEC4" stroke-width="1.14" stroke-dasharray="3.3 3.2" stroke-linecap="round" opacity="0.75" />
+    <path d="M233 59l4.4 3-4.4 3" fill="none" stroke="#38DEC4" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" opacity="0.86" />
+    <g transform="translate(29 17)">
+      <circle cx="137" cy="24" r="8.9" fill="#061218" opacity="0.7" />
+      <circle cx="137" cy="24" r="7.7" fill="#39272A" stroke="#FF775D" stroke-width="1.15" />
+      <path d="M134.35 21.35l5.3 5.3m0-5.3-5.3 5.3" fill="none" stroke="#FF775D" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+    <g transform="translate(-30 21)">
+      <circle cx="302" cy="21" r="8.9" fill="#061218" opacity="0.7" />
+      <circle cx="302" cy="21" r="7.7" fill="#0B3335" stroke="#38DEC4" stroke-width="1.15" />
+      <path d="M298.8 21l2.2 2.4 4.3-4.7" fill="none" stroke="#38DEC4" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+    <path d="M96 53l38 3 10 5v4l-39-1Z" fill="#5C7884" stroke="#C5D1D6" stroke-width="0.9" stroke-linejoin="round" />
+    <path d="M102 55l35 5m-16-1 6 1" fill="none" stroke="#C5D1D6" stroke-width="0.75" stroke-linecap="round" opacity="0.75" />
+    <line x1="126" y1="25" x2="236" y2="25" stroke="#DCEBEA" stroke-width="1.05" opacity="0.89" />
+    <line x1="126" y1="21.6" x2="126" y2="28.4" stroke="#DCEBEA" stroke-width="1.15" />
+    <line x1="236" y1="21.6" x2="236" y2="28.4" stroke="#DCEBEA" stroke-width="1.15" />
+    <rect x="146.502" y="6.7" width="68.997" height="15.4" fill="#0C1D25" rx="4" />
+    <text x="181" y="18.5" fill="#DCEBEA" font-family="Roboto, Segoe UI, Arial, sans-serif" font-weight="750" font-size="11.3" text-anchor="middle">kell 1,25 m</text>
+    <path d="M125 82l-6 9" fill="none" stroke="#C5D1D6" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" opacity="0.68" />
+    <rect x="95" y="87" width="48.179" height="15.4" fill="#0C1D25" rx="4" />
+    <text x="100.5" y="98.8" fill="#C5D1D6" font-family="Roboto, Segoe UI, Arial, sans-serif" font-weight="700" font-size="10.8" text-anchor="start">szegély</text>
+  </g>
+</svg>

@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="104" viewBox="0 0 340 104" role="img" xml:lang="hu" aria-labelledby="x-gas-title x-gas-desc">
+  <title id="x-gas-title">Gázvezeték</title>
+  <desc id="x-gas-desc">A fa közvetlenül a sárga gázcső fölött áll. A méretvonal a cső tengelyétől a szükséges 2 m-es sáv széléig tart.</desc>
+  <defs>
+    <linearGradient id="x-gas-back" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#102831" />
+      <stop offset="100%" stop-color="#091820" />
+    </linearGradient>
+    <linearGradient id="x-gas-earth" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E3840" />
+      <stop offset="100%" stop-color="#10252D" />
+    </linearGradient>
+    <linearGradient id="x-gas-car" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7F9BA6" />
+      <stop offset="100%" stop-color="#486775" />
+    </linearGradient>
+    <pattern id="x-gas-grid" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="8" cy="8" r="0.65" fill="#ADC8C9" opacity="0.15" />
+    </pattern>
+    <pattern id="x-gas-soilDots" width="37" height="14" patternUnits="userSpaceOnUse">
+      <path d="M4 4h3m8 5h2m11-4h4m1 7h2" fill="none" stroke="#8EABA5" stroke-width="0.65" opacity="0.18" />
+    </pattern>
+    <pattern id="x-gas-hatch" width="6.8" height="6.8" patternUnits="userSpaceOnUse">
+      <path d="M-1 1L1-1M0 6.8L6.8 0M5.8 7.8L7.8 5.8" fill="none" stroke="#F5E663" stroke-width="0.65" opacity="0.23" />
+    </pattern>
+    <clipPath id="x-gas-round">
+      <rect x="0" y="0" width="340" height="104" fill="#fff" rx="10" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#x-gas-round)">
+    <rect x="0" y="0" width="340" height="104" fill="url(#x-gas-back)" />
+    <rect x="0" y="0" width="340" height="104" fill="url(#x-gas-grid)" />
+    <rect x="0" y="74" width="340" height="30" fill="url(#x-gas-earth)" />
+    <rect x="0" y="74" width="340" height="30" fill="url(#x-gas-soilDots)" />
+    <path d="M0 86Q68 81 122 88T255 87T340 88V104H0Z" fill="#0A1B22" opacity="0.45" />
+    <line x1="0" y1="74" x2="340" y2="74" stroke="#567973" stroke-width="1.25" opacity="0.9" />
+    <line x1="0" y1="76" x2="340" y2="76" stroke="#75968B" stroke-width="0.55" opacity="0.2" />
+    <rect x="27" y="74" width="218" height="30" fill="#F5E663" opacity="0.12" />
+    <rect x="27" y="74" width="218" height="30" fill="url(#x-gas-hatch)" />
+    <line x1="27" y1="74" x2="27" y2="104" stroke="#F5E663" stroke-width="0.95" stroke-dasharray="2.5 3.4" opacity="0.72" />
+    <line x1="245" y1="74" x2="245" y2="104" stroke="#F5E663" stroke-width="0.95" stroke-dasharray="2.5 3.4" opacity="0.72" />
+    <line x1="245" y1="63" x2="245" y2="74" stroke="#F5E663" stroke-width="0.95" stroke-dasharray="2.5 3.4" opacity="0.44" />
+    <g transform="translate(137 74) scale(0.78 0.78)">
+      <ellipse cx="0" cy="-0.2" rx="19.5" ry="3.5" fill="#061217" opacity="0.6" />
+      <path d="M-3.6 0C-1.8-8-2.4-18-2.7-27l6.1-.3C2.2-17 1.5-7 3.7 0Z" fill="#8B8871" />
+      <path d="M-19-22C-27-27-26-39-18-45C-17-53-11-57-4-56C2-62 12-59 16-52C25-51 29-42 25-35C29-28 22-21 15-21C10-16 1-16-5-19C-11-17-16-18-19-22Z" fill="#344B43" stroke="#A8BE9B" stroke-opacity="0.46" stroke-width="1.05" />
+      <path d="M-22-34C-21-40-16-43-12-43C-11-51-4-54 2-53C8-57 16-53 18-47C24-46 26-40 22-35C17-29 8-28 3-29C-3-24-12-25-17-28C-21-28-23-31-22-34Z" fill="#496453" />
+      <path d="M-17-39C-12-45-7-44-5-48C-1-54 8-55 12-50C17-50 20-45 17-42C14-38 7-39 3-37C-1-34-10-34-14-34C-18-34-19-36-17-39Z" fill="#64806A" opacity="0.83" />
+      <path d="M-13-43q5-3 8-3m4 4q4-3 9-4m2 14q4-1 7-4" fill="none" stroke="#A8BE9B" stroke-width="0.95" stroke-linecap="round" stroke-linejoin="round" opacity="0.62" />
+      <path d="M0-11v-14m0 2q-4-7-11-10m11 10q4-6 11-9" fill="none" stroke="#8B8871" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" opacity="0.84" />
+    </g>
+    <g transform="translate(257 74) scale(0.78 0.78)">
+      <path d="M-3.6 0C-1.8-8-2.4-18-2.7-27l6.1-.3C2.2-17 1.5-7 3.7 0Z" fill="#38DEC4" fill-opacity="0.08" stroke="#38DEC4" stroke-width="1.615" stroke-dasharray="4.36 3.27" stroke-opacity="0.9" stroke-linecap="round" />
+      <path d="M-19-22C-27-27-26-39-18-45C-17-53-11-57-4-56C2-62 12-59 16-52C25-51 29-42 25-35C29-28 22-21 15-21C10-16 1-16-5-19C-11-17-16-18-19-22Z" fill="#38DEC4" fill-opacity="0.08" stroke="#38DEC4" stroke-width="1.615" stroke-dasharray="4.36 3.27" stroke-opacity="0.9" stroke-linecap="round" />
+    </g>
+    <line x1="149" y1="62" x2="245" y2="62" stroke="#38DEC4" stroke-width="1.14" stroke-dasharray="3.3 3.2" stroke-linecap="round" opacity="0.75" />
+    <path d="M242 59l4.4 3-4.4 3" fill="none" stroke="#38DEC4" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" opacity="0.86" />
+    <g transform="translate(22 18)">
+      <circle cx="137" cy="24" r="8.9" fill="#061218" opacity="0.7" />
+      <circle cx="137" cy="24" r="7.7" fill="#39272A" stroke="#FF775D" stroke-width="1.15" />
+      <path d="M134.35 21.35l5.3 5.3m0-5.3-5.3 5.3" fill="none" stroke="#FF775D" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+    <g transform="translate(-22 21)">
+      <circle cx="302" cy="21" r="8.9" fill="#061218" opacity="0.7" />
+      <circle cx="302" cy="21" r="7.7" fill="#0B3335" stroke="#38DEC4" stroke-width="1.15" />
+      <path d="M298.8 21l2.2 2.4 4.3-4.7" fill="none" stroke="#38DEC4" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+    <path d="M137 74q0 3 5 6m-5-5q-2 5-8 6m8-5q2 3 1 6" fill="none" stroke="#E0A181" stroke-width="1.08" stroke-linecap="round" stroke-linejoin="round" opacity="0.86" />
+    <g transform="translate(136 89)">
+      <path d="M0 -7.0l17 -5q7.0 0 7.0 7.0           q0 5.81 -7.0 7.0L0 7.0Z" fill="#7C702F" stroke="#F5E663" stroke-width="0.9" stroke-opacity="0.64" />
+      <path d="M2 -5.9l15 -4.6" fill="none" stroke="#F5E663" stroke-width="0.85" stroke-linecap="round" opacity="0.64" />
+      <circle r="7.0" fill="#7C702F" stroke="#F5E663" stroke-width="1.45" />
+      <circle r="4.75" fill="#3B3723" stroke="#F5E663" stroke-opacity="0.65" stroke-width="0.7" />
+    </g>
+    <line x1="136" y1="89" x2="136" y2="98.5" stroke="#F5E663" stroke-width="0.95" stroke-dasharray="2.5 3.4" opacity="0.95" />
+    <circle cx="136" cy="89" r="1.35" fill="#F5E663" stroke="#0C1D25" stroke-width="0.7" />
+    <line x1="136" y1="98.5" x2="245" y2="98.5" stroke="#DCEBEA" stroke-width="1.05" opacity="0.89" />
+    <line x1="136" y1="95.1" x2="136" y2="101.9" stroke="#DCEBEA" stroke-width="1.15" />
+    <line x1="245" y1="95.1" x2="245" y2="101.9" stroke="#DCEBEA" stroke-width="1.15" />
+    <rect x="164.052" y="80.2" width="52.897" height="15.4" fill="#0C1D25" rx="4" />
+    <text x="190.5" y="92" fill="#DCEBEA" font-family="Roboto, Segoe UI, Arial, sans-serif" font-weight="750" font-size="11.3" text-anchor="middle">kell 2 m</text>
+    <path d="M72 88h42l14-2" fill="none" stroke="#F5E663" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" opacity="0.68" />
+    <rect x="9" y="80" width="67.388" height="15.4" fill="#0C1D25" rx="4" />
+    <text x="14.5" y="91.8" fill="#F5E663" font-family="Roboto, Segoe UI, Arial, sans-serif" font-weight="700" font-size="10.8" text-anchor="start">gázvezeték</text>
+  </g>
+</svg>

@@ -113,6 +113,7 @@ p b{color:var(--text);font-weight:700}
 .insp{border:1px solid var(--line);border-radius:14px;padding:10px 12px 8px;margin:10px 0 2px;background:rgba(15,74,87,.16)}
 .insp h3{font:700 13.5px var(--font);margin-bottom:2px}.insp h3.x{color:var(--red)}.insp h3.ok{color:var(--teal)}.insp h3.lim{color:var(--amber)}
 .insp svg{display:block;width:100%;height:auto;margin:4px 0 2px}
+.insp .art{margin:6px auto 4px;max-width:min(100%,420px)}
 .insp ul{list-style:none;display:grid;gap:3px;margin-top:4px}
 .insp li{font-size:13px;color:var(--muted);line-height:1.35}
 .insp li b{color:var(--text);font-weight:500}.insp li.x::before{content:'✕ ';color:var(--red);font-weight:700}.insp li.l::before{content:'! ';color:var(--amber);font-weight:700}.insp li.o::before{content:'✓ ';color:var(--teal);font-weight:700}
@@ -620,7 +621,8 @@ function tapInformed(xy, ll) {
     for (const p of S.freePts) { const d = Math.hypot(p[0] - xy[0], p[1] - xy[1]); if (d < bd && !S.trees.some(t => Math.hypot(t.x - p[0], t.y - p[1]) < M.spacing)) { bd = d; best = p; } }
     if (best) { xy = [best[0], best[1]]; ev = FH.evalPoint(EN, xy[0], xy[1]); } }
   if (ev.kill) { S.last = { ev, ok: false }; showProbe(xy, ev); flashStep(stepOf(FH.stateAt(ev, NST).by.id).id); return render(); }
-  if (S.trees.some(t => Math.hypot(t.x - xy[0], t.y - xy[1]) < M.spacing)) { S.last = { ev, ok: false, own: true }; return render(); }
+  const od = Math.min.apply(null, S.trees.map(t => Math.hypot(t.x - xy[0], t.y - xy[1])).concat(1e9));
+  if (od < M.spacing) { S.last = { ev, ok: false, own: true, od }; return render(); }
   clearProbe();
   const t = Object.assign(mkTree(xy[0], xy[1], ev.crown < 2 ? 'lim' : 'ok', String(S.trees.length + 1)), { x: xy[0], y: xy[1], ev });
   t.el.addEventListener('click', ev2 => { ev2.stopPropagation(); if (S.st !== 'inf') return; removeTree(t); });
@@ -678,7 +680,7 @@ function section(ev, upTo) {
 function inspHTML(ev, upTo, title) {
   const r = reasons(ev, upTo, 4), st = r.st, cls = st.alive ? (st.crown < 2 ? 'lim' : 'ok') : 'x';
   const head = title || (st.alive ? 'Itt elfér egy fa — ' + CROWN[st.crown] + ' koronával (kb. ' + CROWN_M2[st.crown] + ' m² árnyék)' : 'Itt nem állhat fa');
-  return '<div class="insp"><h3 class="' + cls + '">' + head + '</h3>' + section(ev, upTo) + '<ul>' + r.html + '</ul><div class="fn">A távolságok jellemző értékek — településenként és üzemeltetőnként eltérhetnek.</div></div>';
+  return '<div class="insp"><h3 class="' + cls + '">' + head + '</h3>' + (inspArt(ev, upTo) || section(ev, upTo)) + '<ul>' + r.html + '</ul><div class="fn">A távolságok jellemző értékek — településenként és üzemeltetőnként eltérhetnek.</div></div>';
 }
 
 /* ---------- a lépések miniábrái (img/fahely-abrak/, 340 × 104). A rajzokon rögzített számok szerepelnek (2. mező: szabály:kis,közepes,nagy);
@@ -698,12 +700,58 @@ const ABRA = {
   gas: ['12-gazvezetek', 'gas:2', 'A játék 2 m távolságot jelöl a gázvezetéktől.']
 };
 const abraSrc = key => 'img/fahely-abrak/' + ABRA[key][0] + '.svg?v=16';
-const abraOk = spec => spec.split(' ').every(c => { const [id, v] = c.split(':'), d = id === 'jardaW' ? [M.walkHalf * 2] : (rule(id) || {}).d;
+const abraOk = spec => spec.split(' ').every(c => { const [id, v] = c.split(':'), d = id === 'jardaW' ? [M.walkHalf * 2] : id === 'sajat' ? [M.spacing] : (rule(id) || {}).d;
   return !!d && v.split(',').every((x, i) => x === '' || Math.abs(d[i] - x) < 1e-9); });
 function art(key) { const a = ABRA[key]; if (!a) return ''; if (!abraOk(a[1])) return sketch(key);
   return '<img class="art" src="' + abraSrc(key) + '" width="340" height="104" alt="' + esc(a[2]) + '">'; }
 /* a varázsló előtt (a tipp után, amíg a játékos ültet) betöltjük mind a 12-t, hogy lapozáskor ne villanjon üres keret */
 function preloadArt() { for (const k in ABRA) if (abraOk(ABRA[k][1])) new Image().src = abraSrc(k); }
+
+/* ---------- a vizsgálólap ábrái (img/fahely-hibak/, 340 × 104): a döntő ok rajza. x-* = kizáró ok (a legkisebb koronára is), l-* = korlátozás.
+   Ugyanúgy rögzített számokkal készültek, mint a lépések ábrái; eltérő szabályértéknél a generált keresztmetszet (section()) jelenik meg. ---------- */
+const HIBA = {
+  road: ['x-road', 'road:1.25', 'A fát a szegélykőtől legalább 1,25 m-re lehet ültetni.'],
+  sideroad: ['x-sideroad', 'sideroad:1.25', 'A keresztutca burkolatának szélétől legalább 1,25 m-re ültethető fa.'],
+  drive: ['x-drive', 'drive:1', 'A fa a kapubehajtó burkolatának szélétől legalább 1 m-re ültethető.'],
+  junc: ['x-junc', 'junc:10', 'A kereszteződés két úttengelyének metszéspontjától legalább 10 m-re ültethető fa.'],
+  cross: ['x-cross', 'cross:5', 'A zebra szélétől legalább 5 m távolság kell a fa ültetéséhez.'],
+  walk: ['x-walk', 'walk:0.75 jardaW:1.5', 'A fát az 1,5 m széles szabad járda szélétől legalább 0,75 m-re kell ültetni.'],
+  fence: ['x-fence', 'fence:2', 'A fát a kerítés vonalától legalább 2 m-re lehet ültetni.'],
+  bld: ['x-bld', 'bld:2', 'A ház homlokzatától legalább 2 m kell a fa ültetéséhez.'],
+  tree: ['x-tree', 'tree:5', 'Az új fát a meglévő fa törzsétől legalább 5 m-re lehet ültetni.'],
+  drain: ['x-drain', 'drain:3', 'A nyílt árok tengelyétől legalább 3 m szabad sáv kell a fa ültetéséhez.'],
+  pole: ['x-pole', 'pole:1', 'A villanyoszloptól legalább 1 m távolság kell a fa ültetéséhez.'],
+  gas: ['x-gas', 'gas:2', 'A fát a gázvezeték tengelyétől legalább 2 m-re lehet ültetni.'],
+  water: ['x-water', 'water:2', 'Az ivóvízvezeték tengelyétől vízszintesen legalább 2 m távolság szükséges a fa ültetéséhez.'],
+  sewer: ['x-sewer', 'sewer:3', 'A fát a csatorna tengelyétől legalább 3 m-re lehet ültetni.'],
+  cable: ['x-cable', 'cable:1', 'A földkábeltől legalább 1 m távolság szükséges a fa ültetéséhez.'],
+  manhole: ['x-manhole', 'manhole:1.5', 'Az aknafedlap közepétől legalább 1,5 m távolság kell a fa ültetéséhez.'],
+  culv: ['x-culv', 'culv:3', 'A fát a befedett árok átereszének tengelyétől legalább 3 m-re lehet ültetni.'],
+  sajat: ['x-sajat', 'sajat:6', 'A két ültetett fa törzse között legalább 6 m távolság szükséges.'],
+  wire: ['l-wire', 'wire:,4.5,7', 'A légvezeték vonalától vízszintesen 4,5 m-en belül csak kis korona fér el, közepes korona 4,5 m-től, nagy korona 7 m-től ültethető.'],
+  lamp: ['l-lamp', 'lamp:,3,5', 'A lámpatesttől 3 m-en belül csak kis korona, 3 m-től közepes, 5 m-től nagy korona is ültethető.'],
+  tel: ['l-tel', 'tel:1', 'A hírközlési kábeltől számított 1 m-es sávban csak kézi földmunkával ültethető fa.']
+};
+const hibaSrc = id => 'img/fahely-hibak/' + HIBA[id][0] + '.svg?v=16';
+const hibaOk = id => !!HIBA[id] && abraOk(HIBA[id][1]);
+const hibaImg = id => '<img class="art" src="' + hibaSrc(id) + '" width="340" height="104" alt="' + esc(HIBA[id][2]) + '">';
+/* melyik rajz illik ehhez a ponthoz: ha nem állhat ott fa, a döntő ok (ugyanaz, amit a szöveg is kiír);
+   ha elfér, de kisebb koronával, a koronát elsőként korlátozó szabály — behajtónál, kerítésnél, homlokzatnál és meglévő fánál
+   a lépéskártya rajza, mert az mutatja mindhárom koronaméret távolságát (az x-* rajzok csak a kizáró, legkisebb távolságot);
+   különben a hírközlési kábel. Ha nincs mit rajzolni: '' */
+function inspArt(ev, upTo) {
+  const st = FH.stateAt(ev, upTo);
+  if (!st.alive) return st.by && hibaOk(st.by.id) ? hibaImg(st.by.id) : '';
+  const lim = ev.checks.find(c => c.stage <= upTo && c.res === 'L' && c.cap === st.crown && c.cap < 3);
+  if (lim) { if (rule(lim.id).w === 'L' && hibaOk(lim.id)) return hibaImg(lim.id); const w = { drive: 'drive', fence: 'plot', bld: 'plot', tree: 'tree' }[lim.id]; return w ? art(w) : ''; }
+  return ev.checks.some(c => c.stage <= upTo && c.id === 'tel' && c.res === 'L') && hibaOk('tel') ? hibaImg('tel') : '';
+}
+/* 2. kör: a saját fához túl közel */
+function ownHTML(d) {
+  return '<div class="insp"><h3 class="x">Itt nem állhat fa</h3>' + (hibaOk('sajat') ? hibaImg('sajat') : '') + '<ul><li class="x"><b>Másik fád</b> ' + dTxt(d) + ' — kell ' + hm(M.spacing) + ' m</li></ul></div>';
+}
+/* az eredménylap előtt betöltjük, hogy a vizsgálólapon ne villanjon üres keret */
+function preloadHiba() { for (const k in HIBA) if (hibaOk(k)) new Image().src = hibaSrc(k); }
 
 /* ---------- tartalék: adatból generált vázlat arról, mit jelent a szabály (a távolság a rajzon méretezve) ---------- */
 function sketch(key) {
@@ -850,14 +898,15 @@ function render() {
     <div class="row"><button class="btn" onclick="startInformed()">Újra, adattal</button></div>`; return; }
   if (S.st === 'inf') { TB.innerHTML = '2. kör · adattal · <b>' + n + '/' + N + '</b>';
     let msg = 'Koppints egy zöld foltra. A csíkozott, halványzöld helyeken csak kis koronájú fa fér el.', link = '';
-    if (S.last) { if (S.last.own) msg = '<span class="bad">Túl közel van egy másik fádhoz — legalább ' + M.spacing + ' méter kell.</span>';
+    const more = '<button class="lnk" type="button" onclick="S.sec=!S.sec;render()">' + (S.sec ? 'Ábra elrejtése' : 'Mutasd ábrán') + '</button>';
+    if (S.last) { if (S.last.own) { msg = '<span class="bad">Túl közel van egy másik fádhoz — legalább ' + M.spacing + ' méter kell.</span>'; link = more; }
       else if (S.last.ok) msg = 'Elfér: <b>' + CROWN[S.last.ev.crown] + ' koronájú</b> fa, kb. ' + CROWN_M2[S.last.ev.crown] + ' m² árnyék' + (S.last.ev.flags.park ? ' · <span class="warn">−1 parkolóhely</span>' : '') + (S.last.ev.checks.some(c => c.id === 'tel' && c.res === 'L') ? ' · <span class="warn">hírközlési kábel mellett: csak kézi földmunkával</span>' : '') + '.';
-      else { const st = FH.stateAt(S.last.ev, NST); msg = '<span class="bad">Itt nem lehet:</span> ' + failText(st.by) + '.'; link = '<button class="lnk" type="button" onclick="S.sec=!S.sec;render()">' + (S.sec ? 'Keresztmetszet elrejtése' : 'Keresztmetszet') + '</button>'; } }
+      else { const st = FH.stateAt(S.last.ev, NST); msg = '<span class="bad">Itt nem lehet:</span> ' + failText(st.by) + '.'; link = more; } }
     P.innerHTML = `<span class="eyebrow">2. kör — adattal</span><h1>Ültess ${N} fát a <em>zöldre</em></h1>
     <div class="cnt">${Array.from({ length: N }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>
     <div class="row"><button class="btn btn-ghost sm" onclick="undo()" ${n ? '' : 'disabled'}>Visszavonás</button><button class="btn" onclick="finish()" ${n === N ? '' : 'disabled'}>Kiértékelés</button></div>
     <div class="hint">${msg} ${link}</div>
-    ${S.sec && S.last && !S.last.ok && !S.last.own ? inspHTML(S.last.ev, NST) : ''}`; return; }
+    ${S.sec && S.last && !S.last.ok ? (S.last.own ? ownHTML(S.last.od) : inspHTML(S.last.ev, NST)) : ''}`; return; }
   if (S.st === 'final') { const truth = M.pct[NST], diff = S.guess - truth, fp = Math.min(S.fp || 0, FINP.length - 1), last = fp === FINP.length - 1; TB.innerHTML = 'Adat nélkül <b>' + S.r1 + '</b> · adattal <b>' + n + '</b>';
     if (S.last && S.last.probe) { P.innerHTML = '<button class="lnk" type="button" onclick="closeProbe()">‹ Vissza a mérleghez</button>' + inspHTML(S.last.ev, NST); return; }
     /* lapozható záró lapok: mérleg → hová lett a hely → egyenként → elférő fák → kérdés → tovább */
@@ -903,7 +952,7 @@ function focusStep(anim) { if (!seg()) return fitStreet(anim); const k = S.step,
   if (S.segS != null && Math.abs(SHOW[k] - S.segS) < half * 0.7) return focusSeg(S.segS, anim, 400);
   focusSeg(SHOW[k], anim, 600); }
 function skipWizard() { S.skipped = true; toMid(); }
-function toMid() { S.step = NST; S.r1 = aliveN(NST); S.st = 'mid'; S.last = null; markGhosts(NST, null); render(); applyScene(); cam(true); P.scrollTop = 0; }
+function toMid() { S.step = NST; S.r1 = aliveN(NST); S.st = 'mid'; S.last = null; markGhosts(NST, null); render(); applyScene(); cam(true); P.scrollTop = 0; preloadHiba(); }
 function bestFreeS() { let best = 0, bs = AX.L / 2; const half = seg() ? innerWidth / segPx() / 2 : 30; for (let s = 28; s <= AX.L - 28; s += 6) { let nn = 0; for (const p of S.freePts) if (Math.abs(AX.st(p[0], p[1]).s - s) < half) nn++; if (nn > best) { best = nn; bs = s; } } return bs; }
 function startInformed() { clearProbe(); S.st = 'inf'; S.last = null; S.tries = 0; S.sec = false; render(); applyScene(); cam(true); }
 function finish() { clearProbe(); S.st = 'final'; S.last = null; S.flash = 0; LC.set('final', true); LC.set('free', true); LC.set('ghost', true);
