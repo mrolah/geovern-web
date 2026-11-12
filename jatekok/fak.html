@@ -113,6 +113,18 @@ body.maperr .err{display:flex}
 .err div{max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--faint);border-top-color:var(--teal);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes sp{to{transform:rotate(360deg)}}
+/* rétegbemutató az 1. kör után: a rétegek nem kapcsolnak, csak a RÉTEGEK felirat ragyog (lassabban, 1,5 s-os ütemben) és a kapcsolók
+   balról jobbra hullámban felvillannak a saját színükben — keret, fénykoszorú, kiemelkedés. Az időzítés a showLayers()-ben. */
+#layers.attract .gvl-head>span{animation-duration:1.5s}
+#layers.attract .gvl-chip{animation:fk-chip 1.5s ease-in-out var(--d,0s) 3}
+#layers.attract .gvl-sw{animation:fk-sw 1.5s ease-in-out var(--d,0s) 3}
+#layers.attract .gvl-ic{animation:fk-ic 1.5s ease-in-out var(--d,0s) 3}
+@keyframes fk-chip{45%{border-color:var(--c);color:#fff;box-shadow:0 0 0 3px var(--cbg),0 0 26px 5px var(--c);transform:translateY(-3px) scale(1.08)}}
+@keyframes fk-chip-l{45%{border-color:var(--c);color:#0d2229;box-shadow:0 0 0 3px var(--cbg),0 0 22px 4px var(--c);transform:translateY(-3px) scale(1.08)}}
+@keyframes fk-sw{45%{opacity:1;box-shadow:0 0 10px 2px var(--c)}}
+@keyframes fk-ic{45%{filter:none;opacity:1}}
+html[data-theme=light] #layers.attract .gvl-chip{animation-name:fk-chip-l}
+@media(prefers-reduced-motion:reduce){#layers.attract .gvl-chip,#layers.attract .gvl-sw,#layers.attract .gvl-ic{animation:none}#layers.attract .gvl-chip{border-color:var(--c)}}
 </style>
 </head>
 <body>
@@ -339,9 +351,9 @@ function render(){const n=S.trees.length;
   if(S.st==='reveal1'){TB.innerHTML='1. kör · <b>'+S.r1+' pont</b>';P.innerHTML=`<span class="eyebrow">1. kör — eredmény</span>
     <h1>Vakon: <em>${S.r1}</em> / ${N*10}</h1>
     <p>Minden fa 0–10 pontot ér: annyit, amennyi hőséget, sérülékeny lakót és gyalogost árnyékol — és annyival kevesebbet, amennyi lombkorona már ott van. A település legjobb helye 10 pont.</p>
-    <div class="row"><button class="btn" onclick="showLayers()">Rétegek bekapcsolása</button></div><div class="hint">A számok a fákon: hány pontot ér a hely.</div>`;return;}
+    <div class="row"><button class="btn" onclick="showLayers()">Tovább a rétegekhez</button></div><div class="hint">A számok a fákon: hány pontot ér a hely.</div>`;return;}
   if(S.st==='layers'){P.innerHTML=`<h1>Ugyanaz a város. Más utca.</h1>
-    <p>${S.demo?'Betöltöttük az összes réteget — mindjárt kikapcsoljuk őket. A RÉTEGEK sorban bármelyiket visszakapcsolhatod.':'Koppints a rétegekre, és visszakapcsolod őket. A ⭐ Legjobb helyek a metszet: ahol hő, sérülékeny lakó és hiányzó lombkorona találkozik — a gyűrűk a 8 legjobb hely, a legjobb 10 pontot ér.'}</p>
+    <p>Koppints a rétegekre, és bekapcsolod őket. A ⭐ Legjobb helyek a metszet: ahol hő, sérülékeny lakó és hiányzó lombkorona találkozik — a gyűrűk a 8 legjobb hely, a legjobb 10 pontot ér.</p>
     <div class="row"><button class="btn" onclick="round2()">Újra, adattal</button></div>`;return;}
   if(S.st==='final'){const d=S.r2-S.r1;TB.innerHTML='Vakon <b>'+S.r1+'</b> · adattal <b>'+S.r2+'</b>';
     P.innerHTML=`<span class="eyebrow">A hét lenyomata</span>
@@ -353,20 +365,19 @@ function start(){S.st='place';S.round=1;render();fitArea(true);}
 function finishRound(){const sc=evaluate();if(S.round===1){S.r1=sc;S.st='reveal1';}else{S.r2=sc;S.st='final';
   GV.record('fak',{mode:MODE,src:(D&&D.src)||'',n:N,d3:D3,center:[+center[0].toFixed(5),+center[1].toFixed(5)],blind:{score:S.r1,pts:S.blindPts},informed:{score:S.r2,pts:S.trees.map(t=>[t.x,t.y])},
     layers:LC.all(),toggles:S.toggles,known:T.known});}render();fitArea(true);}
-/* 1. kör kiértékelve → a fák „szellemként” maradnak, a chip-sor megjelenik, a rétegek egymás után úsznak be */
-/* rétegek: előbb mind bekapcsol (a teljes kép), közben a „RÉTEGEK” felirat ragyog, aztán egyszerre mind kikapcsol — ugyanazzal a
-   mozdulattal, mint egy koppintás (lenyomás + villanás, a réteg kiúszik), így látszik, hogy a chipek kapcsolók és visszakapcsolhatók.
-   Ha a játékos közben koppint, a bemutató megáll. */
-const SEQ=['heat','vuln','canopy','ped','best','ghost'];
+/* 1. kör kiértékelve → a fák „szellemként” a térképen maradnak (az „1. kör fái” chip ezt mutatja), a chip-sor megjelenik.
+   A rétegeket NEM kapcsoljuk: csak a „RÉTEGEK” felirat ragyog és a kapcsolók hullámban felvillannak (#layers.attract, a CSS-ben),
+   kb. 6 másodpercig — a felirat négy teljes ütemet fut, így nyugalmi állapotban áll meg. Utána a játékos kapcsolgat, ha akar;
+   ha közben koppint, a bemutató azonnal megáll. */
+const SEQ=['heat','vuln','canopy','ped','best','ghost'],ATTRACT_MS=4*1500;
 function showLayers(){S.blindPts=S.trees.map(t=>[t.x,t.y]);S.ghosts=S.trees;S.trees=[];S.ghosts.forEach(t=>t.el.classList.add('ghost'));
   S.st='layers';S.demo=true;render();fitArea(true);
   revealT.forEach(clearTimeout);revealT=[];
-  SEQ.forEach((id,i)=>revealT.push(setTimeout(()=>LC.set(id,true),150+i*160)));
-  const tOn=150+SEQ.length*160,tOff=tOn+2200;
-  revealT.push(setTimeout(()=>LC.glow(true),tOn));
-  revealT.push(setTimeout(()=>LC.demoAll(SEQ,false),tOff));
-  revealT.push(setTimeout(endDemo,tOff+1600));}
-function endDemo(){revealT.forEach(clearTimeout);revealT=[];LC.glow(false);if(!S.demo)return;S.demo=false;if(S.st==='layers')render();
+  LC.set('ghost',true);const gb=LC.el.querySelector('.gvl-chip[data-id=ghost]');if(gb)gb.classList.remove('flash'); /* a szellemfák már látszanak: a chip csak az állapotot követi */
+  LC.el.querySelectorAll('.gvl-chip').forEach((b,i)=>b.style.setProperty('--d',(i*0.15).toFixed(2)+'s'));
+  revealT.push(setTimeout(()=>{LC.el.classList.add('attract');LC.glow(true);},250));
+  revealT.push(setTimeout(endDemo,250+ATTRACT_MS));}
+function endDemo(){revealT.forEach(clearTimeout);revealT=[];LC.el.classList.remove('attract');LC.glow(false);if(!S.demo)return;S.demo=false;if(S.st==='layers')render();
   const row=LC.el.querySelector('.gvl-row');if(row)try{row.scrollTo({left:0,behavior:'smooth'});}catch(e){row.scrollLeft=0;}} /* a chip-sor vissza az elejére */
 function dataOn(){return SEQ.some(id=>id!=='ghost'&&LC.get(id));}
 function round2(){endDemo();S.round=2;S.st='place';S.last=null;
