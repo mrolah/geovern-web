@@ -117,7 +117,7 @@ h3 .day{font:500 11px var(--mono);letter-spacing:.14em;color:var(--faint);margin
 
 <header>
   <a class="logo" data-fade href="index.html">
-    <img class="wm" src="/logo/geovern-wm.svg" alt="GEOVERN — independent geospatial advisory">
+    <img class="wm" src="/logo/geovern-wm.svg" alt="GEOVERN">
   </a>
   <div class="spacer"></div>
   <a class="navlink" data-fade href="index.html" data-i18n="back">← Vissza a főoldalra</a>
@@ -142,6 +142,7 @@ h3 .day{font:500 11px var(--mono);letter-spacing:.14em;color:var(--faint);margin
         <span class="badge amber">ADVENT</span>
       </div>
       <h2>Önkormányzati látogatás Grazban — advent</h2>
+      <p class="lead" style="margin:10px 0 0">Szervezők: GEOVERN és az Élhető Települések Országos Szövetsége (ÉTOSZ), a Stadt Graz vendégeként.</p>
     </div>
     <div class="ev-body">
 
@@ -150,7 +151,7 @@ h3 .day{font:500 11px var(--mono);letter-spacing:.14em;color:var(--faint);margin
         <li><span class="t">11:00</span><span><b>Ressourcenpark Graz — vezetett túra</b> (2 óra) <span class="prop">OPCIONÁLIS</span><br>
           Graz modern hulladékudvara, ahol a hulladékból újra nyersanyag lesz: szelektív gyűjtés, újrahasználat és újrahasznosítás működés közben, a park munkatársának vezetésével. Korábbi érkezést igényel.</span></li>
         <li><span class="t">13:00</span><span>Érkezés · könnyű egyéni ebéd</span></li>
-        <li><span class="t">14:00</span><span><b>Köszöntés</b></span></li>
+        <li><span class="t">14:00</span><span><b>Fogadás és szakmai program a grazi városházán</b> — köszöntés</span></li>
         <li><span class="t">14:20</span><span><b>Életminőség-felmérés (LQI) és statisztika</b> — Barbara Rauscher, BA, MA (statisztika)</span></li>
         <li><span class="t">14:40</span><span><b>Térinformatika</b> — DI Marc Diehold, BSc (térinformatika)</span></li>
         <li><span class="t">15:00</span><span><b>Lakossági részvétel</b> — Timo Köhler, a lakossági részvételi iroda vezetője</span></li>
@@ -169,16 +170,9 @@ h3 .day{font:500 11px var(--mono);letter-spacing:.14em;color:var(--faint);margin
         <li><span class="t">14:00</span><span>Hazaindulás</span></li>
       </ul>
 
-      <!-- IDEIGLENESEN KIKAPCSOLVA (2026-11-15): költség és elő-jelentkezés
-      <h3>Várható költség <span class="day">INDIKATÍV — LÉTSZÁMTÓL FÜGG</span></h3>
-      <ul class="tl cost">
-        <li><span class="t">Utazás</span><span>Szervezett busz (Bp.–Graz–Bp.) — <b>~25–35 ezer Ft/fő</b></span></li>
-        <li><span class="t">Szállás</span><span>1 éj reggelivel, kétágyas — <b>3★ ~35–45 · 4★ ~50–65 ezer Ft/fő</b></span></li>
-        <li><span class="t">Programok</span><span>Vezetett túra, belépők — <b>~10–15 ezer Ft/fő</b></span></li>
-        <li><span class="t">Összesen</span><span><b>kb. 70–115 ezer Ft/fő</b> + egyéni étkezés · a végleges árat az igényfelmérés után adjuk</span></li>
-      </ul>
+      <p class="lead" style="margin:22px 0 0">A részletes költségtájékoztatót a jelentkezőknek e-mailben küldjük.</p>
 
-      ── elő-jelentkezés ──
+      <!-- IDEIGLENESEN KIKAPCSOLVA (2026-11-15): elő-jelentkezési űrlap
       <div class="reg" id="reg">
         <h3>Gyors elő-jelentkezés — igényfelmérés</h3>
         <p class="regnote"><b style="color:var(--amber)">Elő-jelentkezés: 2026. november 6-ig.</b>
@@ -239,10 +233,10 @@ const I18N={
    lead:'Szakmai tanulmányutak, workshopok és konferenciaszereplések önkormányzati és kormányzati vezetőknek.',note:''},
  en:{title:'GEOVERN — Events',back:'← Back to the main page',h1:'Events',
    lead:'Study visits, workshops and conference appearances for municipal and government leaders.',
-   note:'This advent study visit is organised for Hungarian municipal leaders — details and sign-up are in Hungarian. Questions in English: hello@geovern.com'},
+   note:'This advent study visit is organised for Hungarian municipal leaders, by GEOVERN and the Hungarian National Association of Liveable Settlements (ÉTOSZ), as guests of the City of Graz. Details are in Hungarian; detailed cost information is sent to participants by email. Questions in English: hello@geovern.com'},
  de:{title:'GEOVERN — Veranstaltungen',back:'← Zurück zur Startseite',h1:'Veranstaltungen',
    lead:'Fachexkursionen, Workshops und Konferenzauftritte für kommunale und staatliche Führungskräfte.',
-   note:'Diese Advent-Fachexkursion richtet sich an ungarische Kommunalvertreter — Details und Anmeldung auf Ungarisch. Fragen auf Deutsch: hello@geovern.com'}
+   note:'Diese Advent-Fachexkursion für ungarische Kommunalvertreter:innen organisieren GEOVERN und der ungarische Verband lebenswerter Gemeinden (ÉTOSZ) als Gäste der Stadt Graz. Details auf Ungarisch; die genaue Kosteninformation erhalten die Teilnehmenden per E-Mail. Fragen auf Deutsch: hello@geovern.com'}
 };
 function applyLang(l){
   document.documentElement.lang=l;

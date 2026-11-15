@@ -1,13 +1,13 @@
-# GEOVERN — independent geospatial advisory
+# GEOVERN — nem üzleti célú szakmai kezdeményezés
 
 Háromnyelvű (HU/EN/DE) statikus weboldal: MapLibre-alapú landing, konferencia-aloldal
 interaktív döntésjátékkal, zoomolható referenciatérkép.
 
 Élő oldal: https://mrolah.github.io/geovern-web/
 
-## Időpontfoglalás
+## Kapcsolat
 
-A főoldal „Időpontfoglalás” gombja a Pipedrive Scheduler-t (`https://psh-rf-olah-attila.pipedrive.com/scheduler/0K29R0t6/meeting-standard`) felugró ablakban nyitja meg: iframe, csak az első megnyitáskor töltődik be; Esc, a háttér vagy a × zárja; JS nélkül vagy Ctrl/Cmd/középső kattintásra új lapon nyílik. Közvetlenül nyitható link (pl. levélbe): `index.html?foglalas=1` vagy `index.html#foglalas`.
+A főoldal kapcsolati szakasza (`#s-ct`) csak e-mailes kapcsolatfelvételt kínál (`mailto:hello@geovern.com`); külső időpontfoglaló nincs.
 
 ## Referenciatérkép
 
