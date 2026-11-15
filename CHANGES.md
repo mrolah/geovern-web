@@ -133,19 +133,19 @@ Törölve: „Kapcsolódó szolgáltatás — A GEOVERN AI-készültségi felmé
 - `jatekok.html`: „Konzultáció →” link → „Kapcsolat →”.
 - `rolunk.html`, `referenciak.html`, `rendezvenyek.html`, `impresszum.html`, `adatkezeles.html`, `konferencia.html`, `ranglista.html`: logó `alt` „GEOVERN — independent geospatial advisory” → „GEOVERN”; `logo/*.svg` `aria-label` ugyanígy.
 - `sitemap.xml`: az ArcGIS-licenc URL helyett a licencgazdálkodási cikk; `lastmod` frissítve a módosult tudásbázis-oldalakon.
+- `konferencia.html`: ideiglenesen kikapcsolva (nincs használatban): átirányít a főoldalra (`noindex`); az eredeti tartalom a git-előzményekben megvan. Ezzel a VertiGIS-es e-mail-cím és előadói sor is lekerült.
 - `README.md`: cím; az „Időpontfoglalás” (Pipedrive) szakasz helyett „Kapcsolat” (csak e-mail).
 
 ## Nyitott kérdések (nem változtattam)
 
-1. **`konferencia.html`**: „Oláh Attila · VertiGIS” (előadói sor, 3 nyelven), „attila.olah@vertigis.com” a kapcsolati sorban, és „Tanácsadás → pilot → csak ezután beszerzés” tagline. Az oldal nem szerepelt a feladatlistán, a menüből le van véve, de él. A „VertiGIS csak a három engedélyezett helyen” szabály itt sérül.
-2. **Logó**: a `logo/geovern-wm.svg` (és a két `geovern-logo-*.svg`) vektorosan tartalmazza az „INDEPENDENT GEOSPATIAL ADVISORY” alfeliratot; minden oldal fejlécében látszik. Dizájnelem, ezért nem nyúltam hozzá.
-3. **Megszólítás**: a megadott „Szakmai kérdésed van? Írj nekünk” tegező; a főoldal többi szövege magázó („Kattintson…”, „görgessen”).
-4. **Use case-térkép a főoldalon**: illusztratív eredmény-nagyságrendek (pl. „Szállítási költség −8–15%”, vállalati szegmens) — tartalmilag tanácsadói hangvételű lehet.
-5. **Játékok**: a `jatekok/ugymenet.html` „Pipedrive-szerű” táblát említ (játékdizájn, nem link) — a játékokhoz nem nyúltam.
-6. **Ez a fájl** a merge után nyilvánosan elérhető lesz (`geovern.com/CHANGES.md`). Ha nem kell, merge előtt törölhető.
+1. **Logó**: a `logo/geovern-wm.svg` (és a két `geovern-logo-*.svg`) vektorosan tartalmazza az „INDEPENDENT GEOSPATIAL ADVISORY” alfeliratot; minden oldal fejlécében látszik. Dizájnelem, ezért nem nyúltam hozzá.
+2. **Megszólítás**: a megadott „Szakmai kérdésed van? Írj nekünk” tegező; a főoldal többi szövege magázó („Kattintson…”, „görgessen”).
+3. **Use case-térkép a főoldalon**: illusztratív eredmény-nagyságrendek (pl. „Szállítási költség −8–15%”, vállalati szegmens) — tartalmilag tanácsadói hangvételű lehet.
+4. **Játékok**: a `jatekok/ugymenet.html` „Pipedrive-szerű” táblát említ (játékdizájn, nem link) — a játékokhoz nem nyúltam.
+5. **Ez a fájl** a merge után nyilvánosan elérhető lesz (`geovern.com/CHANGES.md`). Ha nem kell, merge előtt törölhető.
 
 ## Ellenőrzés
 
 - Grep az egész repóban (CHANGES.md kivételével): „Díjmentes konzultáció”, „konzultáció”, „ROI”, „megtérülés”, „Licencmegtakarítás”, „licencdíj nélkül”, „tanácsadó cég”, „Az audit díja”, „Tárgyalási mandátum”, „nem viszonteladó”, „gyártói”, „pipedrive.com/scheduler”, „Kostenlose Beratung”, „free consultation”, „a polgármester fogadása”, „Ft/fő” — **0 találat**.
-- „VertiGIS” előfordulások: kulcsszöveg (`impresszum.html`, `rolunk.html`, 3 nyelv), Rólunk-mondat (`rolunk.html`, 3 nyelv), rövid szerzői doboz (7 tudásbázis-cikk) — és a fenti `konferencia.html` (5 előfordulás, nyitott kérdés).
+- „VertiGIS” előfordulások: kulcsszöveg (`impresszum.html`, `rolunk.html`, 3 nyelv), Rólunk-mondat (`rolunk.html`, 3 nyelv), rövid szerzői doboz (7 tudásbázis-cikk). Más helyen nem szerepel.
 - Helyi szerver: 15 oldal × elérhető nyelvek betöltve, nyelvváltás után nincs JS-hiba és üres szakasz; 66 belső link és horgony él; a régi licenc-URL átirányít.
