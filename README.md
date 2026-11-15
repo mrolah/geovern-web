@@ -1,4 +1,4 @@
-# GEOVERN — nem üzleti célú szakmai kezdeményezés
+# GEOVERN — szakmai szemlélet és tudásmegosztó mozgalom
 
 Háromnyelvű (HU/EN/DE) statikus weboldal: MapLibre-alapú landing, konferencia-aloldal
 interaktív döntésjátékkal, zoomolható referenciatérkép.
